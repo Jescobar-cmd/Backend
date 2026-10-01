@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// rolId: 2 = Freelancer, 3 = Cliente (igual que la entidad User)
+model User {
+  id            Int             @id @default(autoincrement())
+  nombre        String
+  email         String          @unique
+  passwordHash  String?
+  rolId         Int
+  telefono      String?
+  cedula        String?         @unique
+  esMayorDeEdad Boolean         @default(true)
+  estado        String          @default("inactivo")
+  googleId      String?         @unique
+  tokens        RecoveryToken[]
+}
+
+model RecoveryToken {
+  id              Int      @id @default(autoincrement())
+  usuarioId       Int
+  usuario         User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  token           String   @unique
+  fechaExpiracion DateTime
+  usado           Boolean  @default(false)
+}
