@@ -4,6 +4,7 @@ import { PrismaTokenRepository } from '../persistence/postgres/PrismaTokenReposi
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
+import { BrevoEmailSender } from '../email/BrevoEmailSender';
 import { GoogleAuthService } from '../google/GoogleAuthService';
 import { RegisterUserUseCase } from '../../application/use-cases/RegisterUserUseCase';
 import { ConfirmCodeUseCase } from '../../application/use-cases/ConfirmCodeUseCase';
@@ -19,7 +20,9 @@ import { ResetPasswordUseCase } from '../../application/use-cases/ResetPasswordU
 const users = new PrismaUserRepository(prisma);
 const tokens = new PrismaTokenRepository(prisma);
 const hasher = new BcryptPasswordHasher();
-const mail = new NodemailerEmailSender();
+// En Render (BREVO_API_KEY presente) se envía por API HTTPS;
+// en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
+const mail = process.env.BREVO_API_KEY ? new BrevoEmailSender() : new NodemailerEmailSender();
 const jwt = new JwtService();
 const google = new GoogleAuthService();
 
