@@ -1,3 +1,5 @@
+export type UserEstado = 'activo' | 'inactivo';
+
 export class User {
   id: number | null;
   nombre: string;
@@ -7,20 +9,20 @@ export class User {
   telefono: string | null;
   cedula: string | null;
   esMayorDeEdad: boolean;
-  estado: 'activo' | 'inactivo';
+  estado: UserEstado;
   googleId: string | null;
 
   constructor(
     id: number | null,
     nombre: string,
     email: string,
-    passwordHash: string | null, // Será null si se registra con Google
+    passwordHash: string | null,
     rolId: number,
-    telefono: string | null = null, // Será null si viene de Google
-    cedula: string | null = null,   // Será null si viene de Google
+    telefono: string | null = null,
+    cedula: string | null = null,
     esMayorDeEdad: boolean = true,
-    estado: 'activo' | 'inactivo' = 'inactivo',
-    googleId: string | null = null  // Será null si es registro manual
+    estado: UserEstado = 'inactivo',
+    googleId: string | null = null
   ) {
     this.id = id;
     this.nombre = nombre;
@@ -34,25 +36,19 @@ export class User {
     this.googleId = googleId;
   }
 
-  // --- MÉTODOS PARA EL FLUJO DE NEGOCIO ---
-
-  // 1. Se llama cuando el usuario hace clic en el enlace del correo de confirmación
-  activarCuenta() {
+  activarCuenta(): void {
     this.estado = 'activo';
   }
 
-  // 2. Se usa en el Login para bloquear el paso si el estado sigue siendo 'inactivo'
-  esActivo() {
+  esActivo(): boolean {
     return this.estado === 'activo';
   }
 
-  // 3. Sirve para saber si la cuenta se creó con Google (útil para no pedirle contraseña)
-  esRegistroGoogle() {
+  esRegistroGoogle(): boolean {
     return this.googleId !== null;
   }
 
-  // 4. Se llama en la pantalla intermedia donde el usuario de Google termina de llenar sus datos
-  completarDatosFaltantes(telefono: string, cedula: string) {
+  completarDatosFaltantes(telefono: string, cedula: string): void {
     this.telefono = telefono;
     this.cedula = cedula;
   }

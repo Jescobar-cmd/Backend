@@ -1,10 +1,9 @@
 import crypto from 'crypto';
-import { UserRepository } from '../../domain/ports/repositories/User_repository';
+import { UserRepository } from '../../domain/ports/repositories/UserRepository';
 import { TokenRepository } from '../../domain/ports/repositories/TokenRepository';
 import { RecoveryToken } from '../../domain/entities/RecoveryToken';
 import { EmailSender } from '../../domain/ports/services/EmailSender';
 
-// Reenvía el código de verificación (pantallita "Verifica tu cuenta" -> Reenviar).
 export class ResendCodeUseCase {
   constructor(
     private userRepository: UserRepository,
@@ -13,17 +12,24 @@ export class ResendCodeUseCase {
   ) {}
 
   async execute(email: string): Promise<void> {
-    const user = await this.userRepository.findByEmail(email.trim().toLowerCase());
-    // Respuesta genérica para no filtrar qué correos existen
-    if (!user || user.esActivo()) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await this.userRepository.findByEmail(cleanEmail);
+
+    // Respuesta silenciosa para no filtrar qué correos existen
+    if (!user || user.id === null || user.esActivo()) {
+      return;
+    }
+
+    await this.tokenRepository.invalidateAllForUser(user.id);
 
     const code = crypto.randomInt(100000, 1000000).toString();
     const ticket = new RecoveryToken(
       null,
-      user.id as number,
+      user.id,
       code,
-      new Date(Date.now() + 15 * 60 * 1000),
+      new Date(Date.now() + 15 * 60 * 1000)
     );
+
     await this.tokenRepository.save(ticket);
     await this.emailSender.sendVerificationEmail(user.email, code);
   }

@@ -1,18 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import { container } from '../container';
+import { TokenPayload } from '../../../domain/ports/services/TokenService';
+import { UnauthorizedError } from '../../../shared/errors/AppError';
 
 export interface AuthRequest extends Request {
-  user?: { id: number; email: string; rol: number };
+  user?: TokenPayload;
 }
 
-// Protege rutas: exige "Authorization: Bearer <JWT>" válido.
 export function requireAuth(req: AuthRequest, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return next(new Error('No autorizado, inicia sesión'));
+  if (!header || !header.startsWith('Bearer ')) {
+    return next(new UnauthorizedError('No autorizado, debes iniciar sesión'));
+  }
+
+  const token = header.slice(7).trim();
+  if (!token) {
+    return next(new UnauthorizedError('No autorizado, token no proporcionado'));
+  }
+
   try {
-    req.user = container.jwt.verifyToken(header.slice(7));
+    req.user = container.jwt.verifyToken(token);
     next();
-  } catch {
-    next(new Error('Sesión inválida o expirada, inicia sesión de nuevo'));
+  } catch (err) {
+    next(err);
   }
 }

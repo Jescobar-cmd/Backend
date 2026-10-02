@@ -1,8 +1,14 @@
-import { UserRepository } from '../../domain/ports/repositories/User_repository';
+import { UserRepository } from '../../domain/ports/repositories/UserRepository';
 import { TokenRepository } from '../../domain/ports/repositories/TokenRepository';
 import { PasswordHasher } from '../../domain/ports/services/PasswordHasher';
+import { BadRequestError } from '../../shared/errors/AppError';
 
-// Paso 2 de "Olvidé mi contraseña": valida el código y fija la nueva clave.
+export interface ResetPasswordDTO {
+  email: string;
+  code: string;
+  password: string;
+}
+
 export class ResetPasswordUseCase {
   constructor(
     private userRepository: UserRepository,
@@ -10,16 +16,24 @@ export class ResetPasswordUseCase {
     private passwordHasher: PasswordHasher,
   ) {}
 
-  async execute(input: { email: string; code: string; password: string }): Promise<void> {
-    const user = await this.userRepository.findByEmail(input.email.trim().toLowerCase());
-    const ticket = await this.tokenRepository.findByToken(input.code.trim());
-    if (!user || !ticket || ticket.usuarioId !== user.id || !ticket.esValido()) {
-      throw new Error('Código inválido o vencido, pide uno nuevo');
+  async execute(input: ResetPasswordDTO): Promise<void> {
+    const cleanEmail = input.email.trim().toLowerCase();
+    const cleanCode = input.code.trim();
+
+    const user = await this.userRepository.findByEmail(cleanEmail);
+    if (!user || user.id === null) {
+      throw new BadRequestError('Código inválido o vencido, solicita uno nuevo');
+    }
+
+    const ticket = await this.tokenRepository.findValidByUserAndToken(user.id, cleanCode);
+    if (!ticket || !ticket.esValido()) {
+      throw new BadRequestError('Código inválido o vencido, solicita uno nuevo');
     }
 
     user.passwordHash = await this.passwordHasher.hash(input.password);
     ticket.marcarComoUsado();
     await this.tokenRepository.update(ticket);
+    await this.tokenRepository.invalidateAllForUser(user.id);
     await this.userRepository.update(user);
   }
 }

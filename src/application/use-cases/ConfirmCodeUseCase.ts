@@ -1,14 +1,13 @@
-import { User } from '../../domain/entities/user';
-import { UserRepository } from '../../domain/ports/repositories/User_repository';
+import { User } from '../../domain/entities/User';
+import { UserRepository } from '../../domain/ports/repositories/UserRepository';
 import { TokenRepository } from '../../domain/ports/repositories/TokenRepository';
+import { BadRequestError } from '../../shared/errors/AppError';
 
 export interface ConfirmCodeDTO {
   email: string;
   code: string;
 }
 
-// Valida el código de 6 dígitos de la pantallita "Verifica tu cuenta".
-// Sirve para registro con formulario Y con Google: ambos pasan por aquí.
 export class ConfirmCodeUseCase {
   constructor(
     private userRepository: UserRepository,
@@ -16,22 +15,28 @@ export class ConfirmCodeUseCase {
   ) {}
 
   async execute(dto: ConfirmCodeDTO): Promise<User> {
-    // 1. El código debe pertenecer a este usuario
-    const user = await this.userRepository.findByEmail(dto.email.trim().toLowerCase());
-    const ticket = await this.tokenRepository.findByToken(dto.code.trim());
-    if (!user || !ticket || ticket.usuarioId !== user.id) {
-      throw new Error('Código inválido');
+    const email = dto.email.trim().toLowerCase();
+    const code = dto.code.trim();
+
+    const user = await this.userRepository.findByEmail(email);
+    if (!user || user.id === null) {
+      throw new BadRequestError('Código inválido o vencido, solicita uno nuevo');
     }
 
-    // 2. El ticket debe estar sin usar y sin vencer (esValido lo revisa)
-    if (!ticket.esValido()) {
-      throw new Error('Código inválido o vencido, pide uno nuevo');
+    if (user.esActivo()) {
+      return user;
     }
 
-    // 3. Activar la cuenta y quemar el ticket para que no se reutilice
+    const ticket = await this.tokenRepository.findValidByUserAndToken(user.id, code);
+    if (!ticket || !ticket.esValido()) {
+      throw new BadRequestError('Código inválido o vencido, solicita uno nuevo');
+    }
+
     user.activarCuenta();
     ticket.marcarComoUsado();
     await this.tokenRepository.update(ticket);
+    await this.tokenRepository.invalidateAllForUser(user.id);
+
     const updated = await this.userRepository.update(user);
     return updated ?? user;
   }

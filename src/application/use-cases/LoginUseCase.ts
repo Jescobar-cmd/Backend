@@ -1,6 +1,7 @@
-import { User } from '../../domain/entities/user';
-import { UserRepository } from '../../domain/ports/repositories/User_repository';
+import { User } from '../../domain/entities/User';
+import { UserRepository } from '../../domain/ports/repositories/UserRepository';
 import { PasswordHasher } from '../../domain/ports/services/PasswordHasher';
+import { UnauthorizedError } from '../../shared/errors/AppError';
 
 export interface LoginDTO {
   email: string;
@@ -14,21 +15,27 @@ export class LoginUseCase {
   ) {}
 
   async execute(dto: LoginDTO): Promise<User> {
-    // 1. Buscar por correo
-    const user = await this.userRepository.findByEmail(dto.email.trim().toLowerCase());
-    if (!user || !user.passwordHash) {
-      throw new Error('Correo o contraseña incorrectos');
+    const email = dto.email.trim().toLowerCase();
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user) {
+      throw new UnauthorizedError('Correo o contraseña incorrectos');
     }
 
-    // 2. Comparar la contraseña contra el hash
-    const ok = await this.passwordHasher.compare(dto.password, user.passwordHash);
-    if (!ok) {
-      throw new Error('Correo o contraseña incorrectos');
+    if (!user.passwordHash) {
+      if (user.esRegistroGoogle()) {
+        throw new UnauthorizedError('Esta cuenta fue registrada con Google. Inicia sesión con el botón de Google.');
+      }
+      throw new UnauthorizedError('Correo o contraseña incorrectos');
     }
 
-    // 3. Bloquear si aún no confirmó la cuenta
+    const isPasswordValid = await this.passwordHasher.compare(dto.password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedError('Correo o contraseña incorrectos');
+    }
+
     if (!user.esActivo()) {
-      throw new Error('Confirma tu cuenta, revisa tu correo');
+      throw new UnauthorizedError('Confirma tu cuenta antes de iniciar sesión. Revisa tu correo electrónico.');
     }
 
     return user;

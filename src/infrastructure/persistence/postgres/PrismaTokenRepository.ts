@@ -6,7 +6,6 @@ function toEntity(r: PrismaToken): RecoveryToken {
   return new RecoveryToken(r.id, r.usuarioId, r.token, r.fechaExpiracion, r.usado);
 }
 
-// Adaptador Prisma del puerto TokenRepository.
 export class PrismaTokenRepository implements TokenRepository {
   constructor(private db: PrismaClient) {}
 
@@ -27,11 +26,39 @@ export class PrismaTokenRepository implements TokenRepository {
     return found ? toEntity(found) : null;
   }
 
+  async findValidByUserAndToken(usuarioId: number, token: string): Promise<RecoveryToken | null> {
+    const found = await this.db.recoveryToken.findFirst({
+      where: {
+        usuarioId,
+        token,
+        usado: false,
+        fechaExpiracion: { gt: new Date() },
+      },
+      orderBy: { id: 'desc' },
+    });
+    return found ? toEntity(found) : null;
+  }
+
+  async invalidateAllForUser(usuarioId: number): Promise<void> {
+    await this.db.recoveryToken.updateMany({
+      where: {
+        usuarioId,
+        usado: false,
+      },
+      data: {
+        usado: true,
+      },
+    });
+  }
+
   async update(token: RecoveryToken): Promise<RecoveryToken | null> {
     if (token.id === null) return null;
     const updated = await this.db.recoveryToken.update({
       where: { id: token.id },
-      data: { usado: token.usado, fechaExpiracion: token.fechaExpiracion },
+      data: {
+        usado: token.usado,
+        fechaExpiracion: token.fechaExpiracion,
+      },
     });
     return toEntity(updated);
   }

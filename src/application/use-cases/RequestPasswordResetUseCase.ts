@@ -1,10 +1,9 @@
 import crypto from 'crypto';
-import { UserRepository } from '../../domain/ports/repositories/User_repository';
+import { UserRepository } from '../../domain/ports/repositories/UserRepository';
 import { TokenRepository } from '../../domain/ports/repositories/TokenRepository';
 import { RecoveryToken } from '../../domain/entities/RecoveryToken';
 import { EmailSender } from '../../domain/ports/services/EmailSender';
 
-// Paso 1 de "Olvidé mi contraseña": genera código de 6 dígitos (1 hora) y lo envía.
 export class RequestPasswordResetUseCase {
   constructor(
     private userRepository: UserRepository,
@@ -13,17 +12,24 @@ export class RequestPasswordResetUseCase {
   ) {}
 
   async execute(email: string): Promise<void> {
-    const user = await this.userRepository.findByEmail(email.trim().toLowerCase());
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await this.userRepository.findByEmail(cleanEmail);
+
     // Respuesta genérica para no filtrar qué correos existen
-    if (!user) return;
+    if (!user || user.id === null) {
+      return;
+    }
+
+    await this.tokenRepository.invalidateAllForUser(user.id);
 
     const code = crypto.randomInt(100000, 1000000).toString();
     const ticket = new RecoveryToken(
       null,
-      user.id as number,
+      user.id,
       code,
-      new Date(Date.now() + 60 * 60 * 1000),
+      new Date(Date.now() + 60 * 60 * 1000) // 1 hora
     );
+
     await this.tokenRepository.save(ticket);
     await this.emailSender.sendPasswordRecoveryEmail(user.email, code);
   }

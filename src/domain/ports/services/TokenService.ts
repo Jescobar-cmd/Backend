@@ -1,7 +1,10 @@
-export interface TokenService {
-  // Firma el JWT de sesión tras un login exitoso
-  generateToken(payload: { id: number; email: string; rol: number }): string;
+export interface TokenPayload {
+  id: number;
+  email: string;
+  rol: number;
+}
 
-  // Verifica el JWT de las rutas protegidas (lanza si es inválido o expiró)
-  verifyToken(token: string): { id: number; email: string; rol: number };
+export interface TokenService {
+  generateToken(payload: TokenPayload): string;
+  verifyToken(token: string): TokenPayload;
 }

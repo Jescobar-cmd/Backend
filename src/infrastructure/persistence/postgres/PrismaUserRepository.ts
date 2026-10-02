@@ -1,6 +1,6 @@
 import { PrismaClient, User as PrismaUser } from '@prisma/client';
-import { User } from '../../../domain/entities/user';
-import { UserRepository } from '../../../domain/ports/repositories/User_repository';
+import { User, UserEstado } from '../../../domain/entities/User';
+import { UserRepository } from '../../../domain/ports/repositories/UserRepository';
 
 function toEntity(r: PrismaUser): User {
   return new User(
@@ -12,12 +12,11 @@ function toEntity(r: PrismaUser): User {
     r.telefono,
     r.cedula,
     r.esMayorDeEdad,
-    r.estado as 'activo' | 'inactivo',
-    r.googleId,
+    r.estado as UserEstado,
+    r.googleId
   );
 }
 
-// Adaptador Prisma del puerto UserRepository.
 export class PrismaUserRepository implements UserRepository {
   constructor(private db: PrismaClient) {}
 
@@ -43,8 +42,18 @@ export class PrismaUserRepository implements UserRepository {
     return found ? toEntity(found) : null;
   }
 
+  async findByCedula(cedula: string): Promise<User | null> {
+    const found = await this.db.user.findUnique({ where: { cedula } });
+    return found ? toEntity(found) : null;
+  }
+
   async findByGoogleId(googleId: string): Promise<User | null> {
     const found = await this.db.user.findUnique({ where: { googleId } });
+    return found ? toEntity(found) : null;
+  }
+
+  async findById(id: number): Promise<User | null> {
+    const found = await this.db.user.findUnique({ where: { id } });
     return found ? toEntity(found) : null;
   }
 
