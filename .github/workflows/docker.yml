@@ -25,6 +25,9 @@ jobs:
       - name: Levantar el stack completo con Compose
         run: docker compose up -d --build
 
+      - name: Estado de los contenedores
+        run: docker compose ps
+
       - name: Esperar la API y verificar /health
         run: |
           echo "Esperando a que la API responda..."
@@ -37,17 +40,27 @@ jobs:
             sleep 2
           done
           echo "La API no respondió a tiempo"
+          docker compose ps
           docker compose logs
           exit 1
 
-      - name: Probar consulta a la base de datos (login inválido = 401)
+      - name: Probar login real + perfil (usuario demo del seed)
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST http://localhost:4000/api/auth/login \
+          resp=$(curl -s -X POST http://localhost:4000/api/auth/login \
             -H "Content-Type: application/json" \
-            -d '{"email":"nadie@ejemplo.com","password":"clave-incorrecta"}')
-          echo "Código HTTP: $code"
-          test "$code" = "401" || { docker compose logs; exit 1; }
+            -d '{"email":"demo@firstgig.com","password":"Demo1234"}')
+          echo "Respuesta login: $resp"
+          token=$(echo "$resp" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+          if [ -z "$token" ]; then
+            echo "No llegó token en el login"
+            docker compose ps
+            docker compose logs
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/auth/me \
+            -H "Authorization: Bearer $token")
+          echo "GET /me -> $code"
+          test "$code" = "200" || { docker compose ps; docker compose logs; exit 1; }
 
       - name: Verificar Swagger disponible
         run: curl -fsS http://localhost:4000/api-docs.json -o /dev/null && echo "Swagger OK"

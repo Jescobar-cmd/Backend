@@ -1,6 +1,8 @@
-// Seed mínimo para bases de datos nuevas (contenedores Docker):
-// los roles que referencia User.rolId (llave foránea a Rol).
+// Seed para bases de datos nuevas (contenedores Docker):
+// - roles base que referencia User.rolId (llave foránea a Rol)
+// - usuario demo para probar el login sin configurar correo
 // Es idempotente: se puede correr las veces que sea sin duplicar nada.
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -23,7 +25,21 @@ async function main() {
       create: rol,
     });
   }
-  console.log(`Seed OK: ${roles.length} roles disponibles`);
+
+  const demoEmail = 'demo@firstgig.com';
+  await prisma.user.upsert({
+    where: { email: demoEmail },
+    update: {},
+    create: {
+      nombre: 'Usuario Demo',
+      email: demoEmail,
+      passwordHash: await bcrypt.hash('Demo1234', 12),
+      rolId: 3,
+      estado: 'activo',
+    },
+  });
+
+  console.log(`Seed OK: ${roles.length} roles + usuario demo (demo@firstgig.com / Demo1234)`);
 }
 
 main()

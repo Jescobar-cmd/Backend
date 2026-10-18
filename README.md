@@ -28,6 +28,8 @@ Levanta tres servicios en orden:
 2. **migrate** — aplica el schema de Prisma (`npx prisma db push`), siembra los roles base (`prisma/seed.ts`) y termina.
 3. **backend** — API en `http://localhost:4000` (salud: `/health`, Swagger: `/api-docs`).
 
+Usuario de prueba que incluye el seed: **demo@firstgig.com** / **Demo1234** (sirve para probar el login sin configurar correo).
+
 ```bash
 docker compose down      # apagar (conserva los datos)
 docker compose down -v   # apagar y borrar también la BD local
