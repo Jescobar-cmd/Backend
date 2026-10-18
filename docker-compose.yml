@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────
+# FirstGig Backend — orquestación local con Docker Compose
+#
+# Levanta: PostgreSQL 16 + migración del schema (Prisma) + API Express.
+#
+#   docker compose up --build     → levanta todo
+#   docker compose down           → apaga (los datos quedan guardados)
+#   docker compose down -v        → apaga y borra la BD local
+#
+# Las variables ${VARIABLE:-default} se toman del archivo .env si existe;
+# si no existe, se usan los valores por defecto de aquí abajo.
+# ─────────────────────────────────────────────────────────────────────
+name: firstgig
+
+services:
+  # Base de datos local (los datos persisten en el volumen db_data)
+  db:
+    image: postgres:16-alpine
+    container_name: firstgig-db
+    environment:
+      POSTGRES_USER: firstgig
+      POSTGRES_PASSWORD: firstgig
+      POSTGRES_DB: firstgig
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U firstgig -d firstgig"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Aplica el schema de Prisma y siembra los roles base, luego termina.
+  # Usa la etapa `build` de la imagen: ahí están el CLI de Prisma, tsx y el schema.
+  migrate:
+    build:
+      context: .
+      target: build
+    container_name: firstgig-migrate
+    command: ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts"]
+    environment:
+      DATABASE_URL: postgresql://firstgig:firstgig@db:5432/firstgig
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # API en Node (imagen final, sin dependencias de desarrollo)
+  backend:
+    build: .
+    container_name: firstgig-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://firstgig:firstgig@db:5432/firstgig
+      JWT_SECRET: ${JWT_SECRET:-firstgig-secreto-local}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-FirstGig}
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db_data:

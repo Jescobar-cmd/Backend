@@ -1,0 +1,61 @@
+# Construye la imagen Docker y prueba el stack completo con Compose
+# directamente en los servidores de GitHub (no necesita Docker en tu PC).
+name: Docker CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Construir imagen y probar compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Construir imagen del backend
+        run: docker build -t firstgig-backend .
+
+      - name: Levantar el stack completo con Compose
+        run: docker compose up -d --build
+
+      - name: Esperar la API y verificar /health
+        run: |
+          echo "Esperando a que la API responda..."
+          for i in $(seq 1 45); do
+            if curl -fsS http://localhost:4000/health; then
+              echo ""
+              echo "OK: /health respondió"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "La API no respondió a tiempo"
+          docker compose logs
+          exit 1
+
+      - name: Probar consulta a la base de datos (login inválido = 401)
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:4000/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"nadie@ejemplo.com","password":"clave-incorrecta"}')
+          echo "Código HTTP: $code"
+          test "$code" = "401" || { docker compose logs; exit 1; }
+
+      - name: Verificar Swagger disponible
+        run: curl -fsS http://localhost:4000/api-docs.json -o /dev/null && echo "Swagger OK"
+
+      - name: Logs de los contenedores
+        if: always()
+        run: docker compose logs
+
+      - name: Apagar contenedores
+        if: always()
+        run: docker compose down -v

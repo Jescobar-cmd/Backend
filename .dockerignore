@@ -1,0 +1,16 @@
+# Lo que NO debe entrar al contexto de build de Docker
+node_modules
+dist
+.git
+.github
+.gitignore
+.env
+.env.*
+*.log
+*.md
+.vscode
+.idea
+coverage
+docker-compose*.yml
+Dockerfile*
+.dockerignore
