@@ -3,9 +3,9 @@
 export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
-    title: 'FirstGig Backend (Auth — Comité 1)',
-    version: '0.1.0',
-    description: 'Registro, verificación por código, login, Google, recuperación y perfil.',
+    title: 'FirstGig Backend',
+    version: '0.2.0',
+    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -298,6 +298,141 @@ export const swaggerDocument = {
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '404': { description: 'Usuario no encontrado' },
+        },
+      },
+    },
+    '/api/cliente/ofertas': {
+      post: {
+        summary: 'Publicar una oferta/proyecto (requiere JWT + rol Cliente)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['titulo', 'descripcion'],
+                properties: {
+                  titulo: { type: 'string', example: 'Página web para mi negocio' },
+                  descripcion: { type: 'string', example: 'Necesito una landing page con formulario de contacto.' },
+                  presupuesto: { type: 'number', nullable: true, example: 500 },
+                  plazoDias: { type: 'integer', nullable: true, example: 15 },
+                  categoriaId: { type: 'integer', nullable: true, example: 1 },
+                  imagenUrl: { type: 'string', nullable: true, description: 'URL que devuelve Cloudinary' },
+                  habilidadIds: { type: 'array', items: { type: 'integer' }, example: [1, 2] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Oferta publicada: { mensaje, oferta }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Cliente' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+      get: {
+        summary: 'Listar mis ofertas (requiere JWT + rol Cliente)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['abierto', 'en_progreso', 'completado', 'cancelado'] } },
+          { name: 'q', in: 'query', schema: { type: 'string' }, description: 'Busca en título y descripción' },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+        ],
+        responses: {
+          '200': { description: 'Paginado: { page, limit, total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Cliente' },
+        },
+      },
+    },
+    '/api/cliente/ofertas/{id}': {
+      get: {
+        summary: 'Ver el detalle de una oferta mía',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Oferta con categoría, habilidades y totalPropuestas' },
+          '400': { description: 'Id inválido' },
+          '404': { description: 'Oferta no encontrada' },
+        },
+      },
+      patch: {
+        summary: 'Editar una oferta mía (solo si está abierta)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'Envía solo los campos a cambiar.',
+                properties: {
+                  titulo: { type: 'string' },
+                  descripcion: { type: 'string' },
+                  presupuesto: { type: 'number', nullable: true },
+                  plazoDias: { type: 'integer', nullable: true },
+                  categoriaId: { type: 'integer', nullable: true },
+                  imagenUrl: { type: 'string', nullable: true },
+                  habilidadIds: { type: 'array', items: { type: 'integer' } },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Oferta actualizada' },
+          '404': { description: 'Oferta no encontrada' },
+          '409': { description: 'La oferta no está abierta' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/cliente/ofertas/{id}/estado': {
+      patch: {
+        summary: 'Abrir / poner en progreso / completar / cancelar una oferta (sin borrado físico)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['estado'],
+                properties: { estado: { type: 'string', enum: ['abierto', 'en_progreso', 'completado', 'cancelado'] } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Estado actualizado' },
+          '404': { description: 'Oferta no encontrada' },
+          '422': { description: 'Estado inválido' },
+        },
+      },
+    },
+    '/api/cliente/ofertas/{id}/propuestas': {
+      get: {
+        summary: 'Ver las propuestas recibidas en una oferta mía',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ total, propuestas }' },
+          '404': { description: 'Oferta no encontrada' },
+        },
+      },
+    },
+    '/api/categorias': {
+      get: {
+        summary: 'Catálogo de categorías (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, categorias }' },
+          '401': { description: 'Sin sesión o expirada' },
         },
       },
     },

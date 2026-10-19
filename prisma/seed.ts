@@ -17,12 +17,32 @@ const roles = [
   { id: 3, nombre: 'Cliente' },
 ];
 
+// Catálogo base de categorías (para clasificar ofertas y servicios).
+const categorias = [
+  'Desarrollo Web',
+  'Aplicaciones Móviles',
+  'Diseño Gráfico',
+  'Marketing Digital',
+  'Redacción y Contenido',
+  'Video y Animación',
+  'Datos y Análisis',
+  'Soporte Técnico',
+];
+
 async function main() {
   for (const rol of roles) {
     await prisma.rol.upsert({
       where: { id: rol.id },
       update: { nombre: rol.nombre },
       create: rol,
+    });
+  }
+
+  for (const nombre of categorias) {
+    await prisma.categoria.upsert({
+      where: { nombre },
+      update: {},
+      create: { nombre },
     });
   }
 

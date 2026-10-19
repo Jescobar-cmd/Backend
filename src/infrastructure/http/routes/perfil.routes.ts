@@ -3,18 +3,16 @@ import { PerfilController } from '../controllers/PerfilController';
 import { requireAuth } from '../middlewares/authMiddleware';
 import { requireRole } from '../middlewares/requireRole';
 import { validate } from '../middlewares/validate';
+import { ROLES } from '../../../shared/constants/roles';
 import { actualizarPerfilClienteSchema } from '../../../application/validators/perfil.schemas';
-
-// Rol Cliente según el modelo Rol del schema (2 = Freelancer, 3 = Cliente).
-const ROL_CLIENTE = 3;
 
 // Perfil del cliente -> se monta en /api/cliente
 export const clienteRouter = Router();
-clienteRouter.get('/perfil', requireAuth, requireRole(ROL_CLIENTE), PerfilController.miPerfil);
+clienteRouter.get('/perfil', requireAuth, requireRole(ROLES.CLIENTE), PerfilController.miPerfil);
 clienteRouter.patch(
   '/perfil',
   requireAuth,
-  requireRole(ROL_CLIENTE),
+  requireRole(ROLES.CLIENTE),
   validate(actualizarPerfilClienteSchema),
   PerfilController.actualizarMiPerfil
 );
