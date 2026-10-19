@@ -1,6 +1,7 @@
 import { User } from '../../domain/entities/User';
 import { UserRepository } from '../../domain/ports/repositories/UserRepository';
-import { GoogleAuthService } from '../../infrastructure/google/GoogleAuthService';
+import { OAuthVerifier } from '../../domain/ports/services/OAuthVerifier';
+import { BadRequestError, ConflictError } from '../../shared/errors/AppError';
 
 export interface GoogleLoginInput {
   idToken: string; // lo entrega el botón "Continuar con Google" del frontend
@@ -18,11 +19,11 @@ export type GoogleLoginResult =
 export class LoginWithGoogleUseCase {
   constructor(
     private userRepository: UserRepository,
-    private google: GoogleAuthService,
+    private oauthVerifier: OAuthVerifier,
   ) {}
 
   async execute(input: GoogleLoginInput): Promise<GoogleLoginResult> {
-    const profile = await this.google.verifyIdToken(input.idToken);
+    const profile = await this.oauthVerifier.verifyIdToken(input.idToken);
 
     // 1. ¿Ya existe cuenta con este Google? Entra directo si está activa.
     const byGoogle = await this.userRepository.findByGoogleId(profile.googleId);
@@ -43,9 +44,20 @@ export class LoginWithGoogleUseCase {
 
     // 3. Cuenta nueva: se crea activa porque Google ya validó el email.
     const rolId = input.rolId === 2 ? 2 : 3;
-    if (rolId === 2 && !input.cedula) {
-      throw new Error('La cédula es obligatoria para freelancers');
+    const cedula = input.cedula?.trim() ? input.cedula.trim() : null;
+    const telefono = input.telefono?.trim() ? input.telefono.trim() : null;
+
+    if (rolId === 2 && !cedula) {
+      throw new BadRequestError('La cédula es obligatoria para freelancers');
     }
+
+    if (cedula) {
+      const existingCedula = await this.userRepository.findByCedula(cedula);
+      if (existingCedula) {
+        throw new ConflictError('La cédula ya se encuentra registrada con otra cuenta');
+      }
+    }
+
     const created = await this.userRepository.save(
       new User(
         null,
@@ -53,13 +65,14 @@ export class LoginWithGoogleUseCase {
         profile.email,
         null, // sin contraseña: entra siempre con Google
         rolId,
-        input.telefono ?? null,
-        input.cedula ?? null,
+        telefono,
+        cedula,
         true,
         'activo',
         profile.googleId,
       ),
     );
+
     return { status: 'authenticated', user: created };
   }
 }
