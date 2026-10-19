@@ -7,27 +7,30 @@ datasource db {
 }
 
 model User {
-  id                                            Int             @id @default(autoincrement())
+  id                                            Int                  @id @default(autoincrement())
   nombre                                        String
-  email                                         String          @unique
+  email                                         String               @unique
   passwordHash                                  String?
   rolId                                         Int
   telefono                                      String?
-  cedula                                        String?         @unique
-  esMayorDeEdad                                 Boolean         @default(true)
-  estado                                        String          @default("inactivo")
-  googleId                                      String?         @unique
-  fechaRegistro                                 DateTime        @default(now())
-  Calificacion_Calificacion_calificadoIdToUser  Calificacion[]  @relation("Calificacion_calificadoIdToUser")
-  Calificacion_Calificacion_calificadorIdToUser Calificacion[]  @relation("Calificacion_calificadorIdToUser")
+  cedula                                        String?              @unique
+  esMayorDeEdad                                 Boolean              @default(true)
+  estado                                        String               @default("inactivo")
+  googleId                                      String?              @unique
+  fechaRegistro                                 DateTime             @default(now())
+  fotoPerfil                                    String?
+  Calificacion_Calificacion_calificadoIdToUser  Calificacion[]       @relation("Calificacion_calificadoIdToUser")
+  Calificacion_Calificacion_calificadorIdToUser Calificacion[]       @relation("Calificacion_calificadorIdToUser")
   Cliente                                       Cliente?
   Freelancer                                    Freelancer?
+  MeGustaPublicacion                            MeGustaPublicacion[]
   Mensaje                                       Mensaje[]
+  Publicacion                                   Publicacion[]
   tokens                                        RecoveryToken[]
-  Reporte_Reporte_adminIdToUser                 Reporte[]       @relation("Reporte_adminIdToUser")
-  Reporte_Reporte_usuarioReportaIdToUser        Reporte[]       @relation("Reporte_usuarioReportaIdToUser")
-  Reporte_Reporte_usuarioReportadoIdToUser      Reporte[]       @relation("Reporte_usuarioReportadoIdToUser")
-  Rol                                           Rol             @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Reporte_Reporte_adminIdToUser                 Reporte[]            @relation("Reporte_adminIdToUser")
+  Reporte_Reporte_usuarioReportaIdToUser        Reporte[]            @relation("Reporte_usuarioReportaIdToUser")
+  Reporte_Reporte_usuarioReportadoIdToUser      Reporte[]            @relation("Reporte_usuarioReportadoIdToUser")
+  Rol                                           Rol                  @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([rolId])
 }
@@ -66,6 +69,7 @@ model Categoria {
   descripcion String?
   Habilidad   Habilidad[]
   Proyecto    Proyecto[]
+  Servicio    Servicio[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -73,6 +77,7 @@ model Cliente {
   id            Int            @id
   nombreEmpresa String?        @db.VarChar(150)
   tipoCliente   String         @default("natural") @db.VarChar(20)
+  descripcion   String?
   User          User           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   Contrato      Contrato[]
   Conversacion  Conversacion[]
@@ -82,8 +87,10 @@ model Cliente {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Contrato {
   id            Int            @id @default(autoincrement())
-  propuestaId   Int            @unique
-  proyectoId    Int
+  propuestaId   Int?           @unique
+  proyectoId    Int?
+  servicioId    Int?
+  ofertaChatId  Int?           @unique
   clienteId     Int
   freelancerId  Int
   montoAcordado Decimal        @db.Decimal(12, 2)
@@ -93,29 +100,36 @@ model Contrato {
   Calificacion  Calificacion[]
   Cliente       Cliente        @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   Freelancer    Freelancer     @relation(fields: [freelancerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Propuesta     Propuesta      @relation(fields: [propuestaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Proyecto      Proyecto       @relation(fields: [proyectoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  OfertaChat    OfertaChat?    @relation(fields: [ofertaChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Propuesta     Propuesta?     @relation(fields: [propuestaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Proyecto      Proyecto?      @relation(fields: [proyectoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Servicio      Servicio?      @relation(fields: [servicioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   Pago          Pago[]
 
   @@index([clienteId])
   @@index([freelancerId])
   @@index([proyectoId])
+  @@index([servicioId])
 }
 
 model Conversacion {
-  id            Int        @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   proyectoId    Int?
+  servicioId    Int?
   clienteId     Int
   freelancerId  Int
-  fechaCreacion DateTime   @default(now())
-  Cliente       Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  Freelancer    Freelancer @relation(fields: [freelancerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  Proyecto      Proyecto?  @relation(fields: [proyectoId], references: [id], onUpdate: NoAction)
+  fechaCreacion DateTime     @default(now())
+  Cliente       Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Freelancer    Freelancer   @relation(fields: [freelancerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Proyecto      Proyecto?    @relation(fields: [proyectoId], references: [id], onUpdate: NoAction)
+  Servicio      Servicio?    @relation(fields: [servicioId], references: [id], onUpdate: NoAction)
   Mensaje       Mensaje[]
+  OfertaChat    OfertaChat[]
 
   @@unique([proyectoId, clienteId, freelancerId])
   @@index([clienteId])
   @@index([freelancerId])
+  @@index([servicioId])
 }
 
 model EstadisticaFreelancer {
@@ -164,6 +178,7 @@ model Freelancer {
   FreelancerHabilidad   FreelancerHabilidad[]
   PortafolioItem        PortafolioItem[]
   Propuesta             Propuesta[]
+  Servicio              Servicio[]
 }
 
 model FreelancerHabilidad {
@@ -193,9 +208,11 @@ model Mensaje {
   conversacionId Int
   emisorId       Int
   contenido      String
+  tipo           String       @default("texto") @db.VarChar(20)
   fechaEnvio     DateTime     @default(now())
   leido          Boolean      @default(false)
   Conversacion   Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  OfertaChat     OfertaChat?
   User           User         @relation(fields: [emisorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([conversacionId, fechaEnvio])
@@ -253,6 +270,7 @@ model Proyecto {
   categoriaId         Int?
   titulo              String                @db.VarChar(200)
   descripcion         String
+  imagenUrl           String?
   presupuesto         Decimal?              @db.Decimal(12, 2)
   plazoDias           Int?
   estado              String                @default("abierto") @db.VarChar(20)
@@ -304,4 +322,74 @@ model Rol {
   id     Int    @id @default(autoincrement())
   nombre String @unique @db.VarChar(30)
   User   User[]
+}
+
+/// Servicio publicado por un freelancer (estilo Fiverr): el cliente lo explora y lo solicita.
+model Servicio {
+  id            Int            @id @default(autoincrement())
+  freelancerId  Int
+  categoriaId   Int?
+  titulo        String         @db.VarChar(150)
+  descripcion   String
+  precio        Decimal        @db.Decimal(12, 2)
+  imagenUrl     String?
+  estado        String         @default("activo") @db.VarChar(20)
+  fechaCreacion DateTime       @default(now())
+  Categoria     Categoria?     @relation(fields: [categoriaId], references: [id], onUpdate: NoAction)
+  Contrato      Contrato[]
+  Conversacion  Conversacion[]
+  Freelancer    Freelancer     @relation(fields: [freelancerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([categoriaId])
+  @@index([estado])
+  @@index([freelancerId])
+}
+
+/// Oferta o contraoferta de un monto dentro de una conversación (estilo Fiverr).
+/// estados: pendiente | aceptada | rechazada | contraofertada | expirada
+model OfertaChat {
+  id              Int          @id @default(autoincrement())
+  conversacionId  Int
+  mensajeId       Int          @unique
+  monto           Decimal      @db.Decimal(12, 2)
+  descripcion     String?
+  estado          String       @default("pendiente") @db.VarChar(20)
+  ofertaPadreId   Int?         @unique
+  fechaEnvio      DateTime     @default(now())
+  fechaExpiracion DateTime?
+  Contrato        Contrato?
+  Conversacion    Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Mensaje         Mensaje      @relation(fields: [mensajeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Contraoferta    OfertaChat?  @relation("Contraofertas")
+  OfertaPadre     OfertaChat?  @relation("Contraofertas", fields: [ofertaPadreId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([conversacionId])
+}
+
+/// Publicación del blog personal de un usuario (estilo Instagram).
+model Publicacion {
+  id                 Int                  @id @default(autoincrement())
+  autorId            Int
+  titulo             String?              @db.VarChar(150)
+  contenido          String
+  imagenUrl          String?
+  estado             String               @default("publicado") @db.VarChar(20)
+  fechaPublicacion   DateTime             @default(now())
+  Autor              User                 @relation(fields: [autorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  MeGustaPublicacion MeGustaPublicacion[]
+
+  @@index([autorId])
+  @@index([fechaPublicacion])
+}
+
+/// Like de una publicación: máximo un like por usuario.
+model MeGustaPublicacion {
+  publicacionId Int
+  usuarioId     Int
+  fecha         DateTime    @default(now())
+  Publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Usuario       User        @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([publicacionId, usuarioId])
+  @@index([usuarioId])
 }
