@@ -47,20 +47,28 @@ async function main() {
     });
   }
 
-  const demoEmail = 'demo@firstgig.com';
-  await prisma.user.upsert({
-    where: { email: demoEmail },
-    update: {},
-    create: {
-      nombre: 'Usuario Demo',
-      email: demoEmail,
-      passwordHash: await bcrypt.hash('Demo1234', 12),
-      rolId: 3,
-      estado: 'activo',
-    },
-  });
+  // El usuario demo tiene credenciales conocidas: solo se crea si se pide
+  // explícitamente con SEED_DEMO_USER=true (Docker local / CI). Nunca por defecto.
+  const conDemo = process.env.SEED_DEMO_USER === 'true';
+  if (conDemo) {
+    const demoEmail = 'demo@firstgig.com';
+    await prisma.user.upsert({
+      where: { email: demoEmail },
+      update: {},
+      create: {
+        nombre: 'Usuario Demo',
+        email: demoEmail,
+        passwordHash: await bcrypt.hash('Demo1234', 12),
+        rolId: 3,
+        estado: 'activo',
+      },
+    });
+  }
 
-  console.log(`Seed OK: ${roles.length} roles + usuario demo (demo@firstgig.com / Demo1234)`);
+  console.log(
+    `Seed OK: ${roles.length} roles + ${categorias.length} categorias` +
+      (conDemo ? ' + usuario demo (demo@firstgig.com / Demo1234)' : ' (usuario demo omitido)')
+  );
 }
 
 main()
