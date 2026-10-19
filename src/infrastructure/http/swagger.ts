@@ -9,7 +9,7 @@ export const swaggerDocument = {
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
-    { url: 'https://tu-back.onrender.com', description: 'Render (reemplazar por la URL real)' },
+    { url: 'https://backend-2n7n.onrender.com', description: 'Render (producción)' },
   ],
   components: {
     securitySchemes: {
@@ -243,6 +243,61 @@ export const swaggerDocument = {
         responses: {
           '200': { description: 'Contraseña actualizada' },
           '401': { description: 'Actual incorrecta o sin sesión' },
+        },
+      },
+    },
+    '/api/cliente/perfil': {
+      get: {
+        summary: 'Ver mi perfil de cliente (requiere JWT + rol Cliente)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Perfil propio: { id, nombre, email, telefono, fotoPerfil, rol, estado, cliente }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Cliente' },
+        },
+      },
+      patch: {
+        summary: 'Editar mi perfil de cliente (requiere JWT + rol Cliente)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'Envía solo los campos a cambiar. fotoPerfil es la URL que devuelve Cloudinary.',
+                properties: {
+                  nombre: { type: 'string', example: 'Juan Escobar' },
+                  telefono: { type: 'string', nullable: true, example: '3001234567' },
+                  fotoPerfil: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/demo/image/upload/v1/foto.jpg' },
+                  descripcion: { type: 'string', nullable: true, example: 'Empresa de desarrollo web' },
+                  nombreEmpresa: { type: 'string', nullable: true, example: 'FirstGig SAS' },
+                  tipoCliente: { type: 'string', enum: ['natural', 'empresa'] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Perfil actualizado: { mensaje, perfil }' },
+          '400': { description: 'Datos inválidos o campo no permitido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Cliente' },
+        },
+      },
+    },
+    '/api/usuarios/{id}': {
+      get: {
+        summary: 'Ver perfil público de un usuario (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, example: 1 },
+        ],
+        responses: {
+          '200': { description: 'Perfil público (sin email ni teléfono): { id, nombre, fotoPerfil, rol, cliente, freelancer }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '404': { description: 'Usuario no encontrado' },
         },
       },
     },

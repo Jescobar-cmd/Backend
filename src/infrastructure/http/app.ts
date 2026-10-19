@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerDocument } from './swagger';
 import { authRouter } from './routes/auth.routes';
+import { clienteRouter, usuariosRouter } from './routes/perfil.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 export function createApp() {
@@ -24,6 +25,8 @@ export function createApp() {
   });
 
   app.use('/api/auth', authRouter);
+  app.use('/api/cliente', clienteRouter);
+  app.use('/api/usuarios', usuariosRouter);
 
   // Swagger UI + JSON crudo (para importar la colección en Postman)
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

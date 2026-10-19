@@ -1,6 +1,7 @@
 import { prisma } from '../../config/dbconnection';
 import { PrismaUserRepository } from '../persistence/postgres/PrismaUserRepository';
 import { PrismaTokenRepository } from '../persistence/postgres/PrismaTokenRepository';
+import { PrismaPerfilRepository } from '../persistence/postgres/PrismaPerfilRepository';
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
@@ -15,10 +16,14 @@ import { CompleteGoogleProfileUseCase } from '../../application/use-cases/Comple
 import { ChangePasswordUseCase } from '../../application/use-cases/ChangePasswordUseCase';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/RequestPasswordResetUseCase';
 import { ResetPasswordUseCase } from '../../application/use-cases/ResetPasswordUseCase';
+import { ObtenerMiPerfilUseCase } from '../../application/use-cases/ObtenerMiPerfilUseCase';
+import { ActualizarMiPerfilUseCase } from '../../application/use-cases/ActualizarMiPerfilUseCase';
+import { ObtenerPerfilPublicoUseCase } from '../../application/use-cases/ObtenerPerfilPublicoUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
 const tokens = new PrismaTokenRepository(prisma);
+const perfiles = new PrismaPerfilRepository(prisma);
 const hasher = new BcryptPasswordHasher();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -29,6 +34,7 @@ const google = new GoogleAuthService();
 export const container = {
   users,
   tokens,
+  perfiles,
   hasher,
   mail,
   jwt,
@@ -41,4 +47,7 @@ export const container = {
   changePassword: new ChangePasswordUseCase(users, hasher),
   requestReset: new RequestPasswordResetUseCase(users, tokens, mail),
   resetPassword: new ResetPasswordUseCase(users, tokens, hasher),
+  obtenerMiPerfil: new ObtenerMiPerfilUseCase(perfiles),
+  actualizarMiPerfil: new ActualizarMiPerfilUseCase(perfiles),
+  obtenerPerfilPublico: new ObtenerPerfilPublicoUseCase(perfiles),
 };
