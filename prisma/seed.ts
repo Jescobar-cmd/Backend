@@ -2,6 +2,7 @@
 // - roles base que referencia User.rolId (llave foránea a Rol)
 // - usuario demo para probar el login sin configurar correo
 // Es idempotente: se puede correr las veces que sea sin duplicar nada.
+import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
