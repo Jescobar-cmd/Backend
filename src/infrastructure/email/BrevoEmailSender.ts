@@ -19,8 +19,7 @@ export class BrevoEmailSender implements EmailSender {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) throw new Error('Falta BREVO_API_KEY en el .env');
     this.apiKey = apiKey;
-    // Debe ser un remitente VERIFICADO en Brevo (puede ser tu Gmail, no exige dominio propio)
-    this.fromEmail = process.env.EMAIL_FROM ?? 'fended25@gmail.com';
+    this.fromEmail = process.env.EMAIL_FROM ?? process.env.SMTP_FROM ?? 'no-reply@firstgig.com';
     this.fromName = process.env.EMAIL_FROM_NAME ?? 'FirstGig';
     const rawFrontend = (process.env.FRONTEND_URL ?? 'http://localhost:5173').trim().replace(/\/+$/, '');
     this.confirmLinkBase = `${rawFrontend}/confirm?token=`;

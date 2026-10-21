@@ -1,6 +1,9 @@
 import { prisma } from '../../config/dbconnection';
 import { PrismaUserRepository } from '../persistence/postgres/PrismaUserRepository';
 import { PrismaTokenRepository } from '../persistence/postgres/PrismaTokenRepository';
+import { PrismaPerfilRepository } from '../persistence/postgres/PrismaPerfilRepository';
+import { PrismaOfertaRepository } from '../persistence/postgres/PrismaOfertaRepository';
+import { PrismaCategoriaRepository } from '../persistence/postgres/PrismaCategoriaRepository';
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
@@ -15,10 +18,23 @@ import { CompleteGoogleProfileUseCase } from '../../application/use-cases/Comple
 import { ChangePasswordUseCase } from '../../application/use-cases/ChangePasswordUseCase';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/RequestPasswordResetUseCase';
 import { ResetPasswordUseCase } from '../../application/use-cases/ResetPasswordUseCase';
+import { ObtenerMiPerfilUseCase } from '../../application/use-cases/ObtenerMiPerfilUseCase';
+import { ActualizarMiPerfilUseCase } from '../../application/use-cases/ActualizarMiPerfilUseCase';
+import { ObtenerPerfilPublicoUseCase } from '../../application/use-cases/ObtenerPerfilPublicoUseCase';
+import { CrearOfertaUseCase } from '../../application/use-cases/CrearOfertaUseCase';
+import { ListarMisOfertasUseCase } from '../../application/use-cases/ListarMisOfertasUseCase';
+import { ObtenerMiOfertaUseCase } from '../../application/use-cases/ObtenerMiOfertaUseCase';
+import { ActualizarOfertaUseCase } from '../../application/use-cases/ActualizarOfertaUseCase';
+import { CambiarEstadoOfertaUseCase } from '../../application/use-cases/CambiarEstadoOfertaUseCase';
+import { ListarPropuestasDeOfertaUseCase } from '../../application/use-cases/ListarPropuestasDeOfertaUseCase';
+import { ListarCategoriasUseCase } from '../../application/use-cases/ListarCategoriasUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
 const tokens = new PrismaTokenRepository(prisma);
+const perfiles = new PrismaPerfilRepository(prisma);
+const ofertas = new PrismaOfertaRepository(prisma);
+const categorias = new PrismaCategoriaRepository(prisma);
 const hasher = new BcryptPasswordHasher();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -29,6 +45,9 @@ const google = new GoogleAuthService();
 export const container = {
   users,
   tokens,
+  perfiles,
+  ofertas,
+  categorias,
   hasher,
   mail,
   jwt,
@@ -41,4 +60,14 @@ export const container = {
   changePassword: new ChangePasswordUseCase(users, hasher),
   requestReset: new RequestPasswordResetUseCase(users, tokens, mail),
   resetPassword: new ResetPasswordUseCase(users, tokens, hasher),
+  obtenerMiPerfil: new ObtenerMiPerfilUseCase(perfiles),
+  actualizarMiPerfil: new ActualizarMiPerfilUseCase(perfiles),
+  obtenerPerfilPublico: new ObtenerPerfilPublicoUseCase(perfiles),
+  crearOferta: new CrearOfertaUseCase(ofertas),
+  listarMisOfertas: new ListarMisOfertasUseCase(ofertas),
+  obtenerMiOferta: new ObtenerMiOfertaUseCase(ofertas),
+  actualizarOferta: new ActualizarOfertaUseCase(ofertas),
+  cambiarEstadoOferta: new CambiarEstadoOfertaUseCase(ofertas),
+  listarPropuestasDeOferta: new ListarPropuestasDeOfertaUseCase(ofertas),
+  listarCategorias: new ListarCategoriasUseCase(categorias),
 };

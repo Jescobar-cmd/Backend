@@ -1,6 +1,7 @@
 import { User } from '../../domain/entities/User';
 import { UserRepository } from '../../domain/ports/repositories/UserRepository';
-import { GoogleAuthService } from '../../infrastructure/google/GoogleAuthService';
+import { OAuthVerifier } from '../../domain/ports/services/OAuthVerifier';
+import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors/AppError';
 
 export interface CompleteGoogleProfileInput {
   idToken: string; // se vuelve a pedir para comprobar que es el dueño de la cuenta
@@ -14,22 +15,37 @@ export interface CompleteGoogleProfileInput {
 export class CompleteGoogleProfileUseCase {
   constructor(
     private userRepository: UserRepository,
-    private google: GoogleAuthService,
+    private oauthVerifier: OAuthVerifier,
   ) {}
 
   async execute(input: CompleteGoogleProfileInput): Promise<User> {
-    const profile = await this.google.verifyIdToken(input.idToken);
+    const profile = await this.oauthVerifier.verifyIdToken(input.idToken);
     const user = await this.userRepository.findByGoogleId(profile.googleId);
-    if (!user) throw new Error('Cuenta de Google no encontrada');
-    if (user.esActivo()) throw new Error('Tu cuenta ya está activa');
+    if (!user) {
+      throw new NotFoundError('Cuenta de Google no encontrada');
+    }
+    if (user.esActivo()) {
+      throw new BadRequestError('Tu cuenta ya está activa');
+    }
 
     const rolId = input.rolId === 2 ? 2 : 3;
-    if (rolId === 2 && !input.cedula) {
-      throw new Error('La cédula es obligatoria para freelancers');
+    const cedula = input.cedula?.trim() ? input.cedula.trim() : null;
+    const telefono = input.telefono?.trim() ? input.telefono.trim() : null;
+
+    if (rolId === 2 && !cedula) {
+      throw new BadRequestError('La cédula es obligatoria para freelancers');
     }
+
+    if (cedula) {
+      const existingCedula = await this.userRepository.findByCedula(cedula);
+      if (existingCedula && existingCedula.id !== user.id) {
+        throw new ConflictError('La cédula ya se encuentra registrada con otra cuenta');
+      }
+    }
+
     user.rolId = rolId;
-    user.telefono = input.telefono ?? null;
-    user.cedula = input.cedula ?? null;
+    user.telefono = telefono;
+    user.cedula = cedula;
     user.activarCuenta();
 
     const updated = await this.userRepository.update(user);

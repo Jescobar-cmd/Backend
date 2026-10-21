@@ -41,6 +41,8 @@ services:
     command: ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts"]
     environment:
       DATABASE_URL: postgresql://firstgig:firstgig@db:5432/firstgig
+      # Crea el usuario demo (demo@firstgig.com / Demo1234) SOLO en este entorno local/CI.
+      SEED_DEMO_USER: "true"
     depends_on:
       db:
         condition: service_healthy

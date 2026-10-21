@@ -11,6 +11,13 @@ const password = z
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
   .max(72, 'La contraseña no puede exceder 72 caracteres');
 
+const cedulaOpt = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((val) => (val && val.length > 0 ? val : null));
+
 export const registerSchema = z
   .object({
     nombre: z
@@ -33,12 +40,7 @@ export const registerSchema = z
       .optional()
       .nullable()
       .transform((val) => (val && val.length > 0 ? val : null)),
-    cedula: z
-      .string()
-      .trim()
-      .optional()
-      .nullable()
-      .transform((val) => (val && val.length > 0 ? val : null)),
+    cedula: cedulaOpt,
   })
   .superRefine((data, ctx) => {
     if (data.rolId === 2) {
@@ -94,28 +96,61 @@ export const resetSchema = z.object({
   password,
 });
 
-const cedulaOpt = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((val) => (val && val.length > 0 ? val : null));
+export const googleSchema = z
+  .object({
+    idToken: z.string({ required_error: 'El token de Google es requerido' }).min(10),
+    rolId: z.union([z.literal(2), z.literal(3)]).optional().default(3),
+    telefono: z.string().trim().max(20).optional().nullable(),
+    cedula: cedulaOpt,
+  })
+  .superRefine((data, ctx) => {
+    if (data.rolId === 2 && data.cedula && !/^[0-9]{6,12}$/.test(data.cedula)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'La cédula debe contener entre 6 y 12 dígitos numéricos',
+        path: ['cedula'],
+      });
+    } else if (data.cedula && !/^[0-9]{6,12}$/.test(data.cedula)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'La cédula debe contener entre 6 y 12 dígitos numéricos',
+        path: ['cedula'],
+      });
+    }
+  });
 
-export const googleSchema = z.object({
-  idToken: z.string({ required_error: 'El token de Google es requerido' }).min(10),
-  rolId: z.union([z.literal(2), z.literal(3)]).optional().default(3),
-  telefono: z.string().trim().max(20).optional().nullable(),
-  cedula: cedulaOpt,
-});
-
-export const completeGoogleProfileSchema = z.object({
-  idToken: z.string({ required_error: 'El token de Google es requerido' }).min(10),
-  rolId: z.union([z.literal(2), z.literal(3)]),
-  telefono: z.string().trim().max(20).optional().nullable(),
-  cedula: cedulaOpt,
-});
+export const completeGoogleProfileSchema = z
+  .object({
+    idToken: z.string({ required_error: 'El token de Google es requerido' }).min(10),
+    rolId: z.union([z.literal(2), z.literal(3)], { required_error: 'El rol es requerido' }),
+    telefono: z.string().trim().max(20).optional().nullable(),
+    cedula: cedulaOpt,
+  })
+  .superRefine((data, ctx) => {
+    if (data.rolId === 2) {
+      if (!data.cedula) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'La cédula es obligatoria para freelancers',
+          path: ['cedula'],
+        });
+      } else if (!/^[0-9]{6,12}$/.test(data.cedula)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'La cédula debe contener entre 6 y 12 dígitos numéricos',
+          path: ['cedula'],
+        });
+      }
+    } else if (data.cedula && !/^[0-9]{6,12}$/.test(data.cedula)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'La cédula debe contener entre 6 y 12 dígitos numéricos',
+        path: ['cedula'],
+      });
+    }
+  });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string({ required_error: 'La contraseña actual es requerida' }).min(1),
+  currentPassword: z.string({ required_error: 'La contraseña actual es requerida' }).min(1, 'La contraseña actual es requerida'),
   newPassword: password,
 });
