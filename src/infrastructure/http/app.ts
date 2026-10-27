@@ -9,6 +9,7 @@ import { ofertasRouter } from './routes/oferta.routes';
 import { categoriasRouter } from './routes/categoria.routes';
 import { publicacionesRouter } from './routes/publicacion.routes';
 import { freelancerRouter, serviciosRouter } from './routes/servicio.routes';
+import { feedRouter, mercadoRouter } from './routes/feed.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 export function createApp() {
@@ -36,6 +37,8 @@ export function createApp() {
   app.use('/api/publicaciones', publicacionesRouter);
   app.use('/api/servicios', serviciosRouter);
   app.use('/api/freelancer', freelancerRouter);
+  app.use('/api/feed', feedRouter);
+  app.use('/api/ofertas', mercadoRouter);
 
   // Swagger UI + JSON crudo (para importar la colección en Postman)
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

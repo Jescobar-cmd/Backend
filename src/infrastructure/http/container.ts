@@ -41,6 +41,9 @@ import { ObtenerServicioUseCase } from '../../application/use-cases/ObtenerServi
 import { ListarMisServiciosUseCase } from '../../application/use-cases/ListarMisServiciosUseCase';
 import { ActualizarServicioUseCase } from '../../application/use-cases/ActualizarServicioUseCase';
 import { CambiarEstadoServicioUseCase } from '../../application/use-cases/CambiarEstadoServicioUseCase';
+import { ListarOfertasPublicasUseCase } from '../../application/use-cases/ListarOfertasPublicasUseCase';
+import { ObtenerOfertaPublicaUseCase } from '../../application/use-cases/ObtenerOfertaPublicaUseCase';
+import { ObtenerFeedUseCase } from '../../application/use-cases/ObtenerFeedUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
@@ -98,4 +101,7 @@ export const container = {
   listarMisServicios: new ListarMisServiciosUseCase(servicios),
   actualizarServicio: new ActualizarServicioUseCase(servicios),
   cambiarEstadoServicio: new CambiarEstadoServicioUseCase(servicios),
+  listarOfertasPublicas: new ListarOfertasPublicasUseCase(ofertas),
+  obtenerOfertaPublica: new ObtenerOfertaPublicaUseCase(ofertas),
+  obtenerFeed: new ObtenerFeedUseCase(publicaciones, ofertas, servicios),
 };

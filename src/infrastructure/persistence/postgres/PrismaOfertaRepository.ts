@@ -3,9 +3,12 @@ import {
   DatosOferta,
   EstadoOferta,
   FiltrosOferta,
+  FiltrosOfertaPublica,
   NuevaOferta,
   Oferta,
   OfertaPaginada,
+  OfertaPublica,
+  OfertaPublicaPaginada,
 } from '../../../domain/entities/Oferta';
 import { PropuestaResumen } from '../../../domain/entities/Propuesta';
 import { OfertaRepository } from '../../../domain/ports/repositories/OfertaRepository';
@@ -17,6 +20,42 @@ const ofertaInclude = {
 } satisfies Prisma.ProyectoInclude;
 
 type ProyectoConRelaciones = Prisma.ProyectoGetPayload<{ include: typeof ofertaInclude }>;
+
+const ofertaPublicaInclude = {
+  Categoria: true,
+  ProyectoHabilidad: { include: { Habilidad: true } },
+  _count: { select: { Propuesta: true } },
+  Cliente: { include: { User: true } },
+} satisfies Prisma.ProyectoInclude;
+
+type ProyectoPublico = Prisma.ProyectoGetPayload<{ include: typeof ofertaPublicaInclude }>;
+
+function toOfertaPublica(proyecto: ProyectoPublico): OfertaPublica {
+  return {
+    id: proyecto.id,
+    titulo: proyecto.titulo,
+    descripcion: proyecto.descripcion,
+    presupuesto: proyecto.presupuesto === null ? null : Number(proyecto.presupuesto),
+    plazoDias: proyecto.plazoDias,
+    estado: proyecto.estado,
+    imagenUrl: proyecto.imagenUrl,
+    fechaPublicacion: proyecto.fechaPublicacion,
+    categoria: proyecto.Categoria
+      ? { id: proyecto.Categoria.id, nombre: proyecto.Categoria.nombre }
+      : null,
+    habilidades: proyecto.ProyectoHabilidad.map((ph) => ({
+      id: ph.Habilidad.id,
+      nombre: ph.Habilidad.nombre,
+    })),
+    totalPropuestas: proyecto._count.Propuesta,
+    cliente: {
+      id: proyecto.Cliente.id,
+      nombre: proyecto.Cliente.User.nombre,
+      fotoPerfil: proyecto.Cliente.User.fotoPerfil,
+      nombreEmpresa: proyecto.Cliente.nombreEmpresa,
+    },
+  };
+}
 
 function toOferta(proyecto: ProyectoConRelaciones): Oferta {
   return {
@@ -173,5 +212,39 @@ export class PrismaOfertaRepository implements OfertaRepository {
     const unicos = [...new Set(habilidadIds)];
     const total = await this.db.habilidad.count({ where: { id: { in: unicos } } });
     return total === unicos.length;
+  }
+
+  async listarPublicas(filtros: FiltrosOfertaPublica): Promise<OfertaPublicaPaginada> {
+    const where: Prisma.ProyectoWhereInput = { estado: 'abierto' };
+    if (filtros.categoriaId) {
+      where.categoriaId = filtros.categoriaId;
+    }
+    if (filtros.texto) {
+      where.OR = [
+        { titulo: { contains: filtros.texto, mode: 'insensitive' } },
+        { descripcion: { contains: filtros.texto, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, items] = await Promise.all([
+      this.db.proyecto.count({ where }),
+      this.db.proyecto.findMany({
+        where,
+        include: ofertaPublicaInclude,
+        orderBy: { fechaPublicacion: 'desc' },
+        skip: (filtros.page - 1) * filtros.limit,
+        take: filtros.limit,
+      }),
+    ]);
+
+    return { page: filtros.page, limit: filtros.limit, total, items: items.map(toOfertaPublica) };
+  }
+
+  async obtenerPublica(ofertaId: number): Promise<OfertaPublica | null> {
+    const proyecto = await this.db.proyecto.findFirst({
+      where: { id: ofertaId, estado: 'abierto' },
+      include: ofertaPublicaInclude,
+    });
+    return proyecto ? toOfertaPublica(proyecto) : null;
   }
 }

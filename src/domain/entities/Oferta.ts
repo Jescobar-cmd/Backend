@@ -52,3 +52,38 @@ export interface OfertaPaginada {
   total: number;
   items: Oferta[];
 }
+
+/** Oferta pública del marketplace (para freelancers): incluye datos del cliente. */
+export interface OfertaPublica {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  presupuesto: number | null;
+  plazoDias: number | null;
+  estado: string;
+  imagenUrl: string | null;
+  fechaPublicacion: Date;
+  categoria: { id: number; nombre: string } | null;
+  habilidades: { id: number; nombre: string }[];
+  totalPropuestas: number;
+  cliente: {
+    id: number;
+    nombre: string;
+    fotoPerfil: string | null;
+    nombreEmpresa: string | null;
+  };
+}
+
+export interface FiltrosOfertaPublica {
+  page: number;
+  limit: number;
+  categoriaId?: number;
+  texto?: string;
+}
+
+export interface OfertaPublicaPaginada {
+  page: number;
+  limit: number;
+  total: number;
+  items: OfertaPublica[];
+}

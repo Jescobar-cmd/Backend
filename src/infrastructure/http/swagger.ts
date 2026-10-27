@@ -4,8 +4,8 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.4.0',
-    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog + Servicios.',
+    version: '0.5.0',
+    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog + Servicios + Feed por rol.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -648,6 +648,51 @@ export const swaggerDocument = {
           '200': { description: 'Paginado: { page, limit, total, items }' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'El usuario no es Freelancer' },
+        },
+      },
+    },
+    '/api/feed': {
+      get: {
+        summary: 'Feed de inicio según el rol (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 }, description: 'Ítems por sección (máx. 30)' },
+        ],
+        responses: {
+          '200': {
+            description:
+              'Cliente: { rol, publicaciones, ofertas: [], servicios }. Freelancer: { rol, publicaciones, ofertas, servicios }',
+          },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/ofertas': {
+      get: {
+        summary: 'Marketplace de ofertas abiertas (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+          { name: 'categoriaId', in: 'query', schema: { type: 'integer' } },
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': { description: 'Paginado: { page, limit, total, items } con datos del cliente' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/ofertas/{id}': {
+      get: {
+        summary: 'Detalle público de una oferta abierta',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Oferta con cliente, categoría, habilidades y totalPropuestas' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '404': { description: 'Oferta no encontrada o ya no está abierta' },
         },
       },
     },

@@ -2,9 +2,12 @@ import {
   DatosOferta,
   EstadoOferta,
   FiltrosOferta,
+  FiltrosOfertaPublica,
   NuevaOferta,
   Oferta,
   OfertaPaginada,
+  OfertaPublica,
+  OfertaPublicaPaginada,
 } from '../../entities/Oferta';
 import { PropuestaResumen } from '../../entities/Propuesta';
 
@@ -27,6 +30,12 @@ export interface OfertaRepository {
 
   /** Propuestas recibidas (null si la oferta no existe o no es del cliente). */
   listarPropuestas(clienteId: number, ofertaId: number): Promise<PropuestaResumen[] | null>;
+
+  /** Marketplace: ofertas abiertas de todos los clientes. */
+  listarPublicas(filtros: FiltrosOfertaPublica): Promise<OfertaPublicaPaginada>;
+
+  /** Detalle público (null si no existe o ya no está abierta). */
+  obtenerPublica(ofertaId: number): Promise<OfertaPublica | null>;
 
   categoriaExiste(categoriaId: number): Promise<boolean>;
 
