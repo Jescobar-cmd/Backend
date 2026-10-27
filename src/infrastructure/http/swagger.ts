@@ -4,8 +4,9 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.6.0',
-    description: 'Auth + Perfil + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling).',
+    version: '0.7.0',
+    description:
+      'Auth + Perfil + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, aceptar/rechazar y contratos.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -803,6 +804,201 @@ export const swaggerDocument = {
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'No participas en la conversación' },
           '404': { description: 'Conversación no encontrada' },
+        },
+      },
+    },
+    '/api/ofertas/{id}/propuestas': {
+      post: {
+        summary: 'Enviar una propuesta a una oferta (Freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['montoPropuesto'],
+                properties: {
+                  mensaje: { type: 'string', nullable: true, example: 'Puedo entregarlo en 5 días.' },
+                  montoPropuesto: { type: 'number', example: 250 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: '{ mensaje, propuesta }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
+          '404': { description: 'Oferta no encontrada' },
+          '409': { description: 'La oferta no está abierta o ya enviaste una propuesta' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/freelancer/propuestas': {
+      get: {
+        summary: 'Mis propuestas enviadas (Freelancer)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, propuestas } con datos del proyecto' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
+        },
+      },
+    },
+    '/api/cliente/ofertas/{id}/propuestas/{propuestaId}/aceptar': {
+      post: {
+        summary: 'Aceptar una propuesta y crear el contrato (Cliente)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'propuestaId', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': { description: '{ mensaje, contrato }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'La oferta no te pertenece' },
+          '404': { description: 'Propuesta no encontrada' },
+          '409': { description: 'La propuesta ya fue procesada o la oferta no está abierta' },
+        },
+      },
+    },
+    '/api/cliente/ofertas/{id}/propuestas/{propuestaId}/rechazar': {
+      post: {
+        summary: 'Rechazar una propuesta (Cliente)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'propuestaId', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': { description: '{ mensaje }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'La oferta no te pertenece' },
+          '404': { description: 'Propuesta no encontrada' },
+          '409': { description: 'La propuesta ya fue procesada' },
+        },
+      },
+    },
+    '/api/conversaciones/{id}/ofertas': {
+      post: {
+        summary: 'Enviar una oferta de monto en el chat',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['monto'],
+                properties: {
+                  monto: { type: 'number', example: 300 },
+                  descripcion: { type: 'string', nullable: true },
+                  fechaExpiracion: { type: 'string', format: 'date-time', nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Mensaje tipo oferta con su OfertaChat' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en la conversación' },
+          '404': { description: 'Conversación no encontrada' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/ofertas-chat/{id}/aceptar': {
+      post: {
+        summary: 'Aceptar una oferta de chat y crear el contrato',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ mensaje, contrato }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas o intentas aceptar tu propia oferta' },
+          '404': { description: 'Oferta no encontrada' },
+          '409': { description: 'La oferta no está pendiente o expiró' },
+        },
+      },
+    },
+    '/api/ofertas-chat/{id}/rechazar': {
+      post: {
+        summary: 'Rechazar una oferta de chat',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ mensaje }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas o intentas rechazar tu propia oferta' },
+          '404': { description: 'Oferta no encontrada' },
+          '409': { description: 'La oferta no está pendiente' },
+        },
+      },
+    },
+    '/api/ofertas-chat/{id}/contraoferta': {
+      post: {
+        summary: 'Responder con una contraoferta',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['monto'],
+                properties: {
+                  monto: { type: 'number', example: 260 },
+                  descripcion: { type: 'string', nullable: true },
+                  fechaExpiracion: { type: 'string', format: 'date-time', nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Mensaje con la contraoferta pendiente' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas o intentas contraofertar tu propia oferta' },
+          '404': { description: 'Oferta no encontrada' },
+          '409': { description: 'La oferta no está pendiente o expiró' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/contratos': {
+      get: {
+        summary: 'Mis contratos (Cliente o Freelancer)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, contratos } con contexto y contraparte' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/contratos/{id}': {
+      get: {
+        summary: 'Detalle de un contrato propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Contrato con contexto y contraparte' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
         },
       },
     },

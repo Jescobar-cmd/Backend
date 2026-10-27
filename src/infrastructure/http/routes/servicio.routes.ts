@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ServicioController } from '../controllers/ServicioController';
+import { PropuestaController } from '../controllers/PropuestaController';
 import { requireAuth } from '../middlewares/authMiddleware';
 import { requireRole } from '../middlewares/requireRole';
 import { validate } from '../middlewares/validate';
@@ -39,3 +40,4 @@ serviciosRouter.patch(
 export const freelancerRouter = Router();
 freelancerRouter.use(requireAuth, requireRole(ROLES.FREELANCER));
 freelancerRouter.get('/servicios', ServicioController.misServicios);
+freelancerRouter.get('/propuestas', PropuestaController.misPropuestas);

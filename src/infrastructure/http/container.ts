@@ -7,6 +7,9 @@ import { PrismaCategoriaRepository } from '../persistence/postgres/PrismaCategor
 import { PrismaPublicacionRepository } from '../persistence/postgres/PrismaPublicacionRepository';
 import { PrismaServicioRepository } from '../persistence/postgres/PrismaServicioRepository';
 import { PrismaConversacionRepository } from '../persistence/postgres/PrismaConversacionRepository';
+import { PrismaPropuestaRepository } from '../persistence/postgres/PrismaPropuestaRepository';
+import { PrismaOfertaChatRepository } from '../persistence/postgres/PrismaOfertaChatRepository';
+import { PrismaContratoRepository } from '../persistence/postgres/PrismaContratoRepository';
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
@@ -51,6 +54,16 @@ import { ObtenerConversacionUseCase } from '../../application/use-cases/ObtenerC
 import { ListarMensajesUseCase } from '../../application/use-cases/ListarMensajesUseCase';
 import { EnviarMensajeUseCase } from '../../application/use-cases/EnviarMensajeUseCase';
 import { MarcarConversacionLeidaUseCase } from '../../application/use-cases/MarcarConversacionLeidaUseCase';
+import { CrearPropuestaUseCase } from '../../application/use-cases/CrearPropuestaUseCase';
+import { ListarMisPropuestasUseCase } from '../../application/use-cases/ListarMisPropuestasUseCase';
+import { AceptarPropuestaUseCase } from '../../application/use-cases/AceptarPropuestaUseCase';
+import { RechazarPropuestaUseCase } from '../../application/use-cases/RechazarPropuestaUseCase';
+import { CrearOfertaChatUseCase } from '../../application/use-cases/CrearOfertaChatUseCase';
+import { AceptarOfertaChatUseCase } from '../../application/use-cases/AceptarOfertaChatUseCase';
+import { RechazarOfertaChatUseCase } from '../../application/use-cases/RechazarOfertaChatUseCase';
+import { ContraofertarUseCase } from '../../application/use-cases/ContraofertarUseCase';
+import { ListarContratosUseCase } from '../../application/use-cases/ListarContratosUseCase';
+import { ObtenerContratoUseCase } from '../../application/use-cases/ObtenerContratoUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
@@ -61,6 +74,9 @@ const categorias = new PrismaCategoriaRepository(prisma);
 const publicaciones = new PrismaPublicacionRepository(prisma);
 const servicios = new PrismaServicioRepository(prisma);
 const conversaciones = new PrismaConversacionRepository(prisma);
+const propuestas = new PrismaPropuestaRepository(prisma);
+const ofertasChat = new PrismaOfertaChatRepository(prisma);
+const contratos = new PrismaContratoRepository(prisma);
 const hasher = new BcryptPasswordHasher();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -77,6 +93,9 @@ export const container = {
   publicaciones,
   servicios,
   conversaciones,
+  propuestas,
+  ofertasChat,
+  contratos,
   hasher,
   mail,
   jwt,
@@ -119,4 +138,14 @@ export const container = {
   listarMensajes: new ListarMensajesUseCase(conversaciones),
   enviarMensaje: new EnviarMensajeUseCase(conversaciones),
   marcarConversacionLeida: new MarcarConversacionLeidaUseCase(conversaciones),
+  crearPropuesta: new CrearPropuestaUseCase(propuestas, ofertas),
+  listarMisPropuestas: new ListarMisPropuestasUseCase(propuestas),
+  aceptarPropuesta: new AceptarPropuestaUseCase(propuestas),
+  rechazarPropuesta: new RechazarPropuestaUseCase(propuestas),
+  crearOfertaChat: new CrearOfertaChatUseCase(conversaciones, ofertasChat),
+  aceptarOfertaChat: new AceptarOfertaChatUseCase(ofertasChat),
+  rechazarOfertaChat: new RechazarOfertaChatUseCase(ofertasChat),
+  contraofertar: new ContraofertarUseCase(ofertasChat),
+  listarContratos: new ListarContratosUseCase(contratos),
+  obtenerContrato: new ObtenerContratoUseCase(contratos),
 };
