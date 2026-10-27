@@ -4,8 +4,8 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.3.0',
-    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog.',
+    version: '0.4.0',
+    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog + Servicios.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -516,6 +516,138 @@ export const swaggerDocument = {
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '404': { description: 'Publicación no encontrada' },
+        },
+      },
+    },
+    '/api/servicios': {
+      post: {
+        summary: 'Publicar un servicio (requiere JWT + rol Freelancer)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['titulo', 'descripcion', 'precio'],
+                properties: {
+                  titulo: { type: 'string', example: 'Landing page profesional' },
+                  descripcion: { type: 'string', example: 'Diseño y desarrollo una landing page responsive.' },
+                  precio: { type: 'number', example: 150 },
+                  categoriaId: { type: 'integer', nullable: true, example: 5 },
+                  imagenUrl: { type: 'string', nullable: true, description: 'URL que devuelve Cloudinary' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Servicio creado: { mensaje, servicio }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+      get: {
+        summary: 'Catálogo de servicios activos (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+          { name: 'categoriaId', in: 'query', schema: { type: 'integer' } },
+          { name: 'q', in: 'query', schema: { type: 'string' }, description: 'Busca en título y descripción' },
+        ],
+        responses: {
+          '200': { description: 'Paginado: { page, limit, total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/servicios/{id}': {
+      get: {
+        summary: 'Ver el detalle de un servicio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Servicio con categoría y datos del freelancer' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '404': { description: 'Servicio no encontrado' },
+        },
+      },
+      patch: {
+        summary: 'Editar un servicio propio (Freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'Envía solo los campos a cambiar.',
+                properties: {
+                  titulo: { type: 'string' },
+                  descripcion: { type: 'string' },
+                  precio: { type: 'number' },
+                  categoriaId: { type: 'integer', nullable: true },
+                  imagenUrl: { type: 'string', nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Servicio actualizado' },
+          '400': { description: 'Id o categoría inválidos' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No es el dueño del servicio' },
+          '404': { description: 'Servicio no encontrado' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/servicios/{id}/estado': {
+      patch: {
+        summary: 'Activar / pausar / eliminar un servicio propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['estado'],
+                properties: { estado: { type: 'string', enum: ['activo', 'pausado', 'eliminado'] } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Estado actualizado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No es el dueño del servicio' },
+          '404': { description: 'Servicio no encontrado' },
+          '422': { description: 'Estado inválido' },
+        },
+      },
+    },
+    '/api/freelancer/servicios': {
+      get: {
+        summary: 'Mis servicios (requiere JWT + rol Freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['activo', 'pausado', 'eliminado'] } },
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': { description: 'Paginado: { page, limit, total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
         },
       },
     },
