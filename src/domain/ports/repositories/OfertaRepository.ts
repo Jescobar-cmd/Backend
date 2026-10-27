@@ -37,6 +37,11 @@ export interface OfertaRepository {
   /** Detalle público (null si no existe o ya no está abierta). */
   obtenerPublica(ofertaId: number): Promise<OfertaPublica | null>;
 
+  /** Datos mínimos para validar contexto de chat (sin filtrar por cliente). */
+  obtenerBasica(
+    ofertaId: number
+  ): Promise<{ id: number; clienteId: number; titulo: string; estado: string } | null>;
+
   categoriaExiste(categoriaId: number): Promise<boolean>;
 
   /** ¿Todas las habilidades existen en la base de datos? */

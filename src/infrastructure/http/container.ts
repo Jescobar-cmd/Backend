@@ -6,6 +6,7 @@ import { PrismaOfertaRepository } from '../persistence/postgres/PrismaOfertaRepo
 import { PrismaCategoriaRepository } from '../persistence/postgres/PrismaCategoriaRepository';
 import { PrismaPublicacionRepository } from '../persistence/postgres/PrismaPublicacionRepository';
 import { PrismaServicioRepository } from '../persistence/postgres/PrismaServicioRepository';
+import { PrismaConversacionRepository } from '../persistence/postgres/PrismaConversacionRepository';
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
@@ -44,6 +45,12 @@ import { CambiarEstadoServicioUseCase } from '../../application/use-cases/Cambia
 import { ListarOfertasPublicasUseCase } from '../../application/use-cases/ListarOfertasPublicasUseCase';
 import { ObtenerOfertaPublicaUseCase } from '../../application/use-cases/ObtenerOfertaPublicaUseCase';
 import { ObtenerFeedUseCase } from '../../application/use-cases/ObtenerFeedUseCase';
+import { CrearConversacionUseCase } from '../../application/use-cases/CrearConversacionUseCase';
+import { ListarConversacionesUseCase } from '../../application/use-cases/ListarConversacionesUseCase';
+import { ObtenerConversacionUseCase } from '../../application/use-cases/ObtenerConversacionUseCase';
+import { ListarMensajesUseCase } from '../../application/use-cases/ListarMensajesUseCase';
+import { EnviarMensajeUseCase } from '../../application/use-cases/EnviarMensajeUseCase';
+import { MarcarConversacionLeidaUseCase } from '../../application/use-cases/MarcarConversacionLeidaUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
@@ -53,6 +60,7 @@ const ofertas = new PrismaOfertaRepository(prisma);
 const categorias = new PrismaCategoriaRepository(prisma);
 const publicaciones = new PrismaPublicacionRepository(prisma);
 const servicios = new PrismaServicioRepository(prisma);
+const conversaciones = new PrismaConversacionRepository(prisma);
 const hasher = new BcryptPasswordHasher();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -68,6 +76,7 @@ export const container = {
   categorias,
   publicaciones,
   servicios,
+  conversaciones,
   hasher,
   mail,
   jwt,
@@ -104,4 +113,10 @@ export const container = {
   listarOfertasPublicas: new ListarOfertasPublicasUseCase(ofertas),
   obtenerOfertaPublica: new ObtenerOfertaPublicaUseCase(ofertas),
   obtenerFeed: new ObtenerFeedUseCase(publicaciones, ofertas, servicios),
+  crearConversacion: new CrearConversacionUseCase(conversaciones, ofertas, servicios, users),
+  listarConversaciones: new ListarConversacionesUseCase(conversaciones),
+  obtenerConversacion: new ObtenerConversacionUseCase(conversaciones),
+  listarMensajes: new ListarMensajesUseCase(conversaciones),
+  enviarMensaje: new EnviarMensajeUseCase(conversaciones),
+  marcarConversacionLeida: new MarcarConversacionLeidaUseCase(conversaciones),
 };

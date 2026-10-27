@@ -247,4 +247,13 @@ export class PrismaOfertaRepository implements OfertaRepository {
     });
     return proyecto ? toOfertaPublica(proyecto) : null;
   }
+
+  async obtenerBasica(
+    ofertaId: number
+  ): Promise<{ id: number; clienteId: number; titulo: string; estado: string } | null> {
+    return this.db.proyecto.findUnique({
+      where: { id: ofertaId },
+      select: { id: true, clienteId: true, titulo: true, estado: true },
+    });
+  }
 }

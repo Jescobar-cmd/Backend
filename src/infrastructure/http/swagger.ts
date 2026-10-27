@@ -4,8 +4,8 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.5.0',
-    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog + Servicios + Feed por rol.',
+    version: '0.6.0',
+    description: 'Auth + Perfil + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling).',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -693,6 +693,116 @@ export const swaggerDocument = {
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '404': { description: 'Oferta no encontrada o ya no está abierta' },
+        },
+      },
+    },
+    '/api/conversaciones': {
+      post: {
+        summary: 'Iniciar o recuperar una conversación (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description:
+                  'Cliente: { servicioId } o { proyectoId, freelancerId }. Freelancer: { proyectoId }.',
+                properties: {
+                  servicioId: { type: 'integer', example: 1 },
+                  proyectoId: { type: 'integer', example: 1 },
+                  freelancerId: { type: 'integer', example: 2 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: '{ mensaje, conversacion } (idempotente)' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'La oferta no te pertenece o el rol no puede iniciar chat' },
+          '404': { description: 'Servicio, oferta o freelancer no encontrado' },
+          '422': { description: 'Combinación de datos inválida' },
+        },
+      },
+      get: {
+        summary: 'Mis conversaciones (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, conversaciones } con último mensaje y noLeidos' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/conversaciones/{id}': {
+      get: {
+        summary: 'Detalle de una conversación propia',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Conversación con participantes y contexto' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en la conversación' },
+          '404': { description: 'Conversación no encontrada' },
+        },
+      },
+    },
+    '/api/conversaciones/{id}/mensajes': {
+      get: {
+        summary: 'Polling de mensajes nuevos (afterId)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'afterId', in: 'query', schema: { type: 'integer' }, description: 'Devuelve solo mensajes con id > afterId' },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ mensajes, ultimoId }' },
+          '400': { description: 'Id o afterId inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en la conversación' },
+          '404': { description: 'Conversación no encontrada' },
+        },
+      },
+      post: {
+        summary: 'Enviar un mensaje de texto',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['contenido'],
+                properties: { contenido: { type: 'string', example: 'Hola, me interesa tu servicio' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Mensaje creado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en la conversación' },
+          '404': { description: 'Conversación no encontrada' },
+          '422': { description: 'Mensaje vacío o demasiado largo' },
+        },
+      },
+    },
+    '/api/conversaciones/{id}/leido': {
+      patch: {
+        summary: 'Marcar como leídos los mensajes del otro participante',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ mensaje, actualizados }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en la conversación' },
+          '404': { description: 'Conversación no encontrada' },
         },
       },
     },
