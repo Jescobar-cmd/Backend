@@ -7,6 +7,7 @@ import { authRouter } from './routes/auth.routes';
 import { clienteRouter, usuariosRouter } from './routes/perfil.routes';
 import { ofertasRouter } from './routes/oferta.routes';
 import { categoriasRouter } from './routes/categoria.routes';
+import { publicacionesRouter } from './routes/publicacion.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
   app.use('/api/cliente/ofertas', ofertasRouter);
   app.use('/api/usuarios', usuariosRouter);
   app.use('/api/categorias', categoriasRouter);
+  app.use('/api/publicaciones', publicacionesRouter);
 
   // Swagger UI + JSON crudo (para importar la colección en Postman)
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

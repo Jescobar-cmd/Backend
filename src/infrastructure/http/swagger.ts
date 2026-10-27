@@ -4,8 +4,8 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.2.0',
-    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías.',
+    version: '0.3.0',
+    description: 'Auth (registro, verificación, login, Google, recuperación) + Perfil de cliente + Ofertas (proyectos) + Categorías + Blog.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -433,6 +433,89 @@ export const swaggerDocument = {
         responses: {
           '200': { description: '{ total, categorias }' },
           '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/publicaciones': {
+      post: {
+        summary: 'Publicar en el blog (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['contenido'],
+                properties: {
+                  titulo: { type: 'string', nullable: true, example: 'Mi primer proyecto' },
+                  contenido: { type: 'string', example: 'Hoy terminé una landing page...' },
+                  imagenUrl: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'URL que devuelve Cloudinary',
+                    example: 'https://res.cloudinary.com/demo/image/upload/v1/blog.jpg',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Publicación creada: { mensaje, publicacion }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+      get: {
+        summary: 'Listar el blog (requiere JWT)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+          { name: 'autorId', in: 'query', schema: { type: 'integer' }, description: 'Filtrar por autor' },
+        ],
+        responses: {
+          '200': { description: 'Paginado: { page, limit, total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/publicaciones/{id}': {
+      get: {
+        summary: 'Ver una publicación del blog',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Publicación con autor y likes' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '404': { description: 'Publicación no encontrada' },
+        },
+      },
+      delete: {
+        summary: 'Eliminar una publicación (borrado lógico; autor o admin)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Publicación eliminada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No es el autor ni admin' },
+          '404': { description: 'Publicación no encontrada' },
+        },
+      },
+    },
+    '/api/publicaciones/{id}/like': {
+      post: {
+        summary: 'Dar o quitar me gusta (toggle)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ meGusta, totalLikes }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '404': { description: 'Publicación no encontrada' },
         },
       },
     },

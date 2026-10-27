@@ -4,6 +4,7 @@ import { PrismaTokenRepository } from '../persistence/postgres/PrismaTokenReposi
 import { PrismaPerfilRepository } from '../persistence/postgres/PrismaPerfilRepository';
 import { PrismaOfertaRepository } from '../persistence/postgres/PrismaOfertaRepository';
 import { PrismaCategoriaRepository } from '../persistence/postgres/PrismaCategoriaRepository';
+import { PrismaPublicacionRepository } from '../persistence/postgres/PrismaPublicacionRepository';
 import { BcryptPasswordHasher } from '../security/BcryptPasswordHasher';
 import { JwtService } from '../security/JwtService';
 import { NodemailerEmailSender } from '../email/NodemailerEmailSender';
@@ -28,6 +29,11 @@ import { ActualizarOfertaUseCase } from '../../application/use-cases/ActualizarO
 import { CambiarEstadoOfertaUseCase } from '../../application/use-cases/CambiarEstadoOfertaUseCase';
 import { ListarPropuestasDeOfertaUseCase } from '../../application/use-cases/ListarPropuestasDeOfertaUseCase';
 import { ListarCategoriasUseCase } from '../../application/use-cases/ListarCategoriasUseCase';
+import { CrearPublicacionUseCase } from '../../application/use-cases/CrearPublicacionUseCase';
+import { ListarPublicacionesUseCase } from '../../application/use-cases/ListarPublicacionesUseCase';
+import { ObtenerPublicacionUseCase } from '../../application/use-cases/ObtenerPublicacionUseCase';
+import { EliminarPublicacionUseCase } from '../../application/use-cases/EliminarPublicacionUseCase';
+import { AlternarMeGustaUseCase } from '../../application/use-cases/AlternarMeGustaUseCase';
 
 // Composition root: conecta puertos e infraestructura con casos de uso
 const users = new PrismaUserRepository(prisma);
@@ -35,6 +41,7 @@ const tokens = new PrismaTokenRepository(prisma);
 const perfiles = new PrismaPerfilRepository(prisma);
 const ofertas = new PrismaOfertaRepository(prisma);
 const categorias = new PrismaCategoriaRepository(prisma);
+const publicaciones = new PrismaPublicacionRepository(prisma);
 const hasher = new BcryptPasswordHasher();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -48,6 +55,7 @@ export const container = {
   perfiles,
   ofertas,
   categorias,
+  publicaciones,
   hasher,
   mail,
   jwt,
@@ -70,4 +78,9 @@ export const container = {
   cambiarEstadoOferta: new CambiarEstadoOfertaUseCase(ofertas),
   listarPropuestasDeOferta: new ListarPropuestasDeOfertaUseCase(ofertas),
   listarCategorias: new ListarCategoriasUseCase(categorias),
+  crearPublicacion: new CrearPublicacionUseCase(publicaciones),
+  listarPublicaciones: new ListarPublicacionesUseCase(publicaciones),
+  obtenerPublicacion: new ObtenerPublicacionUseCase(publicaciones),
+  eliminarPublicacion: new EliminarPublicacionUseCase(publicaciones),
+  alternarMeGusta: new AlternarMeGustaUseCase(publicaciones),
 };
