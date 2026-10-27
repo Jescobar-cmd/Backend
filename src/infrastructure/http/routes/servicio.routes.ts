@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ServicioController } from '../controllers/ServicioController';
 import { PropuestaController } from '../controllers/PropuestaController';
+import { PerfilController } from '../controllers/PerfilController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar } from '../middlewares/validar';
@@ -10,6 +11,7 @@ import {
   cambiarEstadoServicioSchema,
   crearServicioSchema,
 } from '../../../application/validators/servicio.schemas';
+import { actualizarPerfilFreelancerSchema } from '../../../application/validators/perfil.schemas';
 
 // Catálogo de servicios -> se monta en /api/servicios
 export const serviciosRouter = Router();
@@ -39,5 +41,11 @@ serviciosRouter.patch(
 // Panel del freelancer -> se monta en /api/freelancer
 export const freelancerRouter = Router();
 freelancerRouter.use(requiereAutenticacion, requiereRol(ROLES.FREELANCER));
+freelancerRouter.get('/perfil', PerfilController.miPerfilFreelancer);
+freelancerRouter.patch(
+  '/perfil',
+  validar(actualizarPerfilFreelancerSchema),
+  PerfilController.actualizarMiPerfilFreelancer
+);
 freelancerRouter.get('/servicios', ServicioController.misServicios);
 freelancerRouter.get('/propuestas', PropuestaController.misPropuestas);

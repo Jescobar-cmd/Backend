@@ -134,6 +134,7 @@ export class PrismaOfertaChatRepository implements OfertaChatRepository {
           clienteId: oferta.Conversacion.clienteId,
           freelancerId: oferta.Conversacion.freelancerId,
           montoAcordado: oferta.monto,
+          fechaInicio: new Date(),
           estado: 'activo',
         },
         include: contratoInclude,

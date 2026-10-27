@@ -32,6 +32,45 @@ export class PerfilController {
     }
   }
 
+  /** GET /api/freelancer/perfil -> perfil propio del freelancer. */
+  static async miPerfilFreelancer(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = req.usuario?.id;
+      if (!usuarioId) {
+        throw new ErrorNoAutorizado('No autorizado');
+      }
+      const perfil = await contenedor.obtenerMiPerfilFreelancer.ejecutar(usuarioId);
+      res.json(perfil);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/freelancer/perfil -> actualiza perfil y habilidades. */
+  static async actualizarMiPerfilFreelancer(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = req.usuario?.id;
+      if (!usuarioId) {
+        throw new ErrorNoAutorizado('No autorizado');
+      }
+      const perfil = await contenedor.actualizarMiPerfilFreelancer.ejecutar(
+        usuarioId,
+        req.body
+      );
+      res.json({ mensaje: 'Perfil actualizado correctamente', perfil });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   /** GET /api/usuarios/:id -> perfil público (sin email ni teléfono). */
   static async perfilPublico(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {

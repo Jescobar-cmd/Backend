@@ -13,6 +13,7 @@ import { feedRouter, mercadoRouter } from './routes/feed.routes';
 import { conversacionesRouter } from './routes/conversacion.routes';
 import { ofertaChatRouter } from './routes/ofertaChat.routes';
 import { contratosRouter } from './routes/contrato.routes';
+import { habilidadesRouter } from './routes/habilidad.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
 
 export function createApp() {
@@ -45,6 +46,7 @@ export function createApp() {
   app.use('/api/conversaciones', conversacionesRouter);
   app.use('/api/ofertas-chat', ofertaChatRouter);
   app.use('/api/contratos', contratosRouter);
+  app.use('/api/habilidades', habilidadesRouter);
 
   // Swagger UI + JSON crudo (para importar la colección en Postman)
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

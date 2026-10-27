@@ -10,6 +10,8 @@ import { PrismaConversacionRepository } from '../persistence/postgres/PrismaConv
 import { PrismaPropuestaRepository } from '../persistence/postgres/PrismaPropuestaRepository';
 import { PrismaOfertaChatRepository } from '../persistence/postgres/PrismaOfertaChatRepository';
 import { PrismaContratoRepository } from '../persistence/postgres/PrismaContratoRepository';
+import { PrismaRepositorioHabilidad } from '../persistence/postgres/PrismaRepositorioHabilidad';
+import { PrismaCalificacionRepository } from '../persistence/postgres/PrismaCalificacionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { ServicioJwt } from '../security/ServicioJwt';
 import { EnviadorCorreoNodemailer } from '../email/EnviadorCorreoNodemailer';
@@ -64,6 +66,12 @@ import { RechazarOfertaChatUseCase } from '../../application/use-cases/RechazarO
 import { ContraofertarUseCase } from '../../application/use-cases/ContraofertarUseCase';
 import { ListarContratosUseCase } from '../../application/use-cases/ListarContratosUseCase';
 import { ObtenerContratoUseCase } from '../../application/use-cases/ObtenerContratoUseCase';
+import { ListarHabilidadesUseCase } from '../../application/use-cases/ListarHabilidadesUseCase';
+import { ObtenerMiPerfilFreelancerUseCase } from '../../application/use-cases/ObtenerMiPerfilFreelancerUseCase';
+import { ActualizarMiPerfilFreelancerUseCase } from '../../application/use-cases/ActualizarMiPerfilFreelancerUseCase';
+import { CambiarEstadoContratoUseCase } from '../../application/use-cases/CambiarEstadoContratoUseCase';
+import { CalificarContratoUseCase } from '../../application/use-cases/CalificarContratoUseCase';
+import { ListarCalificacionesContratoUseCase } from '../../application/use-cases/ListarCalificacionesContratoUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -77,6 +85,8 @@ const conversaciones = new PrismaConversacionRepository(prisma);
 const propuestas = new PrismaPropuestaRepository(prisma);
 const ofertasChat = new PrismaOfertaChatRepository(prisma);
 const contratos = new PrismaContratoRepository(prisma);
+const habilidades = new PrismaRepositorioHabilidad(prisma);
+const calificaciones = new PrismaCalificacionRepository(prisma);
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -96,6 +106,8 @@ export const contenedor = {
   propuestas,
   ofertasChat,
   contratos,
+  habilidades,
+  calificaciones,
   hasheador,
   correo,
   jwt,
@@ -110,7 +122,10 @@ export const contenedor = {
   restablecerContrasena: new CasoUsoRestablecerContrasena(usuarios, tokens, hasheador),
   obtenerMiPerfil: new ObtenerMiPerfilUseCase(perfiles),
   actualizarMiPerfil: new ActualizarMiPerfilUseCase(perfiles),
+  obtenerMiPerfilFreelancer: new ObtenerMiPerfilFreelancerUseCase(perfiles),
+  actualizarMiPerfilFreelancer: new ActualizarMiPerfilFreelancerUseCase(perfiles, habilidades),
   obtenerPerfilPublico: new ObtenerPerfilPublicoUseCase(perfiles),
+  listarHabilidades: new ListarHabilidadesUseCase(habilidades),
   crearOferta: new CrearOfertaUseCase(ofertas),
   listarMisOfertas: new ListarMisOfertasUseCase(ofertas),
   obtenerMiOferta: new ObtenerMiOfertaUseCase(ofertas),
@@ -148,4 +163,10 @@ export const contenedor = {
   contraofertar: new ContraofertarUseCase(ofertasChat),
   listarContratos: new ListarContratosUseCase(contratos),
   obtenerContrato: new ObtenerContratoUseCase(contratos),
+  cambiarEstadoContrato: new CambiarEstadoContratoUseCase(contratos),
+  calificarContrato: new CalificarContratoUseCase(calificaciones, contratos),
+  listarCalificacionesContrato: new ListarCalificacionesContratoUseCase(
+    calificaciones,
+    contratos
+  ),
 };

@@ -1,5 +1,7 @@
-// Tipos de perfil del usuario (Fase 1 - Cliente).
+// Tipos de perfil del usuario.
 // Dominio puro: no conoce Prisma, Express ni ninguna librería externa.
+
+import { HabilidadAsignada } from './Habilidad';
 
 export type PerfilTipoCliente = 'natural' | 'empresa';
 
@@ -15,6 +17,7 @@ export interface FreelancerPerfil {
   tituloProfesional: string | null;
   biografia: string | null;
   calificacionPromedio: number;
+  habilidades: HabilidadAsignada[];
 }
 
 /** Perfil propio del cliente: incluye datos privados (email, teléfono). */
@@ -29,6 +32,20 @@ export interface PerfilCliente {
   estado: string;
   fechaRegistro: Date;
   cliente: ClientePerfil;
+}
+
+/** Perfil propio del freelancer: incluye datos privados (email, teléfono). */
+export interface PerfilFreelancer {
+  id: number;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  fotoPerfil: string | null;
+  rolId: number;
+  rolNombre: string;
+  estado: string;
+  fechaRegistro: Date;
+  freelancer: FreelancerPerfil;
 }
 
 /** Perfil público de cualquier usuario: SIN email ni teléfono. */
@@ -54,4 +71,17 @@ export interface DatosPerfilCliente {
   descripcion?: string | null;
   nombreEmpresa?: string | null;
   tipoCliente?: PerfilTipoCliente;
+}
+
+/**
+ * Campos editables del perfil del freelancer.
+ * `habilidadIds` reemplaza el conjunto completo de habilidades si se envía.
+ */
+export interface DatosPerfilFreelancer {
+  nombre?: string;
+  telefono?: string | null;
+  fotoPerfil?: string | null;
+  tituloProfesional?: string | null;
+  biografia?: string | null;
+  habilidadIds?: number[];
 }

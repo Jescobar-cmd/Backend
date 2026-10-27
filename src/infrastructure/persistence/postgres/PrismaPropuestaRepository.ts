@@ -131,6 +131,7 @@ export class PrismaPropuestaRepository implements PropuestaRepository {
           clienteId: propuesta.Proyecto.clienteId,
           freelancerId: propuesta.freelancerId,
           montoAcordado: propuesta.montoPropuesto,
+          fechaInicio: new Date(),
           estado: 'activo',
         },
         include: contratoInclude,

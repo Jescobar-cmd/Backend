@@ -4,9 +4,9 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.7.0',
+    version: '0.8.0',
     description:
-      'Auth + Perfil + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, aceptar/rechazar y contratos.',
+      'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, cierre y calificaciones.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -999,6 +999,129 @@ export const swaggerDocument = {
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'No participas en el contrato' },
           '404': { description: 'Contrato no encontrado' },
+        },
+      },
+    },
+    '/api/freelancer/perfil': {
+      get: {
+        summary: 'Perfil propio del freelancer',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Perfil con email, teléfono, título, biografía y habilidades' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
+          '404': { description: 'Perfil no encontrado' },
+        },
+      },
+      patch: {
+        summary: 'Actualizar perfil del freelancer',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  nombre: { type: 'string', example: 'Ana Pérez' },
+                  telefono: { type: 'string', nullable: true, example: '+57 300 123 4567' },
+                  fotoPerfil: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
+                  tituloProfesional: { type: 'string', nullable: true, example: 'Desarrolladora full stack' },
+                  biografia: { type: 'string', nullable: true, example: 'Especialista en React y Node.js' },
+                  habilidadIds: { type: 'array', items: { type: 'integer' }, example: [1, 2, 3] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Perfil actualizado' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El usuario no es Freelancer' },
+          '404': { description: 'Perfil no encontrado' },
+          '422': { description: 'Datos inválidos o habilidades inexistentes' },
+        },
+      },
+    },
+    '/api/habilidades': {
+      get: {
+        summary: 'Catálogo de habilidades',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, habilidades } con categoría' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/contratos/{id}/estado': {
+      patch: {
+        summary: 'Completar o cancelar un contrato propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['estado'],
+                properties: {
+                  estado: { type: 'string', enum: ['completado', 'cancelado'] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Contrato cerrado y oferta sincronizada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'El contrato ya no está activo' },
+          '422': { description: 'Estado inválido' },
+        },
+      },
+    },
+    '/api/contratos/{id}/calificaciones': {
+      get: {
+        summary: 'Calificaciones de un contrato propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ total, calificaciones, miCalificacion }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+        },
+      },
+      post: {
+        summary: 'Calificar a la otra parte de un contrato completado',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['puntuacion'],
+                properties: {
+                  puntuacion: { type: 'integer', minimum: 1, maximum: 5, example: 5 },
+                  comentario: { type: 'string', nullable: true, example: 'Excelente trabajo' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Calificación registrada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'El contrato no está completado o ya calificaste' },
+          '422': { description: 'Puntuación o comentario inválidos' },
         },
       },
     },

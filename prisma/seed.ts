@@ -30,6 +30,35 @@ const categorias = [
   'Soporte Técnico',
 ];
 
+// Catálogo base de habilidades para perfiles y ofertas.
+const habilidades = [
+  { nombre: 'React', categoria: 'Desarrollo Web' },
+  { nombre: 'Next.js', categoria: 'Desarrollo Web' },
+  { nombre: 'Node.js', categoria: 'Desarrollo Web' },
+  { nombre: 'TypeScript', categoria: 'Desarrollo Web' },
+  { nombre: 'PostgreSQL', categoria: 'Desarrollo Web' },
+  { nombre: 'Flutter', categoria: 'Aplicaciones Móviles' },
+  { nombre: 'React Native', categoria: 'Aplicaciones Móviles' },
+  { nombre: 'Swift', categoria: 'Aplicaciones Móviles' },
+  { nombre: 'Kotlin', categoria: 'Aplicaciones Móviles' },
+  { nombre: 'Figma', categoria: 'Diseño Gráfico' },
+  { nombre: 'Adobe Photoshop', categoria: 'Diseño Gráfico' },
+  { nombre: 'Adobe Illustrator', categoria: 'Diseño Gráfico' },
+  { nombre: 'SEO', categoria: 'Marketing Digital' },
+  { nombre: 'Google Ads', categoria: 'Marketing Digital' },
+  { nombre: 'Meta Ads', categoria: 'Marketing Digital' },
+  { nombre: 'Copywriting', categoria: 'Redacción y Contenido' },
+  { nombre: 'Redacción de artículos', categoria: 'Redacción y Contenido' },
+  { nombre: 'Edición de video', categoria: 'Video y Animación' },
+  { nombre: 'Motion Graphics', categoria: 'Video y Animación' },
+  { nombre: 'After Effects', categoria: 'Video y Animación' },
+  { nombre: 'Python', categoria: 'Datos y Análisis' },
+  { nombre: 'SQL', categoria: 'Datos y Análisis' },
+  { nombre: 'Power BI', categoria: 'Datos y Análisis' },
+  { nombre: 'Soporte técnico', categoria: 'Soporte Técnico' },
+  { nombre: 'Redes y servidores', categoria: 'Soporte Técnico' },
+];
+
 async function main() {
   for (const rol of roles) {
     await prisma.rol.upsert({
@@ -44,6 +73,18 @@ async function main() {
       where: { nombre },
       update: {},
       create: { nombre },
+    });
+  }
+
+  for (const habilidad of habilidades) {
+    const categoria = await prisma.categoria.findUnique({
+      where: { nombre: habilidad.categoria },
+      select: { id: true },
+    });
+    await prisma.habilidad.upsert({
+      where: { nombre: habilidad.nombre },
+      update: { categoriaId: categoria?.id ?? null },
+      create: { nombre: habilidad.nombre, categoriaId: categoria?.id ?? null },
     });
   }
 
@@ -66,7 +107,7 @@ async function main() {
   }
 
   console.log(
-    `Seed OK: ${roles.length} roles + ${categorias.length} categorias` +
+    `Seed OK: ${roles.length} roles + ${categorias.length} categorias + ${habilidades.length} habilidades` +
       (conDemo ? ' + usuario demo (demo@firstgig.com / Demo1234)' : ' (usuario demo omitido)')
   );
 }

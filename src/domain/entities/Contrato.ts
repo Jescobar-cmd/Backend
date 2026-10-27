@@ -1,5 +1,8 @@
 import { ROLES } from '../../shared/constants/roles';
 
+export type EstadoContrato = 'activo' | 'completado' | 'cancelado';
+export type EstadoContratoFinal = 'completado' | 'cancelado';
+
 export interface ContratoDetalle {
   id: number;
   propuestaId: number | null;
