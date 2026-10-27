@@ -1,22 +1,22 @@
 import { Router } from 'express';
 import { PerfilController } from '../controllers/PerfilController';
-import { requireAuth } from '../middlewares/authMiddleware';
-import { requireRole } from '../middlewares/requireRole';
-import { validate } from '../middlewares/validate';
+import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
+import { requiereRol } from '../middlewares/requiereRol';
+import { validar } from '../middlewares/validar';
 import { ROLES } from '../../../shared/constants/roles';
 import { actualizarPerfilClienteSchema } from '../../../application/validators/perfil.schemas';
 
 // Perfil del cliente -> se monta en /api/cliente
 export const clienteRouter = Router();
-clienteRouter.get('/perfil', requireAuth, requireRole(ROLES.CLIENTE), PerfilController.miPerfil);
+clienteRouter.get('/perfil', requiereAutenticacion, requiereRol(ROLES.CLIENTE), PerfilController.miPerfil);
 clienteRouter.patch(
   '/perfil',
-  requireAuth,
-  requireRole(ROLES.CLIENTE),
-  validate(actualizarPerfilClienteSchema),
+  requiereAutenticacion,
+  requiereRol(ROLES.CLIENTE),
+  validar(actualizarPerfilClienteSchema),
   PerfilController.actualizarMiPerfil
 );
 
 // Perfil público de cualquier usuario -> se monta en /api/usuarios
 export const usuariosRouter = Router();
-usuariosRouter.get('/:id', requireAuth, PerfilController.perfilPublico);
+usuariosRouter.get('/:id', requiereAutenticacion, PerfilController.perfilPublico);

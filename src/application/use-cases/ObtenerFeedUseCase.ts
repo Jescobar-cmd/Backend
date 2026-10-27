@@ -15,7 +15,7 @@ export class ObtenerFeedUseCase {
     private servicioRepository: ServicioRepository
   ) {}
 
-  async execute(usuarioId: number, rol: number, limite: number): Promise<Feed> {
+  async ejecutar(usuarioId: number, rol: number, limite: number): Promise<Feed> {
     const [publicaciones, servicios] = await Promise.all([
       this.publicacionRepository.listar({ page: 1, limit: limite }, usuarioId),
       this.servicioRepository.listar({ page: 1, limit: limite }),

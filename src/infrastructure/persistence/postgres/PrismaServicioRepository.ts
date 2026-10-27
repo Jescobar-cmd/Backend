@@ -11,7 +11,7 @@ import { ServicioRepository } from '../../../domain/ports/repositories/ServicioR
 
 const servicioInclude = {
   Categoria: true,
-  Freelancer: { include: { User: true } },
+  Freelancer: { include: { Usuario: true } },
 } satisfies Prisma.ServicioInclude;
 
 type ServicioConRelaciones = Prisma.ServicioGetPayload<{ include: typeof servicioInclude }>;
@@ -30,8 +30,8 @@ function toServicio(servicio: ServicioConRelaciones): Servicio {
       : null,
     freelancer: {
       id: servicio.Freelancer.id,
-      nombre: servicio.Freelancer.User.nombre,
-      fotoPerfil: servicio.Freelancer.User.fotoPerfil,
+      nombre: servicio.Freelancer.Usuario.nombre,
+      fotoPerfil: servicio.Freelancer.Usuario.fotoPerfil,
       tituloProfesional: servicio.Freelancer.tituloProfesional,
       calificacionPromedio: Number(servicio.Freelancer.calificacionPromedio),
     },
@@ -43,7 +43,7 @@ export class PrismaServicioRepository implements ServicioRepository {
   constructor(private db: PrismaClient) {}
 
   async crear(freelancerId: number, datos: NuevoServicio): Promise<Servicio> {
-    // Servicio.freelancerId apunta a Freelancer (no a User): aseguramos la fila
+    // Servicio.freelancerId apunta a Freelancer (no a Usuario): aseguramos la fila
     // antes de crear el servicio, dentro de la misma transacción.
     const creado = await this.db.$transaction(async (tx) => {
       await tx.freelancer.upsert({

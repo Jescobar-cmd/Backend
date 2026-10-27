@@ -1,5 +1,5 @@
 // Seed para bases de datos nuevas (contenedores Docker):
-// - roles base que referencia User.rolId (llave foránea a Rol)
+// - roles base que referencia Usuario.rolId (llave foránea a Rol)
 // - usuario demo para probar el login sin configurar correo
 // Es idempotente: se puede correr las veces que sea sin duplicar nada.
 import 'dotenv/config';
@@ -52,7 +52,7 @@ async function main() {
   const conDemo = process.env.SEED_DEMO_USER === 'true';
   if (conDemo) {
     const demoEmail = 'demo@firstgig.com';
-    await prisma.user.upsert({
+    await prisma.usuario.upsert({
       where: { email: demoEmail },
       update: {},
       create: {

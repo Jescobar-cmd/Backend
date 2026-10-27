@@ -3,7 +3,7 @@ import { ContratoDetalle } from '../../../domain/entities/Contrato';
 import { Mensaje } from '../../../domain/entities/Conversacion';
 import { NuevaOfertaChat, OfertaChatDetalle } from '../../../domain/entities/OfertaChat';
 import { OfertaChatRepository } from '../../../domain/ports/repositories/OfertaChatRepository';
-import { NotFoundError } from '../../../shared/errors/AppError';
+import { ErrorNoEncontrado } from '../../../shared/errors/ErrorAplicacion';
 import { contratoInclude, toContratoDetalle } from './contratoInclude';
 
 const mensajeInclude = { OfertaChat: true } satisfies Prisma.MensajeInclude;
@@ -101,7 +101,7 @@ export class PrismaOfertaChatRepository implements OfertaChatRepository {
         },
       });
       if (!oferta) {
-        throw new NotFoundError('Oferta no encontrada');
+        throw new ErrorNoEncontrado('Oferta no encontrada');
       }
 
       await tx.ofertaChat.update({
@@ -167,7 +167,7 @@ export class PrismaOfertaChatRepository implements OfertaChatRepository {
         select: { id: true, conversacionId: true },
       });
       if (!padre) {
-        throw new NotFoundError('Oferta no encontrada');
+        throw new ErrorNoEncontrado('Oferta no encontrada');
       }
 
       await tx.ofertaChat.update({

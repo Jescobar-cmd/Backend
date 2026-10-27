@@ -25,7 +25,7 @@ const ofertaPublicaInclude = {
   Categoria: true,
   ProyectoHabilidad: { include: { Habilidad: true } },
   _count: { select: { Propuesta: true } },
-  Cliente: { include: { User: true } },
+  Cliente: { include: { Usuario: true } },
 } satisfies Prisma.ProyectoInclude;
 
 type ProyectoPublico = Prisma.ProyectoGetPayload<{ include: typeof ofertaPublicaInclude }>;
@@ -50,8 +50,8 @@ function toOfertaPublica(proyecto: ProyectoPublico): OfertaPublica {
     totalPropuestas: proyecto._count.Propuesta,
     cliente: {
       id: proyecto.Cliente.id,
-      nombre: proyecto.Cliente.User.nombre,
-      fotoPerfil: proyecto.Cliente.User.fotoPerfil,
+      nombre: proyecto.Cliente.Usuario.nombre,
+      fotoPerfil: proyecto.Cliente.Usuario.fotoPerfil,
       nombreEmpresa: proyecto.Cliente.nombreEmpresa,
     },
   };
@@ -78,7 +78,7 @@ export class PrismaOfertaRepository implements OfertaRepository {
   constructor(private db: PrismaClient) {}
 
   async crear(clienteId: number, datos: NuevaOferta): Promise<Oferta> {
-    // Proyecto.clienteId apunta a Cliente (no a User): aseguramos la fila Cliente
+    // Proyecto.clienteId apunta a Cliente (no a Usuario): aseguramos la fila Cliente
     // antes de crear la oferta, dentro de la misma transacción.
     const creada = await this.db.$transaction(async (tx) => {
       await tx.cliente.upsert({
@@ -185,7 +185,7 @@ export class PrismaOfertaRepository implements OfertaRepository {
     const propuestas = await this.db.propuesta.findMany({
       where: { proyectoId: ofertaId },
       orderBy: { fechaEnvio: 'desc' },
-      include: { Freelancer: { include: { User: true } } },
+      include: { Freelancer: { include: { Usuario: true } } },
     });
 
     return propuestas.map((p) => ({
@@ -196,8 +196,8 @@ export class PrismaOfertaRepository implements OfertaRepository {
       fechaEnvio: p.fechaEnvio,
       freelancer: {
         id: p.Freelancer.id,
-        nombre: p.Freelancer.User.nombre,
-        fotoPerfil: p.Freelancer.User.fotoPerfil,
+        nombre: p.Freelancer.Usuario.nombre,
+        fotoPerfil: p.Freelancer.Usuario.fotoPerfil,
         calificacionPromedio: Number(p.Freelancer.calificacionPromedio),
       },
     }));

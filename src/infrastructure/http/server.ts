@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { createApp } from './app';
-import { prisma } from '../../config/dbconnection';
+import { prisma } from '../../config/conexionBd';
 
 const port = Number(process.env.PORT ?? 4000);
 const app = createApp();

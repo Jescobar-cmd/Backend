@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerDocument } from './swagger';
-import { authRouter } from './routes/auth.routes';
+import { autenticacionRouter } from './routes/autenticacion.routes';
 import { clienteRouter, usuariosRouter } from './routes/perfil.routes';
 import { ofertasRouter } from './routes/oferta.routes';
 import { categoriasRouter } from './routes/categoria.routes';
@@ -13,7 +13,7 @@ import { feedRouter, mercadoRouter } from './routes/feed.routes';
 import { conversacionesRouter } from './routes/conversacion.routes';
 import { ofertaChatRouter } from './routes/ofertaChat.routes';
 import { contratosRouter } from './routes/contrato.routes';
-import { errorHandler } from './middlewares/errorHandler';
+import { manejadorErrores } from './middlewares/manejadorErrores';
 
 export function createApp() {
   const app = express();
@@ -32,7 +32,7 @@ export function createApp() {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   });
 
-  app.use('/api/auth', authRouter);
+  app.use('/api/auth', autenticacionRouter);
   app.use('/api/cliente', clienteRouter);
   app.use('/api/cliente/ofertas', ofertasRouter);
   app.use('/api/usuarios', usuariosRouter);
@@ -50,7 +50,7 @@ export function createApp() {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));
   app.get('/api-docs.json', (_req, res) => res.json(swaggerDocument));
 
-  app.use(errorHandler);
+  app.use(manejadorErrores);
 
   return app;
 }

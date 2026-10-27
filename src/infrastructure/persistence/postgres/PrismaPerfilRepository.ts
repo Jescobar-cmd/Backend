@@ -7,9 +7,9 @@ const perfilInclude = {
   Rol: true,
   Cliente: true,
   Freelancer: true,
-} satisfies Prisma.UserInclude;
+} satisfies Prisma.UsuarioInclude;
 
-type UsuarioPerfil = Prisma.UserGetPayload<{ include: typeof perfilInclude }>;
+type UsuarioPerfil = Prisma.UsuarioGetPayload<{ include: typeof perfilInclude }>;
 
 function toPerfilCliente(usuario: UsuarioPerfil): PerfilCliente {
   return {
@@ -63,7 +63,7 @@ export class PrismaPerfilRepository implements PerfilRepository {
   constructor(private db: PrismaClient) {}
 
   async obtenerPerfilCliente(usuarioId: number): Promise<PerfilCliente | null> {
-    const usuario = await this.db.user.findUnique({
+    const usuario = await this.db.usuario.findUnique({
       where: { id: usuarioId },
       include: perfilInclude,
     });
@@ -71,13 +71,13 @@ export class PrismaPerfilRepository implements PerfilRepository {
   }
 
   async actualizarPerfilCliente(usuarioId: number, datos: DatosPerfilCliente): Promise<PerfilCliente | null> {
-    const existe = await this.db.user.findUnique({ where: { id: usuarioId }, select: { id: true } });
+    const existe = await this.db.usuario.findUnique({ where: { id: usuarioId }, select: { id: true } });
     if (!existe) {
       return null;
     }
 
-    // Separamos los campos que viven en User de los que viven en Cliente.
-    const datosUsuario: Prisma.UserUpdateInput = {};
+    // Separamos los campos que viven en Usuario de los que viven en Cliente.
+    const datosUsuario: Prisma.UsuarioUpdateInput = {};
     if (datos.nombre !== undefined) datosUsuario.nombre = datos.nombre;
     if (datos.telefono !== undefined) datosUsuario.telefono = datos.telefono;
     if (datos.fotoPerfil !== undefined) datosUsuario.fotoPerfil = datos.fotoPerfil;
@@ -90,7 +90,7 @@ export class PrismaPerfilRepository implements PerfilRepository {
     // Transacción: o se guardan ambos, o ninguno (atomicidad).
     await this.db.$transaction(async (tx) => {
       if (Object.keys(datosUsuario).length > 0) {
-        await tx.user.update({ where: { id: usuarioId }, data: datosUsuario });
+        await tx.usuario.update({ where: { id: usuarioId }, data: datosUsuario });
       }
       if (Object.keys(datosCliente).length > 0) {
         const crearCliente: Prisma.ClienteUncheckedCreateInput = {
@@ -111,7 +111,7 @@ export class PrismaPerfilRepository implements PerfilRepository {
   }
 
   async obtenerPerfilPublico(usuarioId: number): Promise<PerfilPublico | null> {
-    const usuario = await this.db.user.findUnique({
+    const usuario = await this.db.usuario.findUnique({
       where: { id: usuarioId },
       include: perfilInclude,
     });

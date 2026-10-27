@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { ConversacionController } from '../controllers/ConversacionController';
 import { OfertaChatController } from '../controllers/OfertaChatController';
-import { requireAuth } from '../middlewares/authMiddleware';
-import { validate } from '../middlewares/validate';
+import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
+import { validar } from '../middlewares/validar';
 import {
   crearConversacionSchema,
   enviarMensajeSchema,
@@ -11,20 +11,20 @@ import { crearOfertaChatSchema } from '../../../application/validators/ofertaCha
 
 // Chat (polling) -> se monta en /api/conversaciones
 export const conversacionesRouter = Router();
-conversacionesRouter.use(requireAuth);
+conversacionesRouter.use(requiereAutenticacion);
 
-conversacionesRouter.post('/', validate(crearConversacionSchema), ConversacionController.crear);
+conversacionesRouter.post('/', validar(crearConversacionSchema), ConversacionController.crear);
 conversacionesRouter.get('/', ConversacionController.listar);
 conversacionesRouter.get('/:id', ConversacionController.detalle);
 conversacionesRouter.get('/:id/mensajes', ConversacionController.mensajes);
 conversacionesRouter.post(
   '/:id/mensajes',
-  validate(enviarMensajeSchema),
+  validar(enviarMensajeSchema),
   ConversacionController.enviar
 );
 conversacionesRouter.post(
   '/:id/ofertas',
-  validate(crearOfertaChatSchema),
+  validar(crearOfertaChatSchema),
   OfertaChatController.crear
 );
 conversacionesRouter.patch('/:id/leido', ConversacionController.marcarLeido);

@@ -4,7 +4,7 @@ import { DatosPerfilCliente, PerfilCliente, PerfilPublico } from '../../entities
  * Puerto (interfaz) del repositorio de perfiles.
  * El dominio define QUÉ se necesita; la infraestructura decide CÓMO (Prisma).
  * Principio de Segregación de Interfaces: puerto pequeño y específico,
- * sin engordar el UserRepository.
+ * sin engordar el RepositorioUsuario.
  */
 export interface PerfilRepository {
   /** Perfil propio del cliente (datos privados incluidos). */

@@ -6,58 +6,60 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id                                            Int                  @id @default(autoincrement())
-  nombre                                        String
-  email                                         String               @unique
-  passwordHash                                  String?
-  rolId                                         Int
-  telefono                                      String?
-  cedula                                        String?              @unique
-  esMayorDeEdad                                 Boolean              @default(true)
-  estado                                        String               @default("inactivo")
-  googleId                                      String?              @unique
-  fechaRegistro                                 DateTime             @default(now())
-  fotoPerfil                                    String?
-  Calificacion_Calificacion_calificadoIdToUser  Calificacion[]       @relation("Calificacion_calificadoIdToUser")
-  Calificacion_Calificacion_calificadorIdToUser Calificacion[]       @relation("Calificacion_calificadorIdToUser")
-  Cliente                                       Cliente?
-  Freelancer                                    Freelancer?
-  MeGustaPublicacion                            MeGustaPublicacion[]
-  Mensaje                                       Mensaje[]
-  Publicacion                                   Publicacion[]
-  tokens                                        RecoveryToken[]
-  Reporte_Reporte_adminIdToUser                 Reporte[]            @relation("Reporte_adminIdToUser")
-  Reporte_Reporte_usuarioReportaIdToUser        Reporte[]            @relation("Reporte_usuarioReportaIdToUser")
-  Reporte_Reporte_usuarioReportadoIdToUser      Reporte[]            @relation("Reporte_usuarioReportadoIdToUser")
-  Rol                                           Rol                  @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Usuario {
+  id                                               Int                  @id @default(autoincrement())
+  nombre                                           String
+  email                                            String               @unique
+  passwordHash                                     String?
+  rolId                                            Int
+  telefono                                         String?
+  cedula                                           String?              @unique
+  esMayorDeEdad                                    Boolean              @default(true)
+  estado                                           String               @default("inactivo")
+  googleId                                         String?              @unique
+  fechaRegistro                                    DateTime             @default(now())
+  fotoPerfil                                       String?
+  Calificacion_Calificacion_calificadoIdToUsuario  Calificacion[]       @relation("Calificacion_calificadoIdToUsuario")
+  Calificacion_Calificacion_calificadorIdToUsuario Calificacion[]       @relation("Calificacion_calificadorIdToUsuario")
+  Cliente                                          Cliente?
+  Freelancer                                       Freelancer?
+  MeGustaPublicacion                               MeGustaPublicacion[]
+  Mensaje                                          Mensaje[]
+  Publicacion                                      Publicacion[]
+  tokens                                           TokenRecuperacion[]
+  Reporte_Reporte_adminIdToUsuario                 Reporte[]            @relation("Reporte_adminIdToUsuario")
+  Reporte_Reporte_usuarioReportaIdToUsuario        Reporte[]            @relation("Reporte_usuarioReportaIdToUsuario")
+  Reporte_Reporte_usuarioReportadoIdToUsuario      Reporte[]            @relation("Reporte_usuarioReportadoIdToUsuario")
+  Rol                                              Rol                  @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([rolId])
+  @@map("User")
 }
 
-model RecoveryToken {
+model TokenRecuperacion {
   id              Int      @id @default(autoincrement())
   usuarioId       Int
   token           String   @unique
   fechaExpiracion DateTime
   usado           Boolean  @default(false)
-  usuario         User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
+  @@map("RecoveryToken")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Calificacion {
-  id                                    Int      @id @default(autoincrement())
-  contratoId                            Int
-  calificadorId                         Int
-  calificadoId                          Int
-  puntuacion                            Int      @db.SmallInt
-  comentario                            String?
-  fecha                                 DateTime @default(now())
-  User_Calificacion_calificadoIdToUser  User     @relation("Calificacion_calificadoIdToUser", fields: [calificadoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  User_Calificacion_calificadorIdToUser User     @relation("Calificacion_calificadorIdToUser", fields: [calificadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Contrato                              Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                                          Int      @id @default(autoincrement())
+  contratoId                                  Int
+  calificadorId                               Int
+  calificadoId                                Int
+  puntuacion                                  Int      @db.SmallInt
+  comentario                                  String?
+  fecha                                       DateTime @default(now())
+  Usuario_Calificacion_calificadoIdToUsuario  Usuario  @relation("Calificacion_calificadoIdToUsuario", fields: [calificadoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Usuario_Calificacion_calificadorIdToUsuario Usuario  @relation("Calificacion_calificadorIdToUsuario", fields: [calificadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Contrato                                    Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([contratoId, calificadorId])
   @@index([calificadoId])
@@ -78,7 +80,7 @@ model Cliente {
   nombreEmpresa String?        @db.VarChar(150)
   tipoCliente   String         @default("natural") @db.VarChar(20)
   descripcion   String?
-  User          User           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Usuario       Usuario        @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   Contrato      Contrato[]
   Conversacion  Conversacion[]
   Proyecto      Proyecto[]
@@ -174,7 +176,7 @@ model Freelancer {
   Contrato              Contrato[]
   Conversacion          Conversacion[]
   EstadisticaFreelancer EstadisticaFreelancer[]
-  User                  User                    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Usuario               Usuario                 @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   FreelancerHabilidad   FreelancerHabilidad[]
   PortafolioItem        PortafolioItem[]
   Propuesta             Propuesta[]
@@ -213,7 +215,7 @@ model Mensaje {
   leido          Boolean      @default(false)
   Conversacion   Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   OfertaChat     OfertaChat?
-  User           User         @relation(fields: [emisorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Usuario        Usuario      @relation(fields: [emisorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([conversacionId, fechaEnvio])
 }
@@ -301,27 +303,27 @@ model ProyectoHabilidad {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Reporte {
-  id                                    Int       @id @default(autoincrement())
-  usuarioReportaId                      Int
-  usuarioReportadoId                    Int?
-  proyectoId                            Int?
-  adminId                               Int?
-  motivo                                String    @db.VarChar(100)
-  descripcion                           String?
-  estado                                String    @default("pendiente") @db.VarChar(20)
-  fecha                                 DateTime  @default(now())
-  User_Reporte_adminIdToUser            User?     @relation("Reporte_adminIdToUser", fields: [adminId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Proyecto                              Proyecto? @relation(fields: [proyectoId], references: [id], onUpdate: NoAction)
-  User_Reporte_usuarioReportaIdToUser   User      @relation("Reporte_usuarioReportaIdToUser", fields: [usuarioReportaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  User_Reporte_usuarioReportadoIdToUser User?     @relation("Reporte_usuarioReportadoIdToUser", fields: [usuarioReportadoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                                          Int       @id @default(autoincrement())
+  usuarioReportaId                            Int
+  usuarioReportadoId                          Int?
+  proyectoId                                  Int?
+  adminId                                     Int?
+  motivo                                      String    @db.VarChar(100)
+  descripcion                                 String?
+  estado                                      String    @default("pendiente") @db.VarChar(20)
+  fecha                                       DateTime  @default(now())
+  Usuario_Reporte_adminIdToUsuario            Usuario?  @relation("Reporte_adminIdToUsuario", fields: [adminId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Proyecto                                    Proyecto? @relation(fields: [proyectoId], references: [id], onUpdate: NoAction)
+  Usuario_Reporte_usuarioReportaIdToUsuario   Usuario   @relation("Reporte_usuarioReportaIdToUsuario", fields: [usuarioReportaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Usuario_Reporte_usuarioReportadoIdToUsuario Usuario?  @relation("Reporte_usuarioReportadoIdToUsuario", fields: [usuarioReportadoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([estado])
 }
 
 model Rol {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique @db.VarChar(30)
-  User   User[]
+  id      Int       @id @default(autoincrement())
+  nombre  String    @unique @db.VarChar(30)
+  Usuario Usuario[]
 }
 
 /// Servicio publicado por un freelancer (estilo Fiverr): el cliente lo explora y lo solicita.
@@ -375,7 +377,7 @@ model Publicacion {
   imagenUrl          String?
   estado             String               @default("publicado") @db.VarChar(20)
   fechaPublicacion   DateTime             @default(now())
-  Autor              User                 @relation(fields: [autorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Autor              Usuario              @relation(fields: [autorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   MeGustaPublicacion MeGustaPublicacion[]
 
   @@index([autorId])
@@ -388,7 +390,7 @@ model MeGustaPublicacion {
   usuarioId     Int
   fecha         DateTime    @default(now())
   Publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  Usuario       User        @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([publicacionId, usuarioId])
   @@index([usuarioId])

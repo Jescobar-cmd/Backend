@@ -1,6 +1,6 @@
 import { Mensaje, usuarioParticipa } from '../../domain/entities/Conversacion';
 import { ConversacionRepository } from '../../domain/ports/repositories/ConversacionRepository';
-import { ForbiddenError, NotFoundError } from '../../shared/errors/AppError';
+import { ErrorProhibido, ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
 
 export interface MensajesPaginados {
   mensajes: Mensaje[];
@@ -12,7 +12,7 @@ export interface MensajesPaginados {
 export class ListarMensajesUseCase {
   constructor(private conversacionRepository: ConversacionRepository) {}
 
-  async execute(
+  async ejecutar(
     conversacionId: number,
     usuarioId: number,
     afterId: number | undefined,
@@ -20,10 +20,10 @@ export class ListarMensajesUseCase {
   ): Promise<MensajesPaginados> {
     const detalle = await this.conversacionRepository.obtener(conversacionId);
     if (!detalle) {
-      throw new NotFoundError('Conversación no encontrada');
+      throw new ErrorNoEncontrado('Conversación no encontrada');
     }
     if (!usuarioParticipa(detalle, usuarioId)) {
-      throw new ForbiddenError('No participas en esta conversación');
+      throw new ErrorProhibido('No participas en esta conversación');
     }
 
     const mensajes = await this.conversacionRepository.listarMensajes(

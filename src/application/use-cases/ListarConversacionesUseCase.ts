@@ -5,7 +5,7 @@ import { ConversacionRepository } from '../../domain/ports/repositories/Conversa
 export class ListarConversacionesUseCase {
   constructor(private conversacionRepository: ConversacionRepository) {}
 
-  async execute(usuarioId: number): Promise<ConversacionResumen[]> {
+  async ejecutar(usuarioId: number): Promise<ConversacionResumen[]> {
     return this.conversacionRepository.listar(usuarioId);
   }
 }

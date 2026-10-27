@@ -1,12 +1,12 @@
 import { Response, NextFunction } from 'express';
-import { container } from '../container';
-import { AuthRequest } from '../middlewares/authMiddleware';
-import { BadRequestError, UnauthorizedError } from '../../../shared/errors/AppError';
+import { contenedor } from '../contenedor';
+import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
+import { ErrorSolicitudInvalida, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
 
 function parsearId(valor: string): number {
   const id = Number(valor);
   if (!Number.isInteger(id) || id <= 0) {
-    throw new BadRequestError('El id del servicio no es válido');
+    throw new ErrorSolicitudInvalida('El id del servicio no es válido');
   }
   return id;
 }
@@ -15,7 +15,7 @@ function parsearEnteroPositivo(valor: unknown, nombre: string): number | undefin
   if (typeof valor !== 'string' || !valor) return undefined;
   const numero = Number(valor);
   if (!Number.isInteger(numero) || numero <= 0) {
-    throw new BadRequestError(`El ${nombre} no es válido`);
+    throw new ErrorSolicitudInvalida(`El ${nombre} no es válido`);
   }
   return numero;
 }
@@ -26,11 +26,11 @@ function parsearTexto(valor: unknown): string | undefined {
 
 export class ServicioController {
   /** POST /api/servicios */
-  static async crear(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async crear(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const freelancerId = req.user?.id;
-      if (!freelancerId) throw new UnauthorizedError('No autorizado');
-      const servicio = await container.crearServicio.execute(freelancerId, req.body);
+      const freelancerId = req.usuario?.id;
+      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
+      const servicio = await contenedor.crearServicio.ejecutar(freelancerId, req.body);
       res.status(201).json({ mensaje: 'Servicio publicado correctamente', servicio });
     } catch (e) {
       next(e);
@@ -38,12 +38,12 @@ export class ServicioController {
   }
 
   /** GET /api/servicios?page=&limit=&categoriaId=&q= */
-  static async listar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async listar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
 
-      const resultado = await container.listarServicios.execute({
+      const resultado = await contenedor.listarServicios.ejecutar({
         page,
         limit,
         categoriaId: parsearEnteroPositivo(req.query.categoriaId, 'categoriaId'),
@@ -56,9 +56,9 @@ export class ServicioController {
   }
 
   /** GET /api/servicios/:id */
-  static async detalle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async detalle(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const servicio = await container.obtenerServicio.execute(parsearId(req.params.id));
+      const servicio = await contenedor.obtenerServicio.ejecutar(parsearId(req.params.id));
       res.json(servicio);
     } catch (e) {
       next(e);
@@ -66,11 +66,11 @@ export class ServicioController {
   }
 
   /** PATCH /api/servicios/:id */
-  static async actualizar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async actualizar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const freelancerId = req.user?.id;
-      if (!freelancerId) throw new UnauthorizedError('No autorizado');
-      const servicio = await container.actualizarServicio.execute(
+      const freelancerId = req.usuario?.id;
+      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
+      const servicio = await contenedor.actualizarServicio.ejecutar(
         freelancerId,
         parsearId(req.params.id),
         req.body
@@ -82,11 +82,11 @@ export class ServicioController {
   }
 
   /** PATCH /api/servicios/:id/estado */
-  static async cambiarEstado(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async cambiarEstado(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const freelancerId = req.user?.id;
-      if (!freelancerId) throw new UnauthorizedError('No autorizado');
-      const servicio = await container.cambiarEstadoServicio.execute(
+      const freelancerId = req.usuario?.id;
+      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
+      const servicio = await contenedor.cambiarEstadoServicio.ejecutar(
         freelancerId,
         parsearId(req.params.id),
         req.body.estado
@@ -98,15 +98,15 @@ export class ServicioController {
   }
 
   /** GET /api/freelancer/servicios?page=&limit=&estado=&q= */
-  static async misServicios(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async misServicios(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const freelancerId = req.user?.id;
-      if (!freelancerId) throw new UnauthorizedError('No autorizado');
+      const freelancerId = req.usuario?.id;
+      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
 
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
 
-      const resultado = await container.listarMisServicios.execute(freelancerId, {
+      const resultado = await contenedor.listarMisServicios.ejecutar(freelancerId, {
         page,
         limit,
         estado: parsearTexto(req.query.estado),

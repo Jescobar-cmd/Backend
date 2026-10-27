@@ -5,7 +5,7 @@ import { OfertaRepository } from '../../domain/ports/repositories/OfertaReposito
 export class ListarMisOfertasUseCase {
   constructor(private ofertaRepository: OfertaRepository) {}
 
-  async execute(clienteId: number, filtros: FiltrosOferta): Promise<OfertaPaginada> {
+  async ejecutar(clienteId: number, filtros: FiltrosOferta): Promise<OfertaPaginada> {
     return this.ofertaRepository.listarPorCliente(clienteId, filtros);
   }
 }

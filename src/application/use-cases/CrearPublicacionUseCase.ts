@@ -5,7 +5,7 @@ import { PublicacionRepository } from '../../domain/ports/repositories/Publicaci
 export class CrearPublicacionUseCase {
   constructor(private publicacionRepository: PublicacionRepository) {}
 
-  async execute(autorId: number, datos: NuevaPublicacion): Promise<Publicacion> {
+  async ejecutar(autorId: number, datos: NuevaPublicacion): Promise<Publicacion> {
     return this.publicacionRepository.crear(autorId, datos);
   }
 }

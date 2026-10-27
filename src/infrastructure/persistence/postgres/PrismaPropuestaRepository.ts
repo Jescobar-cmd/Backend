@@ -6,11 +6,11 @@ import {
   PropuestaResumen,
 } from '../../../domain/entities/Propuesta';
 import { PropuestaRepository } from '../../../domain/ports/repositories/PropuestaRepository';
-import { NotFoundError } from '../../../shared/errors/AppError';
+import { ErrorNoEncontrado } from '../../../shared/errors/ErrorAplicacion';
 import { contratoInclude, toContratoDetalle } from './contratoInclude';
 
 const propuestaInclude = {
-  Freelancer: { include: { User: true } },
+  Freelancer: { include: { Usuario: true } },
   Proyecto: { select: { id: true, titulo: true, estado: true } },
 } satisfies Prisma.PropuestaInclude;
 
@@ -27,8 +27,8 @@ function toPropuestaResumen(propuesta: PropuestaConRelaciones): PropuestaResumen
     fechaEnvio: propuesta.fechaEnvio,
     freelancer: {
       id: propuesta.Freelancer.id,
-      nombre: propuesta.Freelancer.User.nombre,
-      fotoPerfil: propuesta.Freelancer.User.fotoPerfil,
+      nombre: propuesta.Freelancer.Usuario.nombre,
+      fotoPerfil: propuesta.Freelancer.Usuario.fotoPerfil,
       calificacionPromedio: Number(propuesta.Freelancer.calificacionPromedio),
     },
     proyecto: {
@@ -49,7 +49,7 @@ export class PrismaPropuestaRepository implements PropuestaRepository {
     datos: NuevaPropuesta
   ): Promise<PropuestaResumen> {
     const propuesta = await this.db.$transaction(async (tx) => {
-      // Propuesta.freelancerId apunta a Freelancer (no a User).
+      // Propuesta.freelancerId apunta a Freelancer (no a Usuario).
       await tx.freelancer.upsert({
         where: { id: freelancerId },
         create: { id: freelancerId },
@@ -101,7 +101,7 @@ export class PrismaPropuestaRepository implements PropuestaRepository {
         include: { Proyecto: { select: { clienteId: true } } },
       });
       if (!propuesta) {
-        throw new NotFoundError('Propuesta no encontrada');
+        throw new ErrorNoEncontrado('Propuesta no encontrada');
       }
 
       await tx.propuesta.update({

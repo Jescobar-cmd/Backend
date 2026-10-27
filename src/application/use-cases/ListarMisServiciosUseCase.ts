@@ -5,7 +5,7 @@ import { ServicioRepository } from '../../domain/ports/repositories/ServicioRepo
 export class ListarMisServiciosUseCase {
   constructor(private servicioRepository: ServicioRepository) {}
 
-  async execute(freelancerId: number, filtros: FiltrosServicio): Promise<ServicioPaginado> {
+  async ejecutar(freelancerId: number, filtros: FiltrosServicio): Promise<ServicioPaginado> {
     return this.servicioRepository.listarPorFreelancer(freelancerId, filtros);
   }
 }

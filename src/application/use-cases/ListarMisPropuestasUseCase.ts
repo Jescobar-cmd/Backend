@@ -5,7 +5,7 @@ import { PropuestaRepository } from '../../domain/ports/repositories/PropuestaRe
 export class ListarMisPropuestasUseCase {
   constructor(private propuestaRepository: PropuestaRepository) {}
 
-  async execute(freelancerId: number): Promise<PropuestaResumen[]> {
+  async ejecutar(freelancerId: number): Promise<PropuestaResumen[]> {
     return this.propuestaRepository.listarPorFreelancer(freelancerId);
   }
 }

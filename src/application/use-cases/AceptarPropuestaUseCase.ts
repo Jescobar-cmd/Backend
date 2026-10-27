@@ -1,10 +1,10 @@
 import { aContratoVista, ContratoVista } from '../../domain/entities/Contrato';
 import { PropuestaRepository } from '../../domain/ports/repositories/PropuestaRepository';
 import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-} from '../../shared/errors/AppError';
+  ErrorConflicto,
+  ErrorProhibido,
+  ErrorNoEncontrado,
+} from '../../shared/errors/ErrorAplicacion';
 
 /**
  * Caso de uso: el cliente acepta una propuesta.
@@ -14,23 +14,23 @@ import {
 export class AceptarPropuestaUseCase {
   constructor(private propuestaRepository: PropuestaRepository) {}
 
-  async execute(
+  async ejecutar(
     clienteId: number,
     ofertaId: number,
     propuestaId: number
   ): Promise<ContratoVista> {
     const detalle = await this.propuestaRepository.obtenerDetalle(propuestaId);
     if (!detalle || detalle.proyectoId !== ofertaId) {
-      throw new NotFoundError('Propuesta no encontrada');
+      throw new ErrorNoEncontrado('Propuesta no encontrada');
     }
     if (detalle.clienteId !== clienteId) {
-      throw new ForbiddenError('La oferta no te pertenece');
+      throw new ErrorProhibido('La oferta no te pertenece');
     }
     if (detalle.estado !== 'pendiente') {
-      throw new ConflictError('La propuesta ya fue procesada');
+      throw new ErrorConflicto('La propuesta ya fue procesada');
     }
     if (detalle.proyectoEstado !== 'abierto') {
-      throw new ConflictError('La oferta no está abierta');
+      throw new ErrorConflicto('La oferta no está abierta');
     }
 
     const contrato = await this.propuestaRepository.aceptar(propuestaId);

@@ -1,15 +1,15 @@
 import { Servicio } from '../../domain/entities/Servicio';
 import { ServicioRepository } from '../../domain/ports/repositories/ServicioRepository';
-import { NotFoundError } from '../../shared/errors/AppError';
+import { ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
 
 /** Caso de uso: ver el detalle de un servicio. */
 export class ObtenerServicioUseCase {
   constructor(private servicioRepository: ServicioRepository) {}
 
-  async execute(servicioId: number): Promise<Servicio> {
+  async ejecutar(servicioId: number): Promise<Servicio> {
     const servicio = await this.servicioRepository.obtenerPorId(servicioId);
     if (!servicio) {
-      throw new NotFoundError('Servicio no encontrado');
+      throw new ErrorNoEncontrado('Servicio no encontrado');
     }
     return servicio;
   }

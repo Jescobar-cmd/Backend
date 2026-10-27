@@ -5,7 +5,7 @@ import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepo
 export class ListarContratosUseCase {
   constructor(private contratoRepository: ContratoRepository) {}
 
-  async execute(usuarioId: number): Promise<ContratoVista[]> {
+  async ejecutar(usuarioId: number): Promise<ContratoVista[]> {
     const contratos = await this.contratoRepository.listar(usuarioId);
     return contratos.map((contrato) => aContratoVista(contrato, usuarioId));
   }

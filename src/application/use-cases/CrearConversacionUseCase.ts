@@ -5,13 +5,13 @@ import {
 import { ConversacionRepository } from '../../domain/ports/repositories/ConversacionRepository';
 import { OfertaRepository } from '../../domain/ports/repositories/OfertaRepository';
 import { ServicioRepository } from '../../domain/ports/repositories/ServicioRepository';
-import { UserRepository } from '../../domain/ports/repositories/UserRepository';
+import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { ROLES } from '../../shared/constants/roles';
 import {
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../shared/errors/AppError';
+  ErrorProhibido,
+  ErrorNoEncontrado,
+  ErrorValidacion,
+} from '../../shared/errors/ErrorAplicacion';
 
 export interface NuevaConversacionDTO {
   servicioId?: number;
@@ -29,10 +29,10 @@ export class CrearConversacionUseCase {
     private conversacionRepository: ConversacionRepository,
     private ofertaRepository: OfertaRepository,
     private servicioRepository: ServicioRepository,
-    private userRepository: UserRepository
+    private repositorioUsuario: RepositorioUsuario
   ) {}
 
-  async execute(
+  async ejecutar(
     usuarioId: number,
     rol: number,
     datos: NuevaConversacionDTO
@@ -47,44 +47,44 @@ export class CrearConversacionUseCase {
       if (datos.servicioId) {
         const servicio = await this.servicioRepository.obtenerPorId(datos.servicioId);
         if (!servicio) {
-          throw new NotFoundError('Servicio no encontrado');
+          throw new ErrorNoEncontrado('Servicio no encontrado');
         }
         if (servicio.estado !== 'activo') {
-          throw new ValidationError('El servicio no está disponible para iniciar un chat');
+          throw new ErrorValidacion('El servicio no está disponible para iniciar un chat');
         }
         freelancerId = servicio.freelancer.id;
         servicioId = servicio.id;
       } else if (datos.proyectoId && datos.freelancerId) {
         const proyecto = await this.ofertaRepository.obtenerBasica(datos.proyectoId);
         if (!proyecto) {
-          throw new NotFoundError('Oferta no encontrada');
+          throw new ErrorNoEncontrado('Oferta no encontrada');
         }
         if (proyecto.clienteId !== usuarioId) {
-          throw new ForbiddenError('La oferta no te pertenece');
+          throw new ErrorProhibido('La oferta no te pertenece');
         }
         freelancerId = datos.freelancerId;
         proyectoId = proyecto.id;
       } else {
-        throw new ValidationError('Debes indicar un servicio o una oferta con el freelancer');
+        throw new ErrorValidacion('Debes indicar un servicio o una oferta con el freelancer');
       }
     } else if (rol === ROLES.FREELANCER) {
       if (!datos.proyectoId) {
-        throw new ValidationError('Debes indicar la oferta (proyectoId)');
+        throw new ErrorValidacion('Debes indicar la oferta (proyectoId)');
       }
       const proyecto = await this.ofertaRepository.obtenerBasica(datos.proyectoId);
       if (!proyecto) {
-        throw new NotFoundError('Oferta no encontrada');
+        throw new ErrorNoEncontrado('Oferta no encontrada');
       }
       clienteId = proyecto.clienteId;
       freelancerId = usuarioId;
       proyectoId = proyecto.id;
     } else {
-      throw new ForbiddenError('Solo clientes y freelancers pueden iniciar conversaciones');
+      throw new ErrorProhibido('Solo clientes y freelancers pueden iniciar conversaciones');
     }
 
-    const freelancer = await this.userRepository.findById(freelancerId);
+    const freelancer = await this.repositorioUsuario.buscarPorId(freelancerId);
     if (!freelancer || freelancer.rolId !== ROLES.FREELANCER) {
-      throw new NotFoundError('Freelancer no encontrado');
+      throw new ErrorNoEncontrado('Freelancer no encontrado');
     }
 
     const conversacion = await this.conversacionRepository.crearOEncontrar(

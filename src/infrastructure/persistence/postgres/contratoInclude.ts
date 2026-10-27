@@ -2,8 +2,8 @@ import { Prisma } from '@prisma/client';
 import { ContratoDetalle } from '../../../domain/entities/Contrato';
 
 export const contratoInclude = {
-  Cliente: { include: { User: true } },
-  Freelancer: { include: { User: true } },
+  Cliente: { include: { Usuario: true } },
+  Freelancer: { include: { Usuario: true } },
   Proyecto: { select: { id: true, titulo: true } },
   Servicio: { select: { id: true, titulo: true } },
 } satisfies Prisma.ContratoInclude;
@@ -32,13 +32,13 @@ export function toContratoDetalle(contrato: ContratoConRelaciones): ContratoDeta
     contexto,
     cliente: {
       id: contrato.Cliente.id,
-      nombre: contrato.Cliente.User.nombre,
-      fotoPerfil: contrato.Cliente.User.fotoPerfil,
+      nombre: contrato.Cliente.Usuario.nombre,
+      fotoPerfil: contrato.Cliente.Usuario.fotoPerfil,
     },
     freelancer: {
       id: contrato.Freelancer.id,
-      nombre: contrato.Freelancer.User.nombre,
-      fotoPerfil: contrato.Freelancer.User.fotoPerfil,
+      nombre: contrato.Freelancer.Usuario.nombre,
+      fotoPerfil: contrato.Freelancer.Usuario.fotoPerfil,
     },
   };
 }

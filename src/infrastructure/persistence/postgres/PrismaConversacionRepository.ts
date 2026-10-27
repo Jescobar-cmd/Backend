@@ -12,8 +12,8 @@ import {
 import { ROLES } from '../../../shared/constants/roles';
 
 const conversacionDetalleInclude = {
-  Cliente: { include: { User: true } },
-  Freelancer: { include: { User: true } },
+  Cliente: { include: { Usuario: true } },
+  Freelancer: { include: { Usuario: true } },
   Proyecto: { select: { id: true, titulo: true } },
   Servicio: { select: { id: true, titulo: true } },
 } satisfies Prisma.ConversacionInclude;
@@ -42,13 +42,13 @@ function toDetalle(conv: ConversacionConDetalle): ConversacionDetalle {
     contexto: toContexto(conv),
     cliente: {
       id: conv.Cliente.id,
-      nombre: conv.Cliente.User.nombre,
-      fotoPerfil: conv.Cliente.User.fotoPerfil,
+      nombre: conv.Cliente.Usuario.nombre,
+      fotoPerfil: conv.Cliente.Usuario.fotoPerfil,
     },
     freelancer: {
       id: conv.Freelancer.id,
-      nombre: conv.Freelancer.User.nombre,
-      fotoPerfil: conv.Freelancer.User.fotoPerfil,
+      nombre: conv.Freelancer.Usuario.nombre,
+      fotoPerfil: conv.Freelancer.Usuario.fotoPerfil,
     },
   };
 }
@@ -86,7 +86,7 @@ export class PrismaConversacionRepository implements ConversacionRepository {
     const servicioId = contexto.servicioId ?? null;
 
     const conversacion = await this.db.$transaction(async (tx) => {
-      // Conversacion apunta a Cliente y Freelancer (no a User): aseguramos ambas filas.
+      // Conversacion apunta a Cliente y Freelancer (no a Usuario): aseguramos ambas filas.
       await tx.cliente.upsert({
         where: { id: clienteId },
         create: { id: clienteId },

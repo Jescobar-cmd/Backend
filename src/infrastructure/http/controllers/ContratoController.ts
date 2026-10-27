@@ -1,24 +1,24 @@
 import { Response, NextFunction } from 'express';
-import { container } from '../container';
-import { AuthRequest } from '../middlewares/authMiddleware';
-import { BadRequestError, UnauthorizedError } from '../../../shared/errors/AppError';
+import { contenedor } from '../contenedor';
+import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
+import { ErrorSolicitudInvalida, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
 
 function parsearId(valor: string): number {
   const id = Number(valor);
   if (!Number.isInteger(id) || id <= 0) {
-    throw new BadRequestError('El id del contrato no es válido');
+    throw new ErrorSolicitudInvalida('El id del contrato no es válido');
   }
   return id;
 }
 
 export class ContratoController {
   /** GET /api/contratos */
-  static async listar(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async listar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.user?.id;
-      if (!usuarioId) throw new UnauthorizedError('No autorizado');
+      const usuarioId = req.usuario?.id;
+      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
 
-      const contratos = await container.listarContratos.execute(usuarioId);
+      const contratos = await contenedor.listarContratos.ejecutar(usuarioId);
       res.json({ total: contratos.length, contratos });
     } catch (e) {
       next(e);
@@ -26,12 +26,12 @@ export class ContratoController {
   }
 
   /** GET /api/contratos/:id */
-  static async detalle(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async detalle(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.user?.id;
-      if (!usuarioId) throw new UnauthorizedError('No autorizado');
+      const usuarioId = req.usuario?.id;
+      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
 
-      const contrato = await container.obtenerContrato.execute(
+      const contrato = await contenedor.obtenerContrato.ejecutar(
         parsearId(req.params.id),
         usuarioId
       );

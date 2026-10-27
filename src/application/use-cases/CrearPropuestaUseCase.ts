@@ -1,7 +1,7 @@
 import { NuevaPropuesta, PropuestaResumen } from '../../domain/entities/Propuesta';
 import { OfertaRepository } from '../../domain/ports/repositories/OfertaRepository';
 import { PropuestaRepository } from '../../domain/ports/repositories/PropuestaRepository';
-import { ConflictError, NotFoundError } from '../../shared/errors/AppError';
+import { ErrorConflicto, ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
 
 /** Caso de uso: un freelancer envía una propuesta a una oferta abierta. */
 export class CrearPropuestaUseCase {
@@ -10,17 +10,17 @@ export class CrearPropuestaUseCase {
     private ofertaRepository: OfertaRepository
   ) {}
 
-  async execute(
+  async ejecutar(
     freelancerId: number,
     ofertaId: number,
     datos: NuevaPropuesta
   ): Promise<PropuestaResumen> {
     const oferta = await this.ofertaRepository.obtenerBasica(ofertaId);
     if (!oferta) {
-      throw new NotFoundError('Oferta no encontrada');
+      throw new ErrorNoEncontrado('Oferta no encontrada');
     }
     if (oferta.estado !== 'abierto') {
-      throw new ConflictError('La oferta no está abierta para recibir propuestas');
+      throw new ErrorConflicto('La oferta no está abierta para recibir propuestas');
     }
     return this.propuestaRepository.crear(freelancerId, ofertaId, datos);
   }

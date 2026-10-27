@@ -8,7 +8,7 @@ import { PublicacionRepository } from '../../domain/ports/repositories/Publicaci
 export class ListarPublicacionesUseCase {
   constructor(private publicacionRepository: PublicacionRepository) {}
 
-  async execute(usuarioId: number, filtros: FiltrosPublicacion): Promise<PublicacionPaginada> {
+  async ejecutar(usuarioId: number, filtros: FiltrosPublicacion): Promise<PublicacionPaginada> {
     return this.publicacionRepository.listar(filtros, usuarioId);
   }
 }

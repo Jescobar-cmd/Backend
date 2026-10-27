@@ -1,12 +1,12 @@
 import { Response, NextFunction } from 'express';
-import { container } from '../container';
-import { AuthRequest } from '../middlewares/authMiddleware';
+import { contenedor } from '../contenedor';
+import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
 
 export class CategoriaController {
   /** GET /api/categorias */
-  static async listar(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  static async listar(_req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const categorias = await container.listarCategorias.execute();
+      const categorias = await contenedor.listarCategorias.ejecutar();
       res.json({ total: categorias.length, categorias });
     } catch (e) {
       next(e);
