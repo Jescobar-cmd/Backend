@@ -1,4 +1,6 @@
 import { EnviadorCorreo } from '../../domain/ports/services/EnviadorCorreo';
+import { ErrorInternoServidor } from '../../shared/errors/ErrorAplicacion';
+import { entorno } from '../../config/entorno';
 
 interface ErrorBrevo {
   message?: string;
@@ -6,8 +8,7 @@ interface ErrorBrevo {
 }
 
 // Adaptador de infraestructura: envía por la API HTTP de Brevo (puerto 443).
-// Render bloquea la salida SMTP (Gmail), pero el HTTPS sí pasa.
-// El puerto EnviadorCorreo no cambia: el dominio ni se entera.
+// Render bloquea la salida SMTP (Gmail), pero HTTPS sí pasa.
 export class EnviadorCorreoBrevo implements EnviadorCorreo {
   private readonly claveApi: string;
   private readonly correoRemitente: string;
@@ -16,12 +17,14 @@ export class EnviadorCorreoBrevo implements EnviadorCorreo {
   private readonly baseEnlaceRestablecimiento: string;
 
   constructor() {
-    const claveApi = process.env.BREVO_API_KEY;
-    if (!claveApi) throw new Error('Falta BREVO_API_KEY en el .env');
+    const claveApi = entorno.BREVO_API_KEY;
+    if (!claveApi) {
+      throw new ErrorInternoServidor('Falta BREVO_API_KEY en la configuración de entorno');
+    }
     this.claveApi = claveApi;
-    this.correoRemitente = process.env.EMAIL_FROM ?? process.env.SMTP_FROM ?? 'no-reply@firstgig.com';
-    this.nombreRemitente = process.env.EMAIL_FROM_NAME ?? 'FirstGig';
-    const urlFrontend = (process.env.FRONTEND_URL ?? 'http://localhost:5173').trim().replace(/\/+$/, '');
+    this.correoRemitente = entorno.EMAIL_FROM ?? entorno.SMTP_FROM ?? 'no-reply@firstgig.com';
+    this.nombreRemitente = entorno.EMAIL_FROM_NAME ?? 'FirstGig';
+    const urlFrontend = entorno.FRONTEND_URL.trim().replace(/\/+$/, '');
     this.baseEnlaceConfirmacion = `${urlFrontend}/confirm?token=`;
     this.baseEnlaceRestablecimiento = `${urlFrontend}/reset-password?token=`;
   }
@@ -47,19 +50,27 @@ export class EnviadorCorreoBrevo implements EnviadorCorreo {
   }
 
   private async enviar(destinatario: string, asunto: string, contenidoHtml: string): Promise<void> {
-    const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'api-key': this.claveApi },
-      body: JSON.stringify({
-        sender: { email: this.correoRemitente, name: this.nombreRemitente },
-        to: [{ email: destinatario }],
-        subject: asunto,
-        htmlContent: contenidoHtml,
-      }),
-    });
-    if (!respuesta.ok) {
-      const cuerpo = (await respuesta.json().catch(() => ({}))) as ErrorBrevo;
-      throw new Error(`Brevo rechazó el envío (${respuesta.status}): ${cuerpo.message ?? 'sin detalle'}`);
+    try {
+      const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-key': this.claveApi },
+        body: JSON.stringify({
+          sender: { email: this.correoRemitente, name: this.nombreRemitente },
+          to: [{ email: destinatario }],
+          subject: asunto,
+          htmlContent: contenidoHtml,
+        }),
+      });
+
+      if (!respuesta.ok) {
+        const cuerpo = (await respuesta.json().catch(() => ({}))) as ErrorBrevo;
+        console.error(`[EnviadorCorreoBrevo] Error (${respuesta.status}):`, cuerpo);
+        throw new ErrorInternoServidor('No se pudo enviar el correo de notificación en este momento');
+      }
+    } catch (error) {
+      if (error instanceof ErrorInternoServidor) throw error;
+      console.error('[EnviadorCorreoBrevo] Fallo de conexión:', error);
+      throw new ErrorInternoServidor('No se pudo establecer conexión con el servicio de correo');
     }
   }
 

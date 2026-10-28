@@ -1,6 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import { VerificadorOAuth, PerfilUsuarioOAuth } from '../../domain/ports/services/VerificadorOAuth';
 import { ErrorNoAutorizado } from '../../shared/errors/ErrorAplicacion';
+import { entorno } from '../../config/entorno';
 
 // Adaptador de infraestructura: implementa el puerto VerificadorOAuth con Google Auth Library.
 export class ServicioAutenticacionGoogle implements VerificadorOAuth {
@@ -8,7 +9,7 @@ export class ServicioAutenticacionGoogle implements VerificadorOAuth {
   private readonly idCliente: string | undefined;
 
   constructor() {
-    this.idCliente = process.env.GOOGLE_CLIENT_ID;
+    this.idCliente = entorno.GOOGLE_CLIENT_ID;
     if (this.idCliente) {
       this.cliente = new OAuth2Client(this.idCliente);
     }

@@ -29,7 +29,7 @@ export class ContraofertarUseCase {
     if (detalle.estado !== 'pendiente') {
       throw new ErrorConflicto('La oferta ya no está pendiente');
     }
-    if (detalle.fechaExpiracion && detalle.fechaExpiracion.getTime() < Date.now()) {
+    if (detalle.fechaExpiracion && new Date(detalle.fechaExpiracion).getTime() < Date.now()) {
       await this.ofertaChatRepository.marcarExpirada(ofertaPadreId);
       throw new ErrorConflicto('La oferta expiró');
     }

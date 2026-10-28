@@ -1,4 +1,5 @@
 import { prisma } from '../../config/conexionBd';
+import { entorno } from '../../config/entorno';
 import { PrismaRepositorioUsuario } from '../persistence/postgres/PrismaRepositorioUsuario';
 import { PrismaRepositorioToken } from '../persistence/postgres/PrismaRepositorioToken';
 import { PrismaPerfilRepository } from '../persistence/postgres/PrismaPerfilRepository';
@@ -90,7 +91,7 @@ const calificaciones = new PrismaCalificacionRepository(prisma);
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
-const correo = process.env.BREVO_API_KEY ? new EnviadorCorreoBrevo() : new EnviadorCorreoNodemailer();
+const correo = entorno.BREVO_API_KEY ? new EnviadorCorreoBrevo() : new EnviadorCorreoNodemailer();
 const jwt = new ServicioJwt();
 const google = new ServicioAutenticacionGoogle();
 

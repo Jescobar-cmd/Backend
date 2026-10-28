@@ -1,22 +1,21 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { DatosToken, ServicioToken } from '../../domain/ports/services/ServicioToken';
 import { ErrorNoAutorizado } from '../../shared/errors/ErrorAplicacion';
+import { entorno } from '../../config/entorno';
 
 export class ServicioJwt implements ServicioToken {
   private readonly secreto: string;
   private readonly expiracion: string;
 
   constructor() {
-    const secreto = process.env.JWT_SECRET;
-    if (!secreto) {
-      throw new Error('Falta JWT_SECRET en las variables de entorno (.env)');
-    }
-    this.secreto = secreto;
-    this.expiracion = process.env.JWT_EXPIRES_IN ?? '24h';
+    this.secreto = entorno.JWT_SECRET;
+    this.expiracion = entorno.JWT_EXPIRES_IN;
   }
 
   generarToken(datos: DatosToken): string {
-    return jwt.sign(datos, this.secreto, { expiresIn: this.expiracion as SignOptions['expiresIn'] });
+    return jwt.sign(datos, this.secreto, {
+      expiresIn: this.expiracion as SignOptions['expiresIn'],
+    });
   }
 
   verificarToken(token: string): DatosToken {

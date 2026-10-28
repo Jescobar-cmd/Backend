@@ -15,24 +15,28 @@ import { ofertaChatRouter } from './routes/ofertaChat.routes';
 import { contratosRouter } from './routes/contrato.routes';
 import { habilidadesRouter } from './routes/habilidad.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
+import { entorno } from '../../config/entorno';
 
 export function createApp() {
   const app = express();
+
+  // Seguridad y hardening HTTP
+  app.disable('x-powered-by');
   app.use(helmet());
   app.use(
     cors({
-      origin: (process.env.FRONTEND_URL ?? 'http://localhost:5173')
-        .split(',')
-        .map((origin) => origin.trim()),
+      origin: entorno.FRONTEND_URL.split(',').map((origen) => origen.trim()),
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
+  // Endpoint de salud (Factor IX - Healthcheck)
   app.get('/health', (_req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   });
 
+  // Rutas de la API
   app.use('/api/auth', autenticacionRouter);
   app.use('/api/cliente', clienteRouter);
   app.use('/api/cliente/ofertas', ofertasRouter);
@@ -48,10 +52,11 @@ export function createApp() {
   app.use('/api/contratos', contratosRouter);
   app.use('/api/habilidades', habilidadesRouter);
 
-  // Swagger UI + JSON crudo (para importar la colección en Postman)
+  // Documentación OpenAPI / Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));
   app.get('/api-docs.json', (_req, res) => res.json(swaggerDocument));
 
+  // Manejador centralizado de errores
   app.use(manejadorErrores);
 
   return app;
