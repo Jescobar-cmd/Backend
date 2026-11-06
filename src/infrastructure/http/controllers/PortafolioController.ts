@@ -1,15 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorNoAutorizado, ErrorSolicitudInvalida } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearId(valor: string, mensaje: string): number {
-  const id = Number(valor);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new ErrorSolicitudInvalida(mensaje);
-  }
-  return id;
-}
+import { obtenerUsuarioId, parsearIdParam } from '../helpers/peticion.helper';
 
 export class PortafolioController {
   /** GET /api/freelancer/portafolio */
@@ -19,9 +11,7 @@ export class PortafolioController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
+      const freelancerId = obtenerUsuarioId(req);
       const items = await contenedor.listarPortafolio.ejecutar(freelancerId);
       res.json({ total: items.length, items });
     } catch (e) {
@@ -36,7 +26,7 @@ export class PortafolioController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = parsearId(req.params.id, 'El id del freelancer no es válido');
+      const freelancerId = parsearIdParam(req.params.id, 'El id del freelancer no es válido');
       const items = await contenedor.listarPortafolio.ejecutar(freelancerId);
       res.json({ total: items.length, items });
     } catch (e) {
@@ -51,9 +41,7 @@ export class PortafolioController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
+      const freelancerId = obtenerUsuarioId(req);
       const item = await contenedor.crearPortafolioItem.ejecutar(freelancerId, req.body);
       res.status(201).json({ mensaje: 'Ítem agregado al portafolio', item });
     } catch (e) {
@@ -68,12 +56,11 @@ export class PortafolioController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
+      const freelancerId = obtenerUsuarioId(req);
+      const itemId = parsearIdParam(req.params.id, 'El id del ítem no es válido');
       const item = await contenedor.actualizarPortafolioItem.ejecutar(
         freelancerId,
-        parsearId(req.params.id, 'El id del ítem no es válido'),
+        itemId,
         req.body
       );
       res.json({ mensaje: 'Ítem del portafolio actualizado', item });
@@ -89,13 +76,9 @@ export class PortafolioController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
-      await contenedor.eliminarPortafolioItem.ejecutar(
-        freelancerId,
-        parsearId(req.params.id, 'El id del ítem no es válido')
-      );
+      const freelancerId = obtenerUsuarioId(req);
+      const itemId = parsearIdParam(req.params.id, 'El id del ítem no es válido');
+      await contenedor.eliminarPortafolioItem.ejecutar(freelancerId, itemId);
       res.json({ mensaje: 'Ítem del portafolio eliminado' });
     } catch (e) {
       next(e);

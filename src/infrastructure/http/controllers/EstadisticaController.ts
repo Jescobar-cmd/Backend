@@ -1,16 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorNoAutorizado, ErrorSolicitudInvalida } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearFecha(valor: unknown, nombre: string): Date | undefined {
-  if (typeof valor !== 'string' || !valor) return undefined;
-  const fecha = new Date(valor);
-  if (Number.isNaN(fecha.getTime())) {
-    throw new ErrorSolicitudInvalida(`El ${nombre} no es una fecha válida`);
-  }
-  return fecha;
-}
+import { obtenerUsuarioId } from '../helpers/peticion.helper';
+import { ConsultaEstadisticas } from '../../../application/validators/estadistica.schemas';
 
 export class EstadisticaController {
   /** GET /api/freelancer/estadisticas?desde=&hasta= */
@@ -20,14 +12,8 @@ export class EstadisticaController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
-      const desde = parsearFecha(req.query.desde, 'desde');
-      const hasta = parsearFecha(req.query.hasta, 'hasta');
-      if (desde && hasta && desde > hasta) {
-        throw new ErrorSolicitudInvalida('"desde" no puede ser posterior a "hasta"');
-      }
+      const freelancerId = obtenerUsuarioId(req);
+      const { desde, hasta } = (req.query as unknown as ConsultaEstadisticas) ?? {};
 
       const resumen = await contenedor.obtenerEstadisticasFreelancer.ejecutar(
         freelancerId,

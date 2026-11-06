@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
+import { obtenerUsuarioId } from '../helpers/peticion.helper';
 
 export class DashboardController {
   /** GET /api/freelancer/dashboard */
@@ -11,9 +11,7 @@ export class DashboardController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const freelancerId = req.usuario?.id;
-      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
-
+      const freelancerId = obtenerUsuarioId(req);
       const dashboard = await contenedor.obtenerDashboardFreelancer.ejecutar(freelancerId);
       res.json(dashboard);
     } catch (e) {

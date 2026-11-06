@@ -7,7 +7,7 @@ import { EstadisticaController } from '../controllers/EstadisticaController';
 import { DashboardController } from '../controllers/DashboardController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
-import { validar } from '../middlewares/validar';
+import { validar, validarQuery } from '../middlewares/validar';
 import { ROLES } from '../../../shared/constants/roles';
 import {
   actualizarServicioSchema,
@@ -19,6 +19,7 @@ import {
   actualizarPortafolioItemSchema,
   crearPortafolioItemSchema,
 } from '../../../application/validators/portafolio.schemas';
+import { consultaEstadisticasSchema } from '../../../application/validators/estadistica.schemas';
 
 // Catálogo de servicios -> se monta en /api/servicios
 export const serviciosRouter = Router();
@@ -69,5 +70,9 @@ freelancerRouter.patch(
   PortafolioController.actualizar
 );
 freelancerRouter.delete('/portafolio/:id', PortafolioController.eliminar);
-freelancerRouter.get('/estadisticas', EstadisticaController.misEstadisticas);
+freelancerRouter.get(
+  '/estadisticas',
+  validarQuery(consultaEstadisticasSchema),
+  EstadisticaController.misEstadisticas
+);
 freelancerRouter.get('/dashboard', DashboardController.obtener);

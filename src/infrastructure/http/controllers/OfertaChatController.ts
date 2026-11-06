@@ -1,25 +1,17 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorSolicitudInvalida, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearId(valor: string, nombre: string): number {
-  const id = Number(valor);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new ErrorSolicitudInvalida(`El id de ${nombre} no es válido`);
-  }
-  return id;
-}
+import { obtenerUsuarioId, parsearIdParam } from '../helpers/peticion.helper';
 
 export class OfertaChatController {
   /** POST /api/conversaciones/:id/ofertas */
   static async crear(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const conversacionId = parsearIdParam(req.params.id, 'la conversación');
 
       const mensaje = await contenedor.crearOfertaChat.ejecutar(
-        parsearId(req.params.id, 'la conversación'),
+        conversacionId,
         usuarioId,
         req.body
       );
@@ -32,11 +24,11 @@ export class OfertaChatController {
   /** POST /api/ofertas-chat/:id/aceptar */
   static async aceptar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const ofertaId = parsearIdParam(req.params.id, 'la oferta');
 
       const contrato = await contenedor.aceptarOfertaChat.ejecutar(
-        parsearId(req.params.id, 'la oferta'),
+        ofertaId,
         usuarioId
       );
       res.json({ mensaje: 'Oferta aceptada y contrato creado', contrato });
@@ -48,11 +40,11 @@ export class OfertaChatController {
   /** POST /api/ofertas-chat/:id/rechazar */
   static async rechazar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const ofertaId = parsearIdParam(req.params.id, 'la oferta');
 
       await contenedor.rechazarOfertaChat.ejecutar(
-        parsearId(req.params.id, 'la oferta'),
+        ofertaId,
         usuarioId
       );
       res.json({ mensaje: 'Oferta rechazada' });
@@ -64,11 +56,11 @@ export class OfertaChatController {
   /** POST /api/ofertas-chat/:id/contraoferta */
   static async contraofertar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const ofertaId = parsearIdParam(req.params.id, 'la oferta');
 
       const mensaje = await contenedor.contraofertar.ejecutar(
-        parsearId(req.params.id, 'la oferta'),
+        ofertaId,
         usuarioId,
         req.body
       );

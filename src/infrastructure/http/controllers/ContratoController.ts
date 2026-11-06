@@ -1,23 +1,13 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorSolicitudInvalida, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearId(valor: string): number {
-  const id = Number(valor);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new ErrorSolicitudInvalida('El id del contrato no es válido');
-  }
-  return id;
-}
+import { obtenerUsuarioId, parsearIdParam } from '../helpers/peticion.helper';
 
 export class ContratoController {
   /** GET /api/contratos */
   static async listar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
+      const usuarioId = obtenerUsuarioId(req);
       const contratos = await contenedor.listarContratos.ejecutar(usuarioId);
       res.json({ total: contratos.length, contratos });
     } catch (e) {
@@ -28,13 +18,9 @@ export class ContratoController {
   /** GET /api/contratos/:id */
   static async detalle(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
-      const contrato = await contenedor.obtenerContrato.ejecutar(
-        parsearId(req.params.id),
-        usuarioId
-      );
+      const usuarioId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
+      const contrato = await contenedor.obtenerContrato.ejecutar(contratoId, usuarioId);
       res.json(contrato);
     } catch (e) {
       next(e);
@@ -48,11 +34,10 @@ export class ContratoController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
+      const usuarioId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
       const contrato = await contenedor.cambiarEstadoContrato.ejecutar(
-        parsearId(req.params.id),
+        contratoId,
         usuarioId,
         req.body.estado
       );
@@ -75,11 +60,10 @@ export class ContratoController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
+      const usuarioId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
       const resultado = await contenedor.listarCalificacionesContrato.ejecutar(
-        parsearId(req.params.id),
+        contratoId,
         usuarioId
       );
       res.json(resultado);
@@ -95,11 +79,10 @@ export class ContratoController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
+      const usuarioId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
       const calificacion = await contenedor.calificarContrato.ejecutar(
-        parsearId(req.params.id),
+        contratoId,
         usuarioId,
         req.body
       );

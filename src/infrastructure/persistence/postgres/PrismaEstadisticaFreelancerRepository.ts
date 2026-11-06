@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { EstadisticaFreelancer } from '../../../domain/entities/EstadisticaFreelancer';
 import { EstadisticaFreelancerRepository } from '../../../domain/ports/repositories/EstadisticaFreelancerRepository';
+import { ROLES } from '../../../shared/constants/roles';
 
 /** Normaliza a fecha UTC para que la columna DATE no dependa del huso horario. */
 function fechaUtc(fecha: Date = new Date()): Date {
@@ -11,16 +12,29 @@ function fechaUtc(fecha: Date = new Date()): Date {
 export class PrismaEstadisticaFreelancerRepository implements EstadisticaFreelancerRepository {
   constructor(private db: PrismaClient) {}
 
-  private async existeFreelancer(freelancerId: number): Promise<boolean> {
-    const freelancer = await this.db.freelancer.findUnique({
+  /**
+   * Garantiza la existencia de la fila en `Freelancer` (relación foránea obligatoria)
+   * para cualquier usuario registrado con rol de freelancer, evitando fallos o pérdidas de métricas.
+   */
+  private async asegurarFreelancer(freelancerId: number): Promise<boolean> {
+    const usuario = await this.db.usuario.findUnique({
       where: { id: freelancerId },
-      select: { id: true },
+      select: { id: true, rolId: true },
     });
-    return freelancer !== null;
+    if (!usuario || usuario.rolId !== ROLES.FREELANCER) {
+      return false;
+    }
+
+    await this.db.freelancer.upsert({
+      where: { id: freelancerId },
+      create: { id: freelancerId },
+      update: {},
+    });
+    return true;
   }
 
   async registrarVisitaPerfil(freelancerId: number, fecha: Date = new Date()): Promise<void> {
-    if (!(await this.existeFreelancer(freelancerId))) return;
+    if (!(await this.asegurarFreelancer(freelancerId))) return;
 
     const dia = fechaUtc(fecha);
     await this.db.estadisticaFreelancer.upsert({
@@ -34,7 +48,7 @@ export class PrismaEstadisticaFreelancerRepository implements EstadisticaFreelan
     freelancerId: number,
     fecha: Date = new Date()
   ): Promise<void> {
-    if (!(await this.existeFreelancer(freelancerId))) return;
+    if (!(await this.asegurarFreelancer(freelancerId))) return;
 
     const dia = fechaUtc(fecha);
     await this.db.estadisticaFreelancer.upsert({

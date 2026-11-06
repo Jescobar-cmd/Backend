@@ -147,7 +147,7 @@ export const contenedor = {
   actualizarMiPerfil: new ActualizarMiPerfilUseCase(perfiles),
   obtenerMiPerfilFreelancer: new ObtenerMiPerfilFreelancerUseCase(perfiles),
   actualizarMiPerfilFreelancer: new ActualizarMiPerfilFreelancerUseCase(perfiles, habilidades),
-  obtenerPerfilPublico: new ObtenerPerfilPublicoUseCase(perfiles),
+  obtenerPerfilPublico: new ObtenerPerfilPublicoUseCase(perfiles, estadisticas),
   listarHabilidades: new ListarHabilidadesUseCase(habilidades),
   crearOferta: new CrearOfertaUseCase(ofertas),
   listarMisOfertas: new ListarMisOfertasUseCase(ofertas),

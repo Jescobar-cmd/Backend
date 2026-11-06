@@ -1,20 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorSolicitudInvalida } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearEnteroPositivo(valor: unknown, nombre: string): number | undefined {
-  if (typeof valor !== 'string' || !valor) return undefined;
-  const numero = Number(valor);
-  if (!Number.isInteger(numero) || numero <= 0) {
-    throw new ErrorSolicitudInvalida(`El ${nombre} no es válido`);
-  }
-  return numero;
-}
-
-function parsearTexto(valor: unknown): string | undefined {
-  return typeof valor === 'string' && valor.trim() ? valor.trim() : undefined;
-}
+import { ConsultaDirectorio } from '../../../application/validators/directorio.schemas';
 
 export class DirectorioFreelancerController {
   /** GET /api/freelancers?page=&limit=&q=&habilidadId=&categoriaId= */
@@ -24,15 +11,14 @@ export class DirectorioFreelancerController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const page = Math.max(1, Number(req.query.page) || 1);
-      const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 12));
+      const { page, limit, q, habilidadId, categoriaId } = (req.query as unknown as ConsultaDirectorio) ?? {};
 
       const resultado = await contenedor.buscarFreelancers.ejecutar({
-        page,
-        limit,
-        texto: parsearTexto(req.query.q),
-        habilidadId: parsearEnteroPositivo(req.query.habilidadId, 'habilidadId'),
-        categoriaId: parsearEnteroPositivo(req.query.categoriaId, 'categoriaId'),
+        page: page ?? 1,
+        limit: limit ?? 12,
+        texto: q,
+        habilidadId,
+        categoriaId,
       });
       res.json(resultado);
     } catch (e) {

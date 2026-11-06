@@ -1,7 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorNoEncontrado, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
+import { ErrorNoEncontrado } from '../../../shared/errors/ErrorAplicacion';
+import { obtenerUsuarioId } from '../helpers/peticion.helper';
 
 export class ControladorAutenticacion {
   static async registrar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
@@ -83,11 +84,7 @@ export class ControladorAutenticacion {
 
   static async yo(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) {
-        throw new ErrorNoAutorizado('No autorizado');
-      }
-
+      const usuarioId = obtenerUsuarioId(req);
       const usuario = await contenedor.usuarios.buscarPorId(usuarioId);
       if (!usuario) {
         throw new ErrorNoEncontrado('Usuario no encontrado');
@@ -153,10 +150,7 @@ export class ControladorAutenticacion {
 
   static async cambiarContrasena(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) {
-        throw new ErrorNoAutorizado('No autorizado');
-      }
+      const usuarioId = obtenerUsuarioId(req);
       await contenedor.cambiarContrasena.ejecutar({
         usuarioId,
         contrasenaActual: req.body.currentPassword,

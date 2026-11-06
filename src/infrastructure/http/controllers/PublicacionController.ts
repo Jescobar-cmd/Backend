@@ -1,22 +1,19 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { ErrorSolicitudInvalida, ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
-
-function parsearId(valor: string): number {
-  const id = Number(valor);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new ErrorSolicitudInvalida('El id de la publicación no es válido');
-  }
-  return id;
-}
+import {
+  obtenerUsuarioId,
+  obtenerUsuarioSesion,
+  parsearIdParam,
+  parsearPaginacion,
+  parsearEnteroOpcional,
+} from '../helpers/peticion.helper';
 
 export class PublicacionController {
   /** POST /api/publicaciones */
   static async crear(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
       const publicacion = await contenedor.crearPublicacion.ejecutar(usuarioId, req.body);
       res.status(201).json({ mensaje: 'Publicación creada correctamente', publicacion });
     } catch (e) {
@@ -27,21 +24,9 @@ export class PublicacionController {
   /** GET /api/publicaciones?page=&limit=&autorId= */
   static async listar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
-
-      const page = Math.max(1, Number(req.query.page) || 1);
-      const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
-
-      let autorId: number | undefined;
-      const rawAutorId = req.query.autorId;
-      if (typeof rawAutorId === 'string' && rawAutorId) {
-        const numero = Number(rawAutorId);
-        if (!Number.isInteger(numero) || numero <= 0) {
-          throw new ErrorSolicitudInvalida('El autorId no es válido');
-        }
-        autorId = numero;
-      }
+      const usuarioId = obtenerUsuarioId(req);
+      const { page, limit } = parsearPaginacion(req.query, { page: 1, limit: 10, maxLimit: 50 });
+      const autorId = parsearEnteroOpcional(req.query.autorId, 'autorId');
 
       const resultado = await contenedor.listarPublicaciones.ejecutar(usuarioId, {
         page,
@@ -57,10 +42,10 @@ export class PublicacionController {
   /** GET /api/publicaciones/:id */
   static async detalle(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const publicacionId = parsearIdParam(req.params.id, 'publicación');
       const publicacion = await contenedor.obtenerPublicacion.ejecutar(
-        parsearId(req.params.id),
+        publicacionId,
         usuarioId
       );
       res.json(publicacion);
@@ -72,10 +57,9 @@ export class PublicacionController {
   /** DELETE /api/publicaciones/:id (borrado lógico) */
   static async eliminar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      const rol = req.usuario?.rol;
-      if (!usuarioId || rol === undefined) throw new ErrorNoAutorizado('No autorizado');
-      await contenedor.eliminarPublicacion.ejecutar(parsearId(req.params.id), usuarioId, rol);
+      const { id: usuarioId, rol } = obtenerUsuarioSesion(req);
+      const publicacionId = parsearIdParam(req.params.id, 'publicación');
+      await contenedor.eliminarPublicacion.ejecutar(publicacionId, usuarioId, rol);
       res.json({ mensaje: 'Publicación eliminada correctamente' });
     } catch (e) {
       next(e);
@@ -89,10 +73,10 @@ export class PublicacionController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const usuarioId = req.usuario?.id;
-      if (!usuarioId) throw new ErrorNoAutorizado('No autorizado');
+      const usuarioId = obtenerUsuarioId(req);
+      const publicacionId = parsearIdParam(req.params.id, 'publicación');
       const resultado = await contenedor.alternarMeGusta.ejecutar(
-        parsearId(req.params.id),
+        publicacionId,
         usuarioId
       );
       res.json({
