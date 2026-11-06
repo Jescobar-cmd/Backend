@@ -42,6 +42,22 @@ export class PropuestaController {
     }
   }
 
+  /** PATCH /api/freelancer/propuestas/:id/retirar */
+  static async retirar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const freelancerId = req.usuario?.id;
+      if (!freelancerId) throw new ErrorNoAutorizado('No autorizado');
+
+      const propuesta = await contenedor.retirarPropuesta.ejecutar(
+        freelancerId,
+        parsearId(req.params.id, 'la propuesta')
+      );
+      res.json({ mensaje: 'Propuesta retirada correctamente', propuesta });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   /** POST /api/cliente/ofertas/:id/propuestas/:propuestaId/aceptar */
   static async aceptar(req: SolicitudAutenticada, res: Response, next: NextFunction): Promise<void> {
     try {

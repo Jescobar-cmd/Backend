@@ -4,9 +4,9 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.8.0',
+    version: '0.9.0',
     description:
-      'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, cierre y calificaciones.',
+      'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, cierre y calificaciones + Portafolio, directorio, métricas y dashboard del freelancer.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -1007,7 +1007,7 @@ export const swaggerDocument = {
         summary: 'Perfil propio del freelancer',
         security: [{ bearerAuth: [] }],
         responses: {
-          '200': { description: 'Perfil con email, teléfono, título, biografía y habilidades' },
+          '200': { description: 'Perfil con email, teléfono, título, biografía, habilidades, portafolio, servicios y reseñas' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'El usuario no es Freelancer' },
           '404': { description: 'Perfil no encontrado' },
@@ -1028,6 +1028,21 @@ export const swaggerDocument = {
                   fotoPerfil: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
                   tituloProfesional: { type: 'string', nullable: true, example: 'Desarrolladora full stack' },
                   biografia: { type: 'string', nullable: true, example: 'Especialista en React y Node.js' },
+                  habilidades: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      required: ['id'],
+                      properties: {
+                        id: { type: 'integer', example: 1 },
+                        nivel: {
+                          type: 'string',
+                          nullable: true,
+                          enum: ['basico', 'intermedio', 'avanzado', 'experto'],
+                        },
+                      },
+                    },
+                  },
                   habilidadIds: { type: 'array', items: { type: 'integer' }, example: [1, 2, 3] },
                 },
               },
@@ -1122,6 +1137,174 @@ export const swaggerDocument = {
           '404': { description: 'Contrato no encontrado' },
           '409': { description: 'El contrato no está completado o ya calificaste' },
           '422': { description: 'Puntuación o comentario inválidos' },
+        },
+      },
+    },
+    '/api/freelancer/portafolio': {
+      get: {
+        summary: 'Listar mi portafolio',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+      post: {
+        summary: 'Agregar un ítem a mi portafolio',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['titulo'],
+                properties: {
+                  titulo: { type: 'string', example: 'Landing page para startup' },
+                  descripcion: { type: 'string', nullable: true },
+                  imagenUrl: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
+                  enlaceUrl: { type: 'string', nullable: true, example: 'https://mi-proyecto.com' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Ítem creado' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/freelancer/portafolio/{id}': {
+      patch: {
+        summary: 'Editar un ítem de mi portafolio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Ítem actualizado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El ítem no es tuyo' },
+          '404': { description: 'Ítem no encontrado' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+      delete: {
+        summary: 'Eliminar un ítem de mi portafolio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Ítem eliminado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'El ítem no es tuyo' },
+          '404': { description: 'Ítem no encontrado' },
+        },
+      },
+    },
+    '/api/freelancer/propuestas/{id}/retirar': {
+      patch: {
+        summary: 'Retirar una propuesta pendiente propia',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Propuesta retirada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'La propuesta no es tuya' },
+          '404': { description: 'Propuesta no encontrada' },
+          '409': { description: 'La propuesta ya no está pendiente' },
+        },
+      },
+    },
+    '/api/freelancer/estadisticas': {
+      get: {
+        summary: 'Métricas diarias de mi perfil y propuestas',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date' } },
+        ],
+        responses: {
+          '200': { description: '{ totalVisitasPerfil, totalVisualizacionesPropuesta, dias }' },
+          '400': { description: 'Rango de fechas inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/freelancer/dashboard': {
+      get: {
+        summary: 'Resumen del panel del freelancer',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Contadores de contratos, propuestas, servicios, reputación y métricas' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/usuarios/{id}/portafolio': {
+      get: {
+        summary: 'Ver el portafolio público de un freelancer',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ total, items }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/usuarios/{id}/calificaciones': {
+      get: {
+        summary: 'Ver las calificaciones públicas de un freelancer',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ total, calificaciones }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/usuarios/{id}/servicios': {
+      get: {
+        summary: 'Ver los servicios activos de un freelancer',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, items }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+        },
+      },
+    },
+    '/api/freelancers': {
+      get: {
+        summary: 'Directorio y búsqueda de freelancers',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'habilidadId', in: 'query', schema: { type: 'integer' } },
+          { name: 'categoriaId', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, items }' },
+          '400': { description: 'Filtro inválido' },
+          '401': { description: 'Sin sesión o expirada' },
         },
       },
     },

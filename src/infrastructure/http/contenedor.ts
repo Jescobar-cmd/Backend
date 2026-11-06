@@ -13,6 +13,10 @@ import { PrismaOfertaChatRepository } from '../persistence/postgres/PrismaOferta
 import { PrismaContratoRepository } from '../persistence/postgres/PrismaContratoRepository';
 import { PrismaRepositorioHabilidad } from '../persistence/postgres/PrismaRepositorioHabilidad';
 import { PrismaCalificacionRepository } from '../persistence/postgres/PrismaCalificacionRepository';
+import { PrismaPortafolioRepository } from '../persistence/postgres/PrismaPortafolioRepository';
+import { PrismaEstadisticaFreelancerRepository } from '../persistence/postgres/PrismaEstadisticaFreelancerRepository';
+import { PrismaDashboardFreelancerRepository } from '../persistence/postgres/PrismaDashboardFreelancerRepository';
+import { PrismaDirectorioFreelancerRepository } from '../persistence/postgres/PrismaDirectorioFreelancerRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { ServicioJwt } from '../security/ServicioJwt';
 import { EnviadorCorreoNodemailer } from '../email/EnviadorCorreoNodemailer';
@@ -73,6 +77,16 @@ import { ActualizarMiPerfilFreelancerUseCase } from '../../application/use-cases
 import { CambiarEstadoContratoUseCase } from '../../application/use-cases/CambiarEstadoContratoUseCase';
 import { CalificarContratoUseCase } from '../../application/use-cases/CalificarContratoUseCase';
 import { ListarCalificacionesContratoUseCase } from '../../application/use-cases/ListarCalificacionesContratoUseCase';
+import { ListarCalificacionesFreelancerUseCase } from '../../application/use-cases/ListarCalificacionesFreelancerUseCase';
+import { RetirarPropuestaUseCase } from '../../application/use-cases/RetirarPropuestaUseCase';
+import { ListarPortafolioUseCase } from '../../application/use-cases/ListarPortafolioUseCase';
+import { CrearPortafolioItemUseCase } from '../../application/use-cases/CrearPortafolioItemUseCase';
+import { ActualizarPortafolioItemUseCase } from '../../application/use-cases/ActualizarPortafolioItemUseCase';
+import { EliminarPortafolioItemUseCase } from '../../application/use-cases/EliminarPortafolioItemUseCase';
+import { RegistrarVisitaPerfilUseCase } from '../../application/use-cases/RegistrarVisitaPerfilUseCase';
+import { ObtenerEstadisticasFreelancerUseCase } from '../../application/use-cases/ObtenerEstadisticasFreelancerUseCase';
+import { ObtenerDashboardFreelancerUseCase } from '../../application/use-cases/ObtenerDashboardFreelancerUseCase';
+import { BuscarFreelancersUseCase } from '../../application/use-cases/BuscarFreelancersUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -88,6 +102,10 @@ const ofertasChat = new PrismaOfertaChatRepository(prisma);
 const contratos = new PrismaContratoRepository(prisma);
 const habilidades = new PrismaRepositorioHabilidad(prisma);
 const calificaciones = new PrismaCalificacionRepository(prisma);
+const portafolio = new PrismaPortafolioRepository(prisma);
+const estadisticas = new PrismaEstadisticaFreelancerRepository(prisma);
+const dashboardFreelancer = new PrismaDashboardFreelancerRepository(prisma);
+const directorioFreelancers = new PrismaDirectorioFreelancerRepository(prisma);
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -109,6 +127,10 @@ export const contenedor = {
   contratos,
   habilidades,
   calificaciones,
+  portafolio,
+  estadisticas,
+  dashboardFreelancer,
+  directorioFreelancers,
   hasheador,
   correo,
   jwt,
@@ -132,7 +154,7 @@ export const contenedor = {
   obtenerMiOferta: new ObtenerMiOfertaUseCase(ofertas),
   actualizarOferta: new ActualizarOfertaUseCase(ofertas),
   cambiarEstadoOferta: new CambiarEstadoOfertaUseCase(ofertas),
-  listarPropuestasDeOferta: new ListarPropuestasDeOfertaUseCase(ofertas),
+  listarPropuestasDeOferta: new ListarPropuestasDeOfertaUseCase(ofertas, estadisticas),
   listarCategorias: new ListarCategoriasUseCase(categorias),
   crearPublicacion: new CrearPublicacionUseCase(publicaciones),
   listarPublicaciones: new ListarPublicacionesUseCase(publicaciones),
@@ -155,6 +177,15 @@ export const contenedor = {
   enviarMensaje: new EnviarMensajeUseCase(conversaciones),
   marcarConversacionLeida: new MarcarConversacionLeidaUseCase(conversaciones),
   crearPropuesta: new CrearPropuestaUseCase(propuestas, ofertas),
+  retirarPropuesta: new RetirarPropuestaUseCase(propuestas),
+  listarPortafolio: new ListarPortafolioUseCase(portafolio),
+  crearPortafolioItem: new CrearPortafolioItemUseCase(portafolio),
+  actualizarPortafolioItem: new ActualizarPortafolioItemUseCase(portafolio),
+  eliminarPortafolioItem: new EliminarPortafolioItemUseCase(portafolio),
+  registrarVisitaPerfil: new RegistrarVisitaPerfilUseCase(estadisticas),
+  obtenerEstadisticasFreelancer: new ObtenerEstadisticasFreelancerUseCase(estadisticas),
+  obtenerDashboardFreelancer: new ObtenerDashboardFreelancerUseCase(dashboardFreelancer),
+  buscarFreelancers: new BuscarFreelancersUseCase(directorioFreelancers),
   listarMisPropuestas: new ListarMisPropuestasUseCase(propuestas),
   aceptarPropuesta: new AceptarPropuestaUseCase(propuestas),
   rechazarPropuesta: new RechazarPropuestaUseCase(propuestas),
@@ -170,4 +201,5 @@ export const contenedor = {
     calificaciones,
     contratos
   ),
+  listarCalificacionesFreelancer: new ListarCalificacionesFreelancerUseCase(calificaciones),
 };

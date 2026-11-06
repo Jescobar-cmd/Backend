@@ -19,7 +19,34 @@ const perfilInclude = {
       FreelancerHabilidad: {
         include: { Habilidad: true },
       },
+      PortafolioItem: {
+        orderBy: { fechaCreacion: 'desc' },
+      },
+      Servicio: {
+        where: { estado: 'activo' },
+        select: {
+          id: true,
+          titulo: true,
+          descripcion: true,
+          precio: true,
+          imagenUrl: true,
+          Categoria: { select: { id: true, nombre: true } },
+        },
+        orderBy: { fechaCreacion: 'desc' },
+      },
     },
+  },
+  Calificacion_Calificacion_calificadoIdToUsuario: {
+    include: {
+      Usuario_Calificacion_calificadorIdToUsuario: {
+        select: { id: true, nombre: true, fotoPerfil: true },
+      },
+      Usuario_Calificacion_calificadoIdToUsuario: {
+        select: { id: true, nombre: true, fotoPerfil: true },
+      },
+    },
+    orderBy: { fecha: 'desc' },
+    take: 5,
   },
 } satisfies Prisma.UsuarioInclude;
 
@@ -43,6 +70,46 @@ function aFreelancerPerfil(usuario: UsuarioPerfil) {
     biografia: freelancer?.biografia ?? null,
     calificacionPromedio: freelancer ? Number(freelancer.calificacionPromedio) : 0,
     habilidades: aHabilidades(freelancer),
+    portafolio: (freelancer?.PortafolioItem ?? []).map((item) => ({
+      id: item.id,
+      freelancerId: item.freelancerId,
+      titulo: item.titulo,
+      descripcion: item.descripcion,
+      imagenUrl: item.imagenUrl,
+      enlaceUrl: item.enlaceUrl,
+      fechaCreacion: item.fechaCreacion,
+    })),
+    servicios: (freelancer?.Servicio ?? []).map((servicio) => ({
+      id: servicio.id,
+      titulo: servicio.titulo,
+      descripcion: servicio.descripcion,
+      precio: Number(servicio.precio),
+      imagenUrl: servicio.imagenUrl,
+      categoria: servicio.Categoria
+        ? { id: servicio.Categoria.id, nombre: servicio.Categoria.nombre }
+        : null,
+    })),
+    calificaciones: (
+      usuario.Calificacion_Calificacion_calificadoIdToUsuario ?? []
+    ).map((calificacion) => ({
+      id: calificacion.id,
+      contratoId: calificacion.contratoId,
+      puntuacion: calificacion.puntuacion,
+      comentario: calificacion.comentario,
+      fecha: calificacion.fecha,
+      calificador: {
+        id: calificacion.Usuario_Calificacion_calificadorIdToUsuario.id,
+        nombre: calificacion.Usuario_Calificacion_calificadorIdToUsuario.nombre,
+        fotoPerfil:
+          calificacion.Usuario_Calificacion_calificadorIdToUsuario.fotoPerfil,
+      },
+      calificado: {
+        id: calificacion.Usuario_Calificacion_calificadoIdToUsuario.id,
+        nombre: calificacion.Usuario_Calificacion_calificadoIdToUsuario.nombre,
+        fotoPerfil:
+          calificacion.Usuario_Calificacion_calificadoIdToUsuario.fotoPerfil,
+      },
+    })),
   };
 }
 
@@ -194,7 +261,9 @@ export class PrismaPerfilRepository implements PerfilRepository {
     }
 
     const tocaFreelancer =
-      Object.keys(datosFreelancer).length > 0 || datos.habilidadIds !== undefined;
+      Object.keys(datosFreelancer).length > 0 ||
+      datos.habilidades !== undefined ||
+      datos.habilidadIds !== undefined;
 
     await this.db.$transaction(async (tx) => {
       if (Object.keys(datosUsuario).length > 0) {
@@ -214,7 +283,19 @@ export class PrismaPerfilRepository implements PerfilRepository {
         });
       }
 
-      if (datos.habilidadIds !== undefined) {
+      if (datos.habilidades !== undefined) {
+        await tx.freelancerHabilidad.deleteMany({ where: { freelancerId: usuarioId } });
+        if (datos.habilidades.length > 0) {
+          await tx.freelancerHabilidad.createMany({
+            data: datos.habilidades.map((habilidad) => ({
+              freelancerId: usuarioId,
+              habilidadId: habilidad.id,
+              nivel: habilidad.nivel ?? null,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      } else if (datos.habilidadIds !== undefined) {
         await tx.freelancerHabilidad.deleteMany({ where: { freelancerId: usuarioId } });
         if (datos.habilidadIds.length > 0) {
           await tx.freelancerHabilidad.createMany({

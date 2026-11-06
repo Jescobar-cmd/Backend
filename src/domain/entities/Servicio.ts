@@ -45,6 +45,7 @@ export interface FiltrosServicio {
   page: number;
   limit: number;
   categoriaId?: number;
+  freelancerId?: number;
   texto?: string;
   estado?: string;
 }

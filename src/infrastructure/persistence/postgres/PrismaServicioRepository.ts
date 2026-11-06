@@ -71,6 +71,9 @@ export class PrismaServicioRepository implements ServicioRepository {
     if (filtros.categoriaId) {
       where.categoriaId = filtros.categoriaId;
     }
+    if (filtros.freelancerId) {
+      where.freelancerId = filtros.freelancerId;
+    }
     if (filtros.texto) {
       where.OR = [
         { titulo: { contains: filtros.texto, mode: 'insensitive' } },

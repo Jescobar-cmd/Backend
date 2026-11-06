@@ -83,6 +83,16 @@ export class PrismaCalificacionRepository implements CalificacionRepository {
     return calificaciones.map(aCalificacion);
   }
 
+  async listarPorCalificado(calificadoId: number, limite = 20): Promise<Calificacion[]> {
+    const calificaciones = await this.db.calificacion.findMany({
+      where: { calificadoId },
+      include: calificacionInclude,
+      orderBy: { fecha: 'desc' },
+      take: limite,
+    });
+    return calificaciones.map(aCalificacion);
+  }
+
   async buscarPorContratoYCalificador(
     contratoId: number,
     calificadorId: number

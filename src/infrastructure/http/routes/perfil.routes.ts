@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { PerfilController } from '../controllers/PerfilController';
+import { PortafolioController } from '../controllers/PortafolioController';
+import { ServicioController } from '../controllers/ServicioController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar } from '../middlewares/validar';
@@ -19,4 +21,19 @@ clienteRouter.patch(
 
 // Perfil público de cualquier usuario -> se monta en /api/usuarios
 export const usuariosRouter = Router();
+usuariosRouter.get(
+  '/:id/portafolio',
+  requiereAutenticacion,
+  PortafolioController.listarPublico
+);
+usuariosRouter.get(
+  '/:id/calificaciones',
+  requiereAutenticacion,
+  PerfilController.calificacionesPublicas
+);
+usuariosRouter.get(
+  '/:id/servicios',
+  requiereAutenticacion,
+  ServicioController.porFreelancer
+);
 usuariosRouter.get('/:id', requiereAutenticacion, PerfilController.perfilPublico);

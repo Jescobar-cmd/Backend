@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { ServicioController } from '../controllers/ServicioController';
 import { PropuestaController } from '../controllers/PropuestaController';
 import { PerfilController } from '../controllers/PerfilController';
+import { PortafolioController } from '../controllers/PortafolioController';
+import { EstadisticaController } from '../controllers/EstadisticaController';
+import { DashboardController } from '../controllers/DashboardController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar } from '../middlewares/validar';
@@ -12,6 +15,10 @@ import {
   crearServicioSchema,
 } from '../../../application/validators/servicio.schemas';
 import { actualizarPerfilFreelancerSchema } from '../../../application/validators/perfil.schemas';
+import {
+  actualizarPortafolioItemSchema,
+  crearPortafolioItemSchema,
+} from '../../../application/validators/portafolio.schemas';
 
 // Catálogo de servicios -> se monta en /api/servicios
 export const serviciosRouter = Router();
@@ -49,3 +56,18 @@ freelancerRouter.patch(
 );
 freelancerRouter.get('/servicios', ServicioController.misServicios);
 freelancerRouter.get('/propuestas', PropuestaController.misPropuestas);
+freelancerRouter.patch('/propuestas/:id/retirar', PropuestaController.retirar);
+freelancerRouter.get('/portafolio', PortafolioController.listar);
+freelancerRouter.post(
+  '/portafolio',
+  validar(crearPortafolioItemSchema),
+  PortafolioController.crear
+);
+freelancerRouter.patch(
+  '/portafolio/:id',
+  validar(actualizarPortafolioItemSchema),
+  PortafolioController.actualizar
+);
+freelancerRouter.delete('/portafolio/:id', PortafolioController.eliminar);
+freelancerRouter.get('/estadisticas', EstadisticaController.misEstadisticas);
+freelancerRouter.get('/dashboard', DashboardController.obtener);

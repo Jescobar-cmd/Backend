@@ -47,7 +47,33 @@ export class ServicioController {
         page,
         limit,
         categoriaId: parsearEnteroPositivo(req.query.categoriaId, 'categoriaId'),
+        freelancerId: parsearEnteroPositivo(req.query.freelancerId, 'freelancerId'),
         texto: parsearTexto(req.query.q),
+      });
+      res.json(resultado);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** GET /api/usuarios/:id/servicios?page=&limit= */
+  static async porFreelancer(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const freelancerId = Number(req.params.id);
+      if (!Number.isInteger(freelancerId) || freelancerId <= 0) {
+        throw new ErrorSolicitudInvalida('El id del freelancer no es válido');
+      }
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+      const resultado = await contenedor.listarServicios.ejecutar({
+        page,
+        limit,
+        freelancerId,
       });
       res.json(resultado);
     } catch (e) {

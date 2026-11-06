@@ -14,6 +14,7 @@ import { conversacionesRouter } from './routes/conversacion.routes';
 import { ofertaChatRouter } from './routes/ofertaChat.routes';
 import { contratosRouter } from './routes/contrato.routes';
 import { habilidadesRouter } from './routes/habilidad.routes';
+import { directorioFreelancerRouter } from './routes/directorio.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
 import { entorno } from '../../config/entorno';
 
@@ -51,6 +52,7 @@ export function createApp() {
   app.use('/api/ofertas-chat', ofertaChatRouter);
   app.use('/api/contratos', contratosRouter);
   app.use('/api/habilidades', habilidadesRouter);
+  app.use('/api/freelancers', directorioFreelancerRouter);
 
   // Documentación OpenAPI / Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

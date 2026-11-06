@@ -79,7 +79,35 @@ export class PerfilController {
         throw new ErrorSolicitudInvalida('El id del usuario no es válido');
       }
       const perfil = await contenedor.obtenerPerfilPublico.ejecutar(id);
+
+      // Métrica de negocio: visitas al perfil público (no cuenta la visita propia).
+      if (perfil.freelancer && req.usuario?.id !== id) {
+        void contenedor.registrarVisitaPerfil.ejecutar(id).catch(() => undefined);
+      }
+
       res.json(perfil);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** GET /api/usuarios/:id/calificaciones -> reseñas públicas recibidas. */
+  static async calificacionesPublicas(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        throw new ErrorSolicitudInvalida('El id del usuario no es válido');
+      }
+      const limite = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+      const calificaciones = await contenedor.listarCalificacionesFreelancer.ejecutar(
+        id,
+        limite
+      );
+      res.json({ total: calificaciones.length, calificaciones });
     } catch (e) {
       next(e);
     }

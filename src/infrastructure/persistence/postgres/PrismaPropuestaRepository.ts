@@ -146,4 +146,13 @@ export class PrismaPropuestaRepository implements PropuestaRepository {
       data: { estado: 'rechazada' },
     });
   }
+
+  async retirar(propuestaId: number): Promise<PropuestaResumen> {
+    const propuesta = await this.db.propuesta.update({
+      where: { id: propuestaId },
+      data: { estado: 'retirada' },
+      include: propuestaInclude,
+    });
+    return toPropuestaResumen(propuesta);
+  }
 }

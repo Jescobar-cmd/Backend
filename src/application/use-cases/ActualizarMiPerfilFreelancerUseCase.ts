@@ -16,7 +16,17 @@ export class ActualizarMiPerfilFreelancerUseCase {
   ): Promise<PerfilFreelancer> {
     let datosActualizados = datos;
 
-    if (datos.habilidadIds !== undefined) {
+    if (datos.habilidades !== undefined) {
+      const idsUnicos = [...new Set(datos.habilidades.map((habilidad) => habilidad.id))];
+      if (idsUnicos.length !== datos.habilidades.length) {
+        throw new ErrorValidacion('No puedes repetir una habilidad');
+      }
+      const habilidades = await this.habilidadRepository.buscarPorIds(idsUnicos);
+      if (habilidades.length !== idsUnicos.length) {
+        throw new ErrorValidacion('Una o más habilidades no existen');
+      }
+      datosActualizados = { ...datos, habilidades: datos.habilidades };
+    } else if (datos.habilidadIds !== undefined) {
       const idsUnicos = [...new Set(datos.habilidadIds)];
       const habilidades = await this.habilidadRepository.buscarPorIds(idsUnicos);
       if (habilidades.length !== idsUnicos.length) {

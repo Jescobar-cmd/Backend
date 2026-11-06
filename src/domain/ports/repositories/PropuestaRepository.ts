@@ -13,4 +13,7 @@ export interface PropuestaRepository {
   aceptar(propuestaId: number): Promise<ContratoDetalle>;
 
   rechazar(propuestaId: number): Promise<void>;
+
+  /** Cambia la propuesta a estado `retirada` y la devuelve actualizada. */
+  retirar(propuestaId: number): Promise<PropuestaResumen>;
 }

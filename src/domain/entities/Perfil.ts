@@ -1,7 +1,9 @@
 // Tipos de perfil del usuario.
 // Dominio puro: no conoce Prisma, Express ni ninguna librería externa.
 
-import { HabilidadAsignada } from './Habilidad';
+import { Calificacion } from './Calificacion';
+import { HabilidadAsignada, HabilidadConNivel } from './Habilidad';
+import { PortafolioItem } from './PortafolioItem';
 
 export type PerfilTipoCliente = 'natural' | 'empresa';
 
@@ -12,12 +14,25 @@ export interface ClientePerfil {
   descripcion: string | null;
 }
 
+/** Servicio resumido que se muestra dentro del perfil público. */
+export interface ServicioPerfil {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  precio: number;
+  imagenUrl: string | null;
+  categoria: { id: number; nombre: string } | null;
+}
+
 /** Datos públicos del freelancer (lo que se muestra al ver su perfil). */
 export interface FreelancerPerfil {
   tituloProfesional: string | null;
   biografia: string | null;
   calificacionPromedio: number;
   habilidades: HabilidadAsignada[];
+  portafolio: PortafolioItem[];
+  servicios: ServicioPerfil[];
+  calificaciones: Calificacion[];
 }
 
 /** Perfil propio del cliente: incluye datos privados (email, teléfono). */
@@ -83,5 +98,10 @@ export interface DatosPerfilFreelancer {
   fotoPerfil?: string | null;
   tituloProfesional?: string | null;
   biografia?: string | null;
+  /**
+   * Forma recomendada: reemplaza las habilidades y permite indicar nivel.
+   * Se mantiene `habilidadIds` por compatibilidad con clientes anteriores.
+   */
+  habilidades?: HabilidadConNivel[];
   habilidadIds?: number[];
 }

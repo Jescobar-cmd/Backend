@@ -6,6 +6,9 @@ export interface CalificacionRepository {
 
   listarPorContrato(contratoId: number): Promise<Calificacion[]>;
 
+  /** Calificaciones recibidas por un usuario, de la más reciente a la más antigua. */
+  listarPorCalificado(calificadoId: number, limite?: number): Promise<Calificacion[]>;
+
   buscarPorContratoYCalificador(
     contratoId: number,
     calificadorId: number

@@ -57,6 +57,33 @@ const habilidadIds = z
   })
   .optional();
 
+const nivelHabilidad = z
+  .enum(['basico', 'intermedio', 'avanzado', 'experto'], {
+    errorMap: () => ({
+      message: "El nivel debe ser 'basico', 'intermedio', 'avanzado' o 'experto'",
+    }),
+  })
+  .nullable()
+  .optional();
+
+const habilidades = z
+  .array(
+    z
+      .object({
+        id: z
+          .number({ invalid_type_error: 'La habilidad debe tener un id numérico' })
+          .int('La habilidad debe tener un id válido')
+          .positive('La habilidad debe tener un id válido'),
+        nivel: nivelHabilidad,
+      })
+      .strict()
+  )
+  .max(20, 'No puedes asignar más de 20 habilidades')
+  .refine((items) => new Set(items.map((item) => item.id)).size === items.length, {
+    message: 'No puedes repetir una habilidad',
+  })
+  .optional();
+
 export const actualizarPerfilFreelancerSchema = z
   .object({
     nombre: z
@@ -78,6 +105,7 @@ export const actualizarPerfilFreelancerSchema = z
       'El título profesional no puede exceder 150 caracteres'
     ),
     biografia: cadenaEditable(2000, 'La biografía no puede exceder 2000 caracteres'),
+    habilidades,
     habilidadIds,
   })
   .strict()
