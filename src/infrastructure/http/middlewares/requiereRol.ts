@@ -5,7 +5,7 @@ import { ErrorProhibido } from '../../../shared/errors/ErrorAplicacion';
 /**
  * Middleware reutilizable: restringe el acceso a los roles indicados.
  * Debe usarse SIEMPRE después de requiereAutenticacion (que llena req.usuario).
- * Roles del sistema: 2 = Freelancer, 3 = Cliente.
+ * Roles del sistema: 1 = Administrador, 4 = Moderador, 2 = Freelancer, 3 = Cliente.
  */
 export function requiereRol(...rolesPermitidos: number[]) {
   return (req: SolicitudAutenticada, _res: Response, next: NextFunction) => {

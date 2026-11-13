@@ -320,6 +320,8 @@ model Reporte {
   motivo                                      String    @db.VarChar(100)
   descripcion                                 String?
   estado                                      String    @default("pendiente") @db.VarChar(20)
+  resolucion                                 String?
+  fechaResolucion                           DateTime?
   fecha                                       DateTime  @default(now())
   Usuario_Reporte_adminIdToUsuario            Usuario?  @relation("Reporte_adminIdToUsuario", fields: [adminId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   Proyecto                                    Proyecto? @relation(fields: [proyectoId], references: [id], onUpdate: NoAction)

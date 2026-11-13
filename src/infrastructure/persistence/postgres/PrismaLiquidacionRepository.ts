@@ -120,4 +120,42 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
       };
     });
   }
+
+  async listar(filtros: {
+    estado?: Liquidacion['estado'];
+    page: number;
+    limit: number;
+  }): Promise<Liquidacion[]> {
+    const liquidaciones = await this.db.liquidacion.findMany({
+      where: {
+        ...(filtros.estado ? { estado: filtros.estado } : {}),
+      },
+      orderBy: { fechaCreacion: 'desc' },
+      skip: (filtros.page - 1) * filtros.limit,
+      take: filtros.limit,
+    });
+    return liquidaciones.map(toLiquidacion);
+  }
+
+  async obtenerPorId(id: number): Promise<Liquidacion | null> {
+    const liquidacion = await this.db.liquidacion.findUnique({ where: { id } });
+    return liquidacion ? toLiquidacion(liquidacion) : null;
+  }
+
+  async aprobarRetiro(
+    id: number,
+    adminId: number,
+    estado: Liquidacion['estado'],
+    referencia: string | null
+  ): Promise<Liquidacion> {
+    const actualizada = await this.db.liquidacion.update({
+      where: { id },
+      data: {
+        estado,
+        fechaPago: new Date(),
+        referencia,
+      },
+    });
+    return toLiquidacion(actualizada);
+  }
 }

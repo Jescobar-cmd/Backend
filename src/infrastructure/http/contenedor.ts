@@ -22,6 +22,7 @@ import { PrismaPagoRepository } from '../persistence/postgres/PrismaPagoReposito
 import { PrismaNotificacionRepository } from '../persistence/postgres/PrismaNotificacionRepository';
 import { PrismaEntregaContratoRepository } from '../persistence/postgres/PrismaEntregaContratoRepository';
 import { PrismaDisputaRepository } from '../persistence/postgres/PrismaDisputaRepository';
+import { PrismaReporteRepository } from '../persistence/postgres/PrismaReporteRepository';
 import { PrismaLiquidacionRepository } from '../persistence/postgres/PrismaLiquidacionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { ServicioJwt } from '../security/ServicioJwt';
@@ -111,6 +112,15 @@ import { ObtenerLiquidacionesFreelancerUseCase } from '../../application/use-cas
 import { SolicitarRetiroUseCase } from '../../application/use-cases/SolicitarRetiroUseCase';
 import { ActualizarEntregaContratoUseCase } from '../../application/use-cases/ActualizarEntregaContratoUseCase';
 import { RechazarEntregaUseCase } from '../../application/use-cases/RechazarEntregaUseCase';
+import { ObtenerReporteAdminUseCase } from '../../application/use-cases/ObtenerReporteAdminUseCase';
+import { ListarReportesAdminUseCase } from '../../application/use-cases/ListarReportesAdminUseCase';
+import { ResolverReporteUseCase } from '../../application/use-cases/ResolverReporteUseCase';
+import { ListarDisputasAdminUseCase } from '../../application/use-cases/ListarDisputasAdminUseCase';
+import { ObtenerDisputaAdminUseCase } from '../../application/use-cases/ObtenerDisputaAdminUseCase';
+import { ResolverDisputaUseCase } from '../../application/use-cases/ResolverDisputaUseCase';
+import { ListarLiquidacionesAdminUseCase } from '../../application/use-cases/ListarLiquidacionesAdminUseCase';
+import { AprobarRetiroUseCase } from '../../application/use-cases/AprobarRetiroUseCase';
+import { ObtenerDashboardModeradorUseCase } from '../../application/use-cases/ObtenerDashboardModeradorUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -135,6 +145,7 @@ const pagos = new PrismaPagoRepository(prisma);
 const notificaciones = new PrismaNotificacionRepository(prisma);
 const entregas = new PrismaEntregaContratoRepository(prisma);
 const disputas = new PrismaDisputaRepository(prisma);
+const reportes = new PrismaReporteRepository(prisma);
 const liquidaciones = new PrismaLiquidacionRepository(prisma);
 const comisionFreelancerPorcentaje =
   entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
@@ -260,6 +271,19 @@ export const contenedor = {
     liquidaciones
   ),
   solicitarRetiro: new SolicitarRetiroUseCase(liquidaciones),
+  listarReportesAdmin: new ListarReportesAdminUseCase(reportes),
+  obtenerReporteAdmin: new ObtenerReporteAdminUseCase(reportes),
+  resolverReporteAdmin: new ResolverReporteUseCase(reportes, notificaciones),
+  listarDisputasAdmin: new ListarDisputasAdminUseCase(disputas),
+  obtenerDisputaAdmin: new ObtenerDisputaAdminUseCase(disputas),
+  resolverDisputaAdmin: new ResolverDisputaUseCase(contratos, disputas, notificaciones),
+  listarLiquidacionesAdmin: new ListarLiquidacionesAdminUseCase(liquidaciones),
+  aprobarRetiroAdmin: new AprobarRetiroUseCase(liquidaciones, notificaciones),
+  obtenerDashboardModerador: new ObtenerDashboardModeradorUseCase(
+    reportes,
+    disputas,
+    liquidaciones
+  ),
   listarNotificaciones: new ListarNotificacionesUseCase(notificaciones),
   marcarNotificacionLeida: new MarcarNotificacionLeidaUseCase(notificaciones),
   marcarTodasNotificacionesLeidas: new MarcarTodasNotificacionesLeidasUseCase(

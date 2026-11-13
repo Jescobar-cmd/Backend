@@ -1665,5 +1665,187 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/moderador/dashboard': {
+      get: {
+        summary: 'Resumen de moderación (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description:
+              '{ reportesPendientes, disputasAbiertas, retirosPendientes }',
+          },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/reportes': {
+      get: {
+        summary: 'Listar reportes (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['pendiente', 'resuelto', 'rechazado'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ total, reportes }' },
+          '400': { description: 'Filtro inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/reportes/{id}': {
+      get: {
+        summary: 'Consultar un reporte (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Reporte encontrado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Reporte no encontrado' },
+        },
+      },
+    },
+    '/api/moderador/reportes/{id}/resolver': {
+      patch: {
+        summary: 'Resolver un reporte (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['resolucion'],
+                properties: {
+                  resolucion: { type: 'string', minLength: 3, maxLength: 1000, example: 'Contenido ha sido moderado.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Reporte resuelto' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Reporte no encontrado' },
+          '409': { description: 'El reporte ya fue gestionado' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/moderador/disputas': {
+      get: {
+        summary: 'Listar disputas (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['abierta', 'en_revision', 'resuelta', 'rechazada'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ total, disputas }' },
+          '400': { description: 'Filtro inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/disputas/{id}': {
+      get: {
+        summary: 'Consultar una disputa (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Disputa encontrada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Disputa no encontrada' },
+        },
+      },
+    },
+    '/api/moderador/disputas/{id}/resolver': {
+      patch: {
+        summary: 'Resolver una disputa (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['estado', 'resolucion'],
+                properties: {
+                  estado: { type: 'string', enum: ['resuelta', 'rechazada'] },
+                  resolucion: { type: 'string', minLength: 3, maxLength: 1000, example: 'Cliente prevalece.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Disputa resuelta' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Disputa no encontrada' },
+          '409': { description: 'La disputa ya no está abierta' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/moderador/liquidaciones': {
+      get: {
+        summary: 'Listar liquidaciones administrativamente',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['pendiente', 'solicitada', 'pagada'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ total, liquidaciones }' },
+          '400': { description: 'Filtro inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/liquidaciones/{id}/pagar': {
+      patch: {
+        summary: 'Aprobar pago de retiro (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  referencia: { type: 'string', nullable: true, example: 'MP-SIM-RET-001' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Retiro aprobado y liquidación pagada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Liquidación no encontrada' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
   },
 };
