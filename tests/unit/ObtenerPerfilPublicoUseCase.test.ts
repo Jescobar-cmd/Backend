@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+﻿import { describe, expect, it, vi } from 'vitest';
 import { ObtenerPerfilPublicoUseCase } from '../../src/application/use-cases/ObtenerPerfilPublicoUseCase';
 import { PerfilRepository } from '../../src/domain/ports/repositories/PerfilRepository';
 import { EstadisticaFreelancerRepository } from '../../src/domain/ports/repositories/EstadisticaFreelancerRepository';

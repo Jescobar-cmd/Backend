@@ -30,6 +30,11 @@ model Usuario {
   Reporte_Reporte_adminIdToUsuario                 Reporte[]            @relation("Reporte_adminIdToUsuario")
   Reporte_Reporte_usuarioReportaIdToUsuario        Reporte[]            @relation("Reporte_usuarioReportaIdToUsuario")
   Reporte_Reporte_usuarioReportadoIdToUsuario      Reporte[]            @relation("Reporte_usuarioReportadoIdToUsuario")
+  DisputaAbiertaPor                                Disputa[]            @relation("DisputaAbiertaPor")
+  DisputaResueltaPor                               Disputa[]            @relation("DisputaResueltaPor")
+  EntregaAutor                                     EntregaContrato[]    @relation("EntregaAutor")
+  EntregaRevisor                                   EntregaContrato[]    @relation("EntregaRevisor")
+  Notificacion                                     Notificacion[]
   Rol                                              Rol                  @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([rolId])
@@ -88,25 +93,28 @@ model Cliente {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Contrato {
-  id            Int            @id @default(autoincrement())
-  propuestaId   Int?           @unique
-  proyectoId    Int?
-  servicioId    Int?
-  ofertaChatId  Int?           @unique
-  clienteId     Int
-  freelancerId  Int
-  montoAcordado Decimal        @db.Decimal(12, 2)
-  fechaInicio   DateTime?      @db.Date
-  fechaFin      DateTime?      @db.Date
-  estado        String         @default("activo") @db.VarChar(20)
-  Calificacion  Calificacion[]
-  Cliente       Cliente        @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Freelancer    Freelancer     @relation(fields: [freelancerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  OfertaChat    OfertaChat?    @relation(fields: [ofertaChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Propuesta     Propuesta?     @relation(fields: [propuestaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Proyecto      Proyecto?      @relation(fields: [proyectoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Servicio      Servicio?      @relation(fields: [servicioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Pago          Pago[]
+  id              Int               @id @default(autoincrement())
+  propuestaId     Int?              @unique
+  proyectoId      Int?
+  servicioId      Int?
+  ofertaChatId    Int?              @unique
+  clienteId       Int
+  freelancerId    Int
+  montoAcordado   Decimal           @db.Decimal(12, 2)
+  fechaInicio     DateTime?         @db.Date
+  fechaFin        DateTime?         @db.Date
+  estado          String            @default("activo") @db.VarChar(20)
+  Calificacion    Calificacion[]
+  Cliente         Cliente           @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Freelancer      Freelancer        @relation(fields: [freelancerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  OfertaChat      OfertaChat?       @relation(fields: [ofertaChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Propuesta       Propuesta?        @relation(fields: [propuestaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Proyecto        Proyecto?         @relation(fields: [proyectoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Servicio        Servicio?         @relation(fields: [servicioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Pago            Pago[]
+  Disputa         Disputa[]
+  EntregaContrato EntregaContrato[]
+  Liquidacion     Liquidacion?
 
   @@index([clienteId])
   @@index([freelancerId])
@@ -181,6 +189,7 @@ model Freelancer {
   PortafolioItem        PortafolioItem[]
   Propuesta             Propuesta[]
   Servicio              Servicio[]
+  Liquidacion           Liquidacion[]
 }
 
 model FreelancerHabilidad {
@@ -394,4 +403,82 @@ model MeGustaPublicacion {
 
   @@id([publicacionId, usuarioId])
   @@index([usuarioId])
+}
+
+/// Entrega de un contrato: el freelancer adjunta un archivo o enlace y el cliente la revisa.
+model EntregaContrato {
+  id                  Int       @id @default(autoincrement())
+  contratoId          Int
+  autorId             Int
+  mensaje             String?
+  archivoUrl          String?   @db.VarChar(500)
+  enlaceUrl           String?   @db.VarChar(500)
+  estado              String    @default("enviada") @db.VarChar(20)
+  observacionRevision String?
+  fechaEntrega        DateTime  @default(now())
+  fechaRevision       DateTime?
+  revisadoPorId       Int?
+  Contrato            Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Autor               Usuario   @relation("EntregaAutor", fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  RevisadoPor         Usuario?  @relation("EntregaRevisor", fields: [revisadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([contratoId, estado])
+  @@index([autorId])
+  @@index([revisadoPorId])
+}
+
+/// Disputa formal abierta por una de las partes de un contrato.
+model Disputa {
+  id              Int       @id @default(autoincrement())
+  contratoId      Int
+  abiertaPorId    Int
+  motivo          String    @db.VarChar(120)
+  descripcion     String
+  evidenciaUrl    String?   @db.VarChar(500)
+  estado          String    @default("abierta") @db.VarChar(20)
+  resolucion      String?
+  resueltaPorId   Int?
+  fechaApertura   DateTime  @default(now())
+  fechaResolucion DateTime?
+  Contrato        Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  AbiertaPor      Usuario   @relation("DisputaAbiertaPor", fields: [abiertaPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ResueltaPor     Usuario?  @relation("DisputaResueltaPor", fields: [resueltaPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([contratoId, estado])
+  @@index([abiertaPorId])
+  @@index([resueltaPorId])
+}
+
+/// Notificacion persistente para un usuario (polling desde el frontend).
+model Notificacion {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int
+  tipo          String   @db.VarChar(50)
+  titulo        String   @db.VarChar(150)
+  mensaje       String
+  enlace        String?  @db.VarChar(500)
+  leida         Boolean  @default(false)
+  fechaCreacion DateTime @default(now())
+  Usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([usuarioId, leida, fechaCreacion])
+}
+
+/// Liquidacion del freelancer generada al completar un contrato.
+model Liquidacion {
+  id             Int        @id @default(autoincrement())
+  freelancerId   Int
+  contratoId     Int?       @unique
+  montoBruto     Decimal    @db.Decimal(12, 2)
+  comision       Decimal    @db.Decimal(12, 2)
+  montoNeto      Decimal    @db.Decimal(12, 2)
+  estado         String     @default("pendiente") @db.VarChar(20)
+  referencia     String?    @db.VarChar(100)
+  fechaCreacion  DateTime   @default(now())
+  fechaSolicitud DateTime?
+  fechaPago      DateTime?
+  Freelancer     Freelancer @relation(fields: [freelancerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Contrato       Contrato?  @relation(fields: [contratoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([freelancerId, estado])
 }

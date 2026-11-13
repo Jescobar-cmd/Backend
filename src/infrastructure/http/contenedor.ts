@@ -17,6 +17,12 @@ import { PrismaPortafolioRepository } from '../persistence/postgres/PrismaPortaf
 import { PrismaEstadisticaFreelancerRepository } from '../persistence/postgres/PrismaEstadisticaFreelancerRepository';
 import { PrismaDashboardFreelancerRepository } from '../persistence/postgres/PrismaDashboardFreelancerRepository';
 import { PrismaDirectorioFreelancerRepository } from '../persistence/postgres/PrismaDirectorioFreelancerRepository';
+import { PrismaDashboardClienteRepository } from '../persistence/postgres/PrismaDashboardClienteRepository';
+import { PrismaPagoRepository } from '../persistence/postgres/PrismaPagoRepository';
+import { PrismaNotificacionRepository } from '../persistence/postgres/PrismaNotificacionRepository';
+import { PrismaEntregaContratoRepository } from '../persistence/postgres/PrismaEntregaContratoRepository';
+import { PrismaDisputaRepository } from '../persistence/postgres/PrismaDisputaRepository';
+import { PrismaLiquidacionRepository } from '../persistence/postgres/PrismaLiquidacionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { ServicioJwt } from '../security/ServicioJwt';
 import { EnviadorCorreoNodemailer } from '../email/EnviadorCorreoNodemailer';
@@ -87,6 +93,24 @@ import { RegistrarVisitaPerfilUseCase } from '../../application/use-cases/Regist
 import { ObtenerEstadisticasFreelancerUseCase } from '../../application/use-cases/ObtenerEstadisticasFreelancerUseCase';
 import { ObtenerDashboardFreelancerUseCase } from '../../application/use-cases/ObtenerDashboardFreelancerUseCase';
 import { BuscarFreelancersUseCase } from '../../application/use-cases/BuscarFreelancersUseCase';
+import { ObtenerDashboardClienteUseCase } from '../../application/use-cases/ObtenerDashboardClienteUseCase';
+import { ContratarServicioUseCase } from '../../application/use-cases/ContratarServicioUseCase';
+import { RegistrarEntregaContratoUseCase } from '../../application/use-cases/RegistrarEntregaContratoUseCase';
+import { ListarEntregasContratoUseCase } from '../../application/use-cases/ListarEntregasContratoUseCase';
+import { AprobarEntregaUseCase } from '../../application/use-cases/AprobarEntregaUseCase';
+import { AbrirDisputaUseCase } from '../../application/use-cases/AbrirDisputaUseCase';
+import { ListarDisputasContratoUseCase } from '../../application/use-cases/ListarDisputasContratoUseCase';
+import { ListarPagosClienteUseCase } from '../../application/use-cases/ListarPagosClienteUseCase';
+import { ObtenerFacturaPagoUseCase } from '../../application/use-cases/ObtenerFacturaPagoUseCase';
+import { ListarNotificacionesUseCase } from '../../application/use-cases/ListarNotificacionesUseCase';
+import { MarcarNotificacionLeidaUseCase } from '../../application/use-cases/MarcarNotificacionLeidaUseCase';
+import { MarcarTodasNotificacionesLeidasUseCase } from '../../application/use-cases/MarcarTodasNotificacionesLeidasUseCase';
+import { ListarPagosFreelancerUseCase } from '../../application/use-cases/ListarPagosFreelancerUseCase';
+import { ObtenerFacturaPagoFreelancerUseCase } from '../../application/use-cases/ObtenerFacturaPagoFreelancerUseCase';
+import { ObtenerLiquidacionesFreelancerUseCase } from '../../application/use-cases/ObtenerLiquidacionesFreelancerUseCase';
+import { SolicitarRetiroUseCase } from '../../application/use-cases/SolicitarRetiroUseCase';
+import { ActualizarEntregaContratoUseCase } from '../../application/use-cases/ActualizarEntregaContratoUseCase';
+import { RechazarEntregaUseCase } from '../../application/use-cases/RechazarEntregaUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -106,6 +130,14 @@ const portafolio = new PrismaPortafolioRepository(prisma);
 const estadisticas = new PrismaEstadisticaFreelancerRepository(prisma);
 const dashboardFreelancer = new PrismaDashboardFreelancerRepository(prisma);
 const directorioFreelancers = new PrismaDirectorioFreelancerRepository(prisma);
+const dashboardCliente = new PrismaDashboardClienteRepository(prisma);
+const pagos = new PrismaPagoRepository(prisma);
+const notificaciones = new PrismaNotificacionRepository(prisma);
+const entregas = new PrismaEntregaContratoRepository(prisma);
+const disputas = new PrismaDisputaRepository(prisma);
+const liquidaciones = new PrismaLiquidacionRepository(prisma);
+const comisionFreelancerPorcentaje =
+  entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -131,6 +163,12 @@ export const contenedor = {
   estadisticas,
   dashboardFreelancer,
   directorioFreelancers,
+  dashboardCliente,
+  pagos,
+  notificaciones,
+  entregas,
+  disputas,
+  liquidaciones,
   hasheador,
   correo,
   jwt,
@@ -186,6 +224,47 @@ export const contenedor = {
   obtenerEstadisticasFreelancer: new ObtenerEstadisticasFreelancerUseCase(estadisticas),
   obtenerDashboardFreelancer: new ObtenerDashboardFreelancerUseCase(dashboardFreelancer),
   buscarFreelancers: new BuscarFreelancersUseCase(directorioFreelancers),
+  obtenerDashboardCliente: new ObtenerDashboardClienteUseCase(dashboardCliente),
+  contratarServicio: new ContratarServicioUseCase(
+    servicios,
+    contratos,
+    notificaciones,
+    entorno.COMISION_CLIENTE_PORCENTAJE
+  ),
+  registrarEntregaContrato: new RegistrarEntregaContratoUseCase(
+    contratos,
+    entregas,
+    notificaciones
+  ),
+  listarEntregasContrato: new ListarEntregasContratoUseCase(contratos, entregas),
+  actualizarEntregaContrato: new ActualizarEntregaContratoUseCase(
+    contratos,
+    entregas,
+    notificaciones
+  ),
+  aprobarEntrega: new AprobarEntregaUseCase(
+    contratos,
+    entregas,
+    notificaciones,
+    liquidaciones,
+    comisionFreelancerPorcentaje
+  ),
+  rechazarEntrega: new RechazarEntregaUseCase(contratos, entregas, notificaciones),
+  abrirDisputa: new AbrirDisputaUseCase(contratos, disputas, notificaciones),
+  listarDisputasContrato: new ListarDisputasContratoUseCase(contratos, disputas),
+  listarPagosCliente: new ListarPagosClienteUseCase(pagos),
+  obtenerFacturaPago: new ObtenerFacturaPagoUseCase(pagos),
+  listarPagosFreelancer: new ListarPagosFreelancerUseCase(pagos),
+  obtenerFacturaPagoFreelancer: new ObtenerFacturaPagoFreelancerUseCase(pagos),
+  obtenerLiquidacionesFreelancer: new ObtenerLiquidacionesFreelancerUseCase(
+    liquidaciones
+  ),
+  solicitarRetiro: new SolicitarRetiroUseCase(liquidaciones),
+  listarNotificaciones: new ListarNotificacionesUseCase(notificaciones),
+  marcarNotificacionLeida: new MarcarNotificacionLeidaUseCase(notificaciones),
+  marcarTodasNotificacionesLeidas: new MarcarTodasNotificacionesLeidasUseCase(
+    notificaciones
+  ),
   listarMisPropuestas: new ListarMisPropuestasUseCase(propuestas),
   aceptarPropuesta: new AceptarPropuestaUseCase(propuestas),
   rechazarPropuesta: new RechazarPropuestaUseCase(propuestas),
@@ -195,7 +274,11 @@ export const contenedor = {
   contraofertar: new ContraofertarUseCase(ofertasChat),
   listarContratos: new ListarContratosUseCase(contratos),
   obtenerContrato: new ObtenerContratoUseCase(contratos),
-  cambiarEstadoContrato: new CambiarEstadoContratoUseCase(contratos),
+  cambiarEstadoContrato: new CambiarEstadoContratoUseCase(
+    contratos,
+    liquidaciones,
+    comisionFreelancerPorcentaje
+  ),
   calificarContrato: new CalificarContratoUseCase(calificaciones, contratos),
   listarCalificacionesContrato: new ListarCalificacionesContratoUseCase(
     calificaciones,

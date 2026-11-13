@@ -43,12 +43,46 @@ const esquemaEntorno = z.object({
   // Autenticación con Google OAuth
   GOOGLE_CLIENT_ID: z.string().optional(),
 
+  // Comision total de la plataforma (0-100). Se reparte entre cliente y freelancer.
+  COMISION_PLATAFORMA_PORCENTAJE: z
+    .string()
+    .optional()
+    .default('15')
+    .transform((valor) => {
+      const porcentaje = Number(valor);
+      if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+        return 15;
+      }
+      return porcentaje;
+    }),
+
+  // Parte de la comision total que paga el cliente al contratar.
+  COMISION_CLIENTE_PORCENTAJE: z
+    .string()
+    .optional()
+    .default('3')
+    .transform((valor) => {
+      const porcentaje = Number(valor);
+      if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+        return 3;
+      }
+      return porcentaje;
+    }),
+
   // Semilla de base de datos
   SEED_DEMO_USER: z
     .string()
     .optional()
     .transform((val) => val === 'true'),
-});
+}).refine(
+  (datos) =>
+    datos.COMISION_CLIENTE_PORCENTAJE <= datos.COMISION_PLATAFORMA_PORCENTAJE,
+  {
+    message:
+      'COMISION_CLIENTE_PORCENTAJE no puede ser mayor que COMISION_PLATAFORMA_PORCENTAJE',
+    path: ['COMISION_CLIENTE_PORCENTAJE'],
+  }
+);
 
 const resultado = esquemaEntorno.safeParse(process.env);
 

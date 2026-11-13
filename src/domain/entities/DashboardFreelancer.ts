@@ -4,7 +4,12 @@ export interface DashboardFreelancer {
   contratosCompletados: number;
   propuestasPendientes: number;
   serviciosActivos: number;
+  entregasPendientes: number;
+  pagosPendientes: number;
+  disputasAbiertas: number;
+  notificacionesSinLeer: number;
   calificacionPromedio: number;
   visitasPerfil: number;
   visualizacionesPropuesta: number;
+  saldoDisponible: number;
 }

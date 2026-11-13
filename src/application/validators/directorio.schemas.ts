@@ -1,10 +1,5 @@
 import { z } from 'zod';
-
-const preprocesarEnteroPositivo = (valor: unknown) => {
-  if (valor === undefined || valor === null || valor === '') return undefined;
-  const num = typeof valor === 'string' ? Number(valor) : valor;
-  return Number.isInteger(num) && (num as number) > 0 ? num : valor;
-};
+import { preprocesarEnteroPositivo } from './comunes.schemas';
 
 export const consultaDirectorioSchema = z.object({
   page: z.preprocess(

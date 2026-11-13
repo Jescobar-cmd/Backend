@@ -4,9 +4,9 @@ export const swaggerDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FirstGig Backend',
-    version: '0.9.0',
+    version: '1.0.0',
     description:
-      'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, cierre y calificaciones + Portafolio, directorio, métricas y dashboard del freelancer.',
+      'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, entregas, disputas, pagos, liquidaciones, notificaciones, cierre y calificaciones + Portafolio, directorio, métricas y dashboards de cliente y freelancer.',
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Local' },
@@ -1002,6 +1002,268 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/cliente/dashboard': {
+      get: {
+        summary: 'Dashboard del cliente',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description:
+              'Resumen de contratos, entregas, disputas, pagos, total pagado, notificaciones y contratos recientes',
+          },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+        },
+      },
+    },
+    '/api/cliente/servicios/{id}/contratar': {
+      post: {
+        summary: 'Contratar directamente un servicio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '201': {
+            description:
+              'Contrato creado con pago pendiente. El pago incluye la comisión de servicio al cliente (3% por defecto).',
+          },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+          '404': { description: 'Servicio no encontrado' },
+          '409': { description: 'Servicio no disponible, propio o ya contratado' },
+        },
+      },
+    },
+    '/api/cliente/pagos': {
+      get: {
+        summary: 'Listar mis pagos y facturas',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, pagos } con contrato y factura' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+        },
+      },
+    },
+    '/api/cliente/pagos/{id}/factura': {
+      get: {
+        summary: 'Consultar la factura de un pago propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Factura del pago' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+          '404': { description: 'Factura no encontrada' },
+        },
+      },
+    },
+    '/api/cliente/notificaciones': {
+      get: {
+        summary: 'Listar mis notificaciones',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 50 } },
+          { name: 'soloNoLeidas', in: 'query', schema: { type: 'boolean', default: false } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, noLeidas, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+        },
+      },
+    },
+    '/api/cliente/notificaciones/leidas': {
+      patch: {
+        summary: 'Marcar todas mis notificaciones como leídas',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ actualizadas }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+        },
+      },
+    },
+    '/api/cliente/notificaciones/{id}/leida': {
+      patch: {
+        summary: 'Marcar una notificación como leída',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Notificación actualizada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol cliente' },
+          '404': { description: 'Notificación no encontrada' },
+        },
+      },
+    },
+    '/api/contratos/{id}/entregas': {
+      get: {
+        summary: 'Listar entregas de un contrato propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ total, entregas }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+        },
+      },
+      post: {
+        summary: 'Registrar la entrega de un contrato (freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  mensaje: { type: 'string', nullable: true },
+                  archivoUrl: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
+                  enlaceUrl: { type: 'string', nullable: true, example: 'https://drive.google.com/...' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Entrega registrada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer y participación' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'Contrato inactivo o entrega pendiente existente' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/contratos/{id}/entregas/{entregaId}': {
+      patch: {
+        summary: 'Reemplazar una entrega en revisión (freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'entregaId', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  mensaje: { type: 'string', nullable: true },
+                  archivoUrl: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
+                  enlaceUrl: { type: 'string', nullable: true, example: 'https://drive.google.com/...' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Entrega actualizada y cliente notificado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No eres el freelancer del contrato o autor de la entrega' },
+          '404': { description: 'Contrato o entrega no encontrada' },
+          '409': { description: 'Contrato inactivo o entrega ya revisada' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/contratos/{id}/aprobar-entrega': {
+      patch: {
+        summary: 'Aprobar la entrega y completar el contrato (cliente)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Entrega aprobada y contrato completado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No eres el cliente del contrato' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'Contrato inactivo o sin entrega pendiente' },
+        },
+      },
+    },
+    '/api/contratos/{id}/rechazar-entrega': {
+      patch: {
+        summary: 'Rechazar una entrega y dejar observaciones (cliente)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['observacion'],
+                properties: {
+                  observacion: { type: 'string', minLength: 3, maxLength: 1000, example: 'Falta el footer y el responsive móvil.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Entrega rechazada y freelancer notificado' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No eres el cliente del contrato' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'Contrato inactivo o sin entrega pendiente' },
+          '422': { description: 'Observación inválida' },
+        },
+      },
+    },
+    '/api/contratos/{id}/disputas': {
+      get: {
+        summary: 'Listar disputas de un contrato propio',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ total, disputas }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+        },
+      },
+      post: {
+        summary: 'Abrir una disputa formal sobre un contrato activo',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['motivo', 'descripcion'],
+                properties: {
+                  motivo: { type: 'string', example: 'Entrega incompleta' },
+                  descripcion: { type: 'string', example: 'Faltan dos pantallas del diseño acordado.' },
+                  evidenciaUrl: { type: 'string', nullable: true, example: 'https://res.cloudinary.com/...' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Disputa abierta' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+          '409': { description: 'Contrato inactivo o disputa abierta existente' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
     '/api/freelancer/perfil': {
       get: {
         summary: 'Perfil propio del freelancer',
@@ -1236,12 +1498,107 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/freelancer/notificaciones': {
+      get: {
+        summary: 'Listar mis notificaciones (freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 50 } },
+          { name: 'soloNoLeidas', in: 'query', schema: { type: 'boolean', default: false } },
+        ],
+        responses: {
+          '200': { description: '{ total, pagina, limite, notificaciones, sinLeer }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/freelancer/notificaciones/leidas': {
+      patch: {
+        summary: 'Marcar todas mis notificaciones como leídas (freelancer)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ actualizadas }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/freelancer/notificaciones/{id}/leida': {
+      patch: {
+        summary: 'Marcar una notificación como leída (freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Notificación actualizada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+          '404': { description: 'Notificación no encontrada' },
+        },
+      },
+    },
+    '/api/freelancer/pagos': {
+      get: {
+        summary: 'Listar mis pagos y facturas (freelancer)',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ total, pagos } con contrato, cliente y factura' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/freelancer/pagos/{id}/factura': {
+      get: {
+        summary: 'Consultar la factura de un pago propio (freelancer)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Factura del pago' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+          '404': { description: 'Factura no encontrada' },
+        },
+      },
+    },
+    '/api/freelancer/liquidaciones': {
+      get: {
+        summary: 'Consultar saldo, comisiones e historial de liquidaciones',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description:
+              '{ resumen: { saldoDisponible, saldoEnProceso, totalPagado, comisionTotal, totalLiquidaciones }, liquidaciones }. La comisión del freelancer es 12% por defecto (15% total menos 3% del cliente).',
+          },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+        },
+      },
+    },
+    '/api/freelancer/liquidaciones/solicitar': {
+      post: {
+        summary: 'Solicitar el retiro de las liquidaciones disponibles',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '201': { description: '{ mensaje, cantidad, total }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol freelancer' },
+          '409': { description: 'No hay saldo disponible para retirar' },
+        },
+      },
+    },
     '/api/freelancer/dashboard': {
       get: {
         summary: 'Resumen del panel del freelancer',
         security: [{ bearerAuth: [] }],
         responses: {
-          '200': { description: 'Contadores de contratos, propuestas, servicios, reputación y métricas' },
+          '200': {
+            description:
+              'Contadores de contratos, propuestas, servicios, entregas, pagos, disputas, notificaciones, reputación, métricas y saldo disponible',
+          },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol freelancer' },
         },
