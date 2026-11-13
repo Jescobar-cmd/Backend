@@ -22,3 +22,11 @@ export interface PagoCliente {
   };
   factura: FacturaCliente | null;
 }
+
+export interface PagoFreelancer extends PagoCliente {
+  cliente: {
+    id: number;
+    nombre: string;
+    fotoPerfil: string | null;
+  };
+}

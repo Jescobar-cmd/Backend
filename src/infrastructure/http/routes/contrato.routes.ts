@@ -7,7 +7,10 @@ import {
   calificarContratoSchema,
   cambiarEstadoContratoSchema,
 } from '../../../application/validators/contrato.schemas';
-import { registrarEntregaSchema } from '../../../application/validators/entrega.schemas';
+import {
+  rechazarEntregaSchema,
+  registrarEntregaSchema,
+} from '../../../application/validators/entrega.schemas';
 import { abrirDisputaSchema } from '../../../application/validators/disputa.schemas';
 import { ROLES } from '../../../shared/constants/roles';
 
@@ -38,9 +41,21 @@ contratosRouter.post(
   ContratoController.registrarEntrega
 );
 contratosRouter.patch(
+  '/:id/entregas/:entregaId',
+  requiereRol(ROLES.FREELANCER),
+  validar(registrarEntregaSchema),
+  ContratoController.actualizarEntrega
+);
+contratosRouter.patch(
   '/:id/aprobar-entrega',
   requiereRol(ROLES.CLIENTE),
   ContratoController.aprobarEntrega
+);
+contratosRouter.patch(
+  '/:id/rechazar-entrega',
+  requiereRol(ROLES.CLIENTE),
+  validar(rechazarEntregaSchema),
+  ContratoController.rechazarEntrega
 );
 
 // Disputas formales del contrato.

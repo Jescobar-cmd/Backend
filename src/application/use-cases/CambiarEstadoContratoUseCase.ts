@@ -3,7 +3,9 @@ import {
   ContratoVista,
   EstadoContratoFinal,
 } from '../../domain/entities/Contrato';
+import { calcularLiquidacion } from '../../domain/entities/Liquidacion';
 import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
+import { LiquidacionRepository } from '../../domain/ports/repositories/LiquidacionRepository';
 import {
   ErrorConflicto,
   ErrorNoEncontrado,
@@ -12,7 +14,11 @@ import {
 
 /** Caso de uso: un participante cierra el contrato como completado o cancelado. */
 export class CambiarEstadoContratoUseCase {
-  constructor(private contratoRepository: ContratoRepository) {}
+  constructor(
+    private contratoRepository: ContratoRepository,
+    private liquidacionRepository: LiquidacionRepository,
+    private comisionPorcentaje: number
+  ) {}
 
   async ejecutar(
     contratoId: number,
@@ -31,6 +37,21 @@ export class CambiarEstadoContratoUseCase {
     }
 
     const actualizado = await this.contratoRepository.cambiarEstado(contratoId, estado);
+
+    if (estado === 'completado') {
+      const calculo = calcularLiquidacion(
+        contrato.montoAcordado,
+        this.comisionPorcentaje
+      );
+      await this.liquidacionRepository.crearParaContrato({
+        freelancerId: contrato.freelancer.id,
+        contratoId: contrato.id,
+        montoBruto: contrato.montoAcordado,
+        comision: calculo.comision,
+        montoNeto: calculo.montoNeto,
+      });
+    }
+
     return aContratoVista(actualizado, usuarioId);
   }
 }

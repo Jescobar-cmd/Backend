@@ -1,5 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { FacturaCliente, PagoCliente } from '../../../domain/entities/Pago';
+import {
+  FacturaCliente,
+  PagoCliente,
+  PagoFreelancer,
+} from '../../../domain/entities/Pago';
 import { PagoRepository } from '../../../domain/ports/repositories/PagoRepository';
 
 const pagoInclude = {
@@ -8,6 +12,7 @@ const pagoInclude = {
     select: {
       id: true,
       estado: true,
+      Cliente: { include: { Usuario: true } },
       Proyecto: { select: { titulo: true } },
       Servicio: { select: { titulo: true } },
     },
@@ -46,6 +51,35 @@ function toPagoCliente(pago: PagoConRelaciones): PagoCliente {
   };
 }
 
+function toPagoFreelancer(pago: PagoConRelaciones): PagoFreelancer {
+  return {
+    ...toPagoCliente(pago),
+    cliente: {
+      id: pago.Contrato.Cliente.id,
+      nombre: pago.Contrato.Cliente.Usuario.nombre,
+      fotoPerfil: pago.Contrato.Cliente.Usuario.fotoPerfil,
+    },
+  };
+}
+
+function toFactura(factura: {
+  id: number;
+  numeroFactura: string | null;
+  cufe: string | null;
+  fechaEmision: Date | null;
+  estado: string;
+  urlPdf: string | null;
+}): FacturaCliente {
+  return {
+    id: factura.id,
+    numeroFactura: factura.numeroFactura,
+    cufe: factura.cufe,
+    fechaEmision: factura.fechaEmision,
+    estado: factura.estado,
+    urlPdf: factura.urlPdf,
+  };
+}
+
 /** Adaptador Prisma del puerto PagoRepository. */
 export class PrismaPagoRepository implements PagoRepository {
   constructor(private db: PrismaClient) {}
@@ -59,6 +93,15 @@ export class PrismaPagoRepository implements PagoRepository {
     return pagos.map(toPagoCliente);
   }
 
+  async listarPorFreelancer(freelancerId: number): Promise<PagoFreelancer[]> {
+    const pagos = await this.db.pago.findMany({
+      where: { Contrato: { freelancerId } },
+      include: pagoInclude,
+      orderBy: { fechaPago: 'desc' },
+    });
+    return pagos.map(toPagoFreelancer);
+  }
+
   async obtenerFactura(
     pagoId: number,
     clienteId: number
@@ -69,16 +112,19 @@ export class PrismaPagoRepository implements PagoRepository {
         Pago: { Contrato: { clienteId } },
       },
     });
-    if (!factura) {
-      return null;
-    }
-    return {
-      id: factura.id,
-      numeroFactura: factura.numeroFactura,
-      cufe: factura.cufe,
-      fechaEmision: factura.fechaEmision,
-      estado: factura.estado,
-      urlPdf: factura.urlPdf,
-    };
+    return factura ? toFactura(factura) : null;
+  }
+
+  async obtenerFacturaFreelancer(
+    pagoId: number,
+    freelancerId: number
+  ): Promise<FacturaCliente | null> {
+    const factura = await this.db.factura.findFirst({
+      where: {
+        pagoId,
+        Pago: { Contrato: { freelancerId } },
+      },
+    });
+    return factura ? toFactura(factura) : null;
   }
 }

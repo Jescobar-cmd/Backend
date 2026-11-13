@@ -1,7 +1,9 @@
 import { aContratoVista, ContratoVista } from '../../domain/entities/Contrato';
 import { EntregaContrato } from '../../domain/entities/EntregaContrato';
+import { calcularLiquidacion } from '../../domain/entities/Liquidacion';
 import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
 import { EntregaContratoRepository } from '../../domain/ports/repositories/EntregaContratoRepository';
+import { LiquidacionRepository } from '../../domain/ports/repositories/LiquidacionRepository';
 import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
 import {
   ErrorConflicto,
@@ -19,7 +21,9 @@ export class AprobarEntregaUseCase {
   constructor(
     private contratoRepository: ContratoRepository,
     private entregaRepository: EntregaContratoRepository,
-    private notificacionRepository: NotificacionRepository
+    private notificacionRepository: NotificacionRepository,
+    private liquidacionRepository: LiquidacionRepository,
+    private comisionPorcentaje: number
   ) {}
 
   async ejecutar(contratoId: number, clienteId: number): Promise<AprobacionEntrega> {
@@ -44,6 +48,18 @@ export class AprobarEntregaUseCase {
       contratoId,
       'completado'
     );
+
+    const calculo = calcularLiquidacion(
+      contrato.montoAcordado,
+      this.comisionPorcentaje
+    );
+    await this.liquidacionRepository.crearParaContrato({
+      freelancerId: contrato.freelancer.id,
+      contratoId: contrato.id,
+      montoBruto: contrato.montoAcordado,
+      comision: calculo.comision,
+      montoNeto: calculo.montoNeto,
+    });
 
     await this.notificacionRepository.crear({
       usuarioId: contrato.freelancer.id,

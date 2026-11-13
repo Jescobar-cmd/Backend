@@ -5,6 +5,7 @@ import { PerfilController } from '../controllers/PerfilController';
 import { PortafolioController } from '../controllers/PortafolioController';
 import { EstadisticaController } from '../controllers/EstadisticaController';
 import { DashboardController } from '../controllers/DashboardController';
+import { FreelancerController } from '../controllers/FreelancerController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar, validarQuery } from '../middlewares/validar';
@@ -76,3 +77,19 @@ freelancerRouter.get(
   EstadisticaController.misEstadisticas
 );
 freelancerRouter.get('/dashboard', DashboardController.obtener);
+freelancerRouter.get('/notificaciones', FreelancerController.notificaciones);
+freelancerRouter.patch(
+  '/notificaciones/leidas',
+  FreelancerController.marcarTodasLeidas
+);
+freelancerRouter.patch(
+  '/notificaciones/:id/leida',
+  FreelancerController.marcarNotificacionLeida
+);
+freelancerRouter.get('/pagos', FreelancerController.pagos);
+freelancerRouter.get('/pagos/:id/factura', FreelancerController.factura);
+freelancerRouter.get('/liquidaciones', FreelancerController.liquidaciones);
+freelancerRouter.post(
+  '/liquidaciones/solicitar',
+  FreelancerController.solicitarRetiro
+);

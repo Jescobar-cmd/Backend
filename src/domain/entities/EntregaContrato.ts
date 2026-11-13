@@ -8,6 +8,7 @@ export interface EntregaContrato {
   archivoUrl: string | null;
   enlaceUrl: string | null;
   estado: EstadoEntrega;
+  observacionRevision: string | null;
   fechaEntrega: Date;
   fechaRevision: Date | null;
   revisadoPorId: number | null;
@@ -16,6 +17,12 @@ export interface EntregaContrato {
 export interface NuevaEntregaContrato {
   contratoId: number;
   autorId: number;
+  mensaje?: string | null;
+  archivoUrl?: string | null;
+  enlaceUrl?: string | null;
+}
+
+export interface DatosActualizacionEntrega {
   mensaje?: string | null;
   archivoUrl?: string | null;
   enlaceUrl?: string | null;

@@ -43,6 +43,19 @@ const esquemaEntorno = z.object({
   // Autenticación con Google OAuth
   GOOGLE_CLIENT_ID: z.string().optional(),
 
+  // Comision de la plataforma para liquidaciones (0-100).
+  COMISION_PLATAFORMA_PORCENTAJE: z
+    .string()
+    .optional()
+    .default('10')
+    .transform((valor) => {
+      const porcentaje = Number(valor);
+      if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+        return 10;
+      }
+      return porcentaje;
+    }),
+
   // Semilla de base de datos
   SEED_DEMO_USER: z
     .string()

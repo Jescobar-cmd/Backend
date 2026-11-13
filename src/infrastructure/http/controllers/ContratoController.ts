@@ -201,4 +201,46 @@ export class ContratoController {
       next(e);
     }
   }
+
+  /** PATCH /api/contratos/:id/entregas/:entregaId */
+  static async actualizarEntrega(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const freelancerId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
+      const entregaId = parsearIdParam(req.params.entregaId, 'entrega');
+      const entrega = await contenedor.actualizarEntregaContrato.ejecutar(
+        contratoId,
+        entregaId,
+        freelancerId,
+        req.body
+      );
+      res.json({ mensaje: 'Entrega actualizada correctamente', entrega });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/contratos/:id/rechazar-entrega */
+  static async rechazarEntrega(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const clienteId = obtenerUsuarioId(req);
+      const contratoId = parsearIdParam(req.params.id, 'contrato');
+      const entrega = await contenedor.rechazarEntrega.ejecutar(
+        contratoId,
+        clienteId,
+        req.body.observacion
+      );
+      res.json({ mensaje: 'Entrega rechazada correctamente', entrega });
+    } catch (e) {
+      next(e);
+    }
+  }
 }

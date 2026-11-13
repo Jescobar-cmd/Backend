@@ -9,9 +9,14 @@ describe('ObtenerDashboardFreelancerUseCase', () => {
       contratosCompletados: 3,
       propuestasPendientes: 1,
       serviciosActivos: 4,
+      entregasPendientes: 1,
+      pagosPendientes: 2,
+      disputasAbiertas: 0,
+      notificacionesSinLeer: 3,
       calificacionPromedio: 4.5,
       visitasPerfil: 10,
       visualizacionesPropuesta: 6,
+      saldoDisponible: 450,
     };
     const repo: DashboardFreelancerRepository = {
       obtener: vi.fn().mockResolvedValue(resumen),

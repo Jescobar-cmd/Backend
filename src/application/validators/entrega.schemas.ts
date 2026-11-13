@@ -39,3 +39,13 @@ export const registrarEntregaSchema = z
       path: ['mensaje'],
     }
   );
+
+export const rechazarEntregaSchema = z
+  .object({
+    observacion: z
+      .string({ required_error: 'La observación es requerida' })
+      .trim()
+      .min(3, 'La observación debe tener al menos 3 caracteres')
+      .max(1000, 'La observación no puede exceder 1000 caracteres'),
+  })
+  .strict();

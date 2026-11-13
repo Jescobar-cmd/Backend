@@ -18,6 +18,7 @@ import { NotificacionRepository } from '../../src/domain/ports/repositories/Noti
 import { EntregaContratoRepository } from '../../src/domain/ports/repositories/EntregaContratoRepository';
 import { DisputaRepository } from '../../src/domain/ports/repositories/DisputaRepository';
 import { PagoRepository } from '../../src/domain/ports/repositories/PagoRepository';
+import { LiquidacionRepository } from '../../src/domain/ports/repositories/LiquidacionRepository';
 import { ContratoDetalle } from '../../src/domain/entities/Contrato';
 import { Servicio } from '../../src/domain/entities/Servicio';
 import { EntregaContrato } from '../../src/domain/entities/EntregaContrato';
@@ -73,6 +74,7 @@ const entregaBase: EntregaContrato = {
   archivoUrl: 'https://res.cloudinary.com/entrega.zip',
   enlaceUrl: null,
   estado: 'enviada',
+  observacionRevision: null,
   fechaEntrega: new Date('2026-01-02T00:00:00.000Z'),
   fechaRevision: null,
   revisadoPorId: null,
@@ -211,16 +213,28 @@ describe('ClienteUseCases', () => {
     const notificaciones = {
       crear: vi.fn().mockResolvedValue(notificacionBase),
     } as unknown as NotificacionRepository;
+    const liquidaciones = {
+      crearParaContrato: vi.fn().mockResolvedValue({}),
+    } as unknown as LiquidacionRepository;
 
     const resultado = await new AprobarEntregaUseCase(
       contratos,
       entregas,
-      notificaciones
+      notificaciones,
+      liquidaciones,
+      10
     ).ejecutar(1, 10);
 
     expect(resultado.contrato.estado).toBe('completado');
     expect(resultado.entrega.estado).toBe('aprobada');
     expect(contratos.cambiarEstado).toHaveBeenCalledWith(1, 'completado');
+    expect(liquidaciones.crearParaContrato).toHaveBeenCalledWith({
+      freelancerId: 20,
+      contratoId: 1,
+      montoBruto: 100,
+      comision: 10,
+      montoNeto: 90,
+    });
   });
 
   it('rechaza aprobar si no hay entrega pendiente', async () => {
@@ -231,9 +245,16 @@ describe('ClienteUseCases', () => {
       obtenerPendiente: vi.fn().mockResolvedValue(null),
     } as unknown as EntregaContratoRepository;
     const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const liquidaciones = {} as unknown as LiquidacionRepository;
 
     await expect(
-      new AprobarEntregaUseCase(contratos, entregas, notificaciones).ejecutar(1, 10)
+      new AprobarEntregaUseCase(
+        contratos,
+        entregas,
+        notificaciones,
+        liquidaciones,
+        10
+      ).ejecutar(1, 10)
     ).rejects.toThrow(ErrorConflicto);
   });
 
@@ -243,9 +264,16 @@ describe('ClienteUseCases', () => {
     });
     const entregas = {} as unknown as EntregaContratoRepository;
     const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const liquidaciones = {} as unknown as LiquidacionRepository;
 
     await expect(
-      new AprobarEntregaUseCase(contratos, entregas, notificaciones).ejecutar(1, 99)
+      new AprobarEntregaUseCase(
+        contratos,
+        entregas,
+        notificaciones,
+        liquidaciones,
+        10
+      ).ejecutar(1, 99)
     ).rejects.toThrow(ErrorProhibido);
   });
 

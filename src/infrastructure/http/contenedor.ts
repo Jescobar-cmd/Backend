@@ -22,6 +22,7 @@ import { PrismaPagoRepository } from '../persistence/postgres/PrismaPagoReposito
 import { PrismaNotificacionRepository } from '../persistence/postgres/PrismaNotificacionRepository';
 import { PrismaEntregaContratoRepository } from '../persistence/postgres/PrismaEntregaContratoRepository';
 import { PrismaDisputaRepository } from '../persistence/postgres/PrismaDisputaRepository';
+import { PrismaLiquidacionRepository } from '../persistence/postgres/PrismaLiquidacionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { ServicioJwt } from '../security/ServicioJwt';
 import { EnviadorCorreoNodemailer } from '../email/EnviadorCorreoNodemailer';
@@ -104,6 +105,12 @@ import { ObtenerFacturaPagoUseCase } from '../../application/use-cases/ObtenerFa
 import { ListarNotificacionesUseCase } from '../../application/use-cases/ListarNotificacionesUseCase';
 import { MarcarNotificacionLeidaUseCase } from '../../application/use-cases/MarcarNotificacionLeidaUseCase';
 import { MarcarTodasNotificacionesLeidasUseCase } from '../../application/use-cases/MarcarTodasNotificacionesLeidasUseCase';
+import { ListarPagosFreelancerUseCase } from '../../application/use-cases/ListarPagosFreelancerUseCase';
+import { ObtenerFacturaPagoFreelancerUseCase } from '../../application/use-cases/ObtenerFacturaPagoFreelancerUseCase';
+import { ObtenerLiquidacionesFreelancerUseCase } from '../../application/use-cases/ObtenerLiquidacionesFreelancerUseCase';
+import { SolicitarRetiroUseCase } from '../../application/use-cases/SolicitarRetiroUseCase';
+import { ActualizarEntregaContratoUseCase } from '../../application/use-cases/ActualizarEntregaContratoUseCase';
+import { RechazarEntregaUseCase } from '../../application/use-cases/RechazarEntregaUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -128,6 +135,7 @@ const pagos = new PrismaPagoRepository(prisma);
 const notificaciones = new PrismaNotificacionRepository(prisma);
 const entregas = new PrismaEntregaContratoRepository(prisma);
 const disputas = new PrismaDisputaRepository(prisma);
+const liquidaciones = new PrismaLiquidacionRepository(prisma);
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -158,6 +166,7 @@ export const contenedor = {
   notificaciones,
   entregas,
   disputas,
+  liquidaciones,
   hasheador,
   correo,
   jwt,
@@ -221,11 +230,29 @@ export const contenedor = {
     notificaciones
   ),
   listarEntregasContrato: new ListarEntregasContratoUseCase(contratos, entregas),
-  aprobarEntrega: new AprobarEntregaUseCase(contratos, entregas, notificaciones),
+  actualizarEntregaContrato: new ActualizarEntregaContratoUseCase(
+    contratos,
+    entregas,
+    notificaciones
+  ),
+  aprobarEntrega: new AprobarEntregaUseCase(
+    contratos,
+    entregas,
+    notificaciones,
+    liquidaciones,
+    entorno.COMISION_PLATAFORMA_PORCENTAJE
+  ),
+  rechazarEntrega: new RechazarEntregaUseCase(contratos, entregas, notificaciones),
   abrirDisputa: new AbrirDisputaUseCase(contratos, disputas, notificaciones),
   listarDisputasContrato: new ListarDisputasContratoUseCase(contratos, disputas),
   listarPagosCliente: new ListarPagosClienteUseCase(pagos),
   obtenerFacturaPago: new ObtenerFacturaPagoUseCase(pagos),
+  listarPagosFreelancer: new ListarPagosFreelancerUseCase(pagos),
+  obtenerFacturaPagoFreelancer: new ObtenerFacturaPagoFreelancerUseCase(pagos),
+  obtenerLiquidacionesFreelancer: new ObtenerLiquidacionesFreelancerUseCase(
+    liquidaciones
+  ),
+  solicitarRetiro: new SolicitarRetiroUseCase(liquidaciones),
   listarNotificaciones: new ListarNotificacionesUseCase(notificaciones),
   marcarNotificacionLeida: new MarcarNotificacionLeidaUseCase(notificaciones),
   marcarTodasNotificacionesLeidas: new MarcarTodasNotificacionesLeidasUseCase(
@@ -240,7 +267,11 @@ export const contenedor = {
   contraofertar: new ContraofertarUseCase(ofertasChat),
   listarContratos: new ListarContratosUseCase(contratos),
   obtenerContrato: new ObtenerContratoUseCase(contratos),
-  cambiarEstadoContrato: new CambiarEstadoContratoUseCase(contratos),
+  cambiarEstadoContrato: new CambiarEstadoContratoUseCase(
+    contratos,
+    liquidaciones,
+    entorno.COMISION_PLATAFORMA_PORCENTAJE
+  ),
   calificarContrato: new CalificarContratoUseCase(calificaciones, contratos),
   listarCalificacionesContrato: new ListarCalificacionesContratoUseCase(
     calificaciones,

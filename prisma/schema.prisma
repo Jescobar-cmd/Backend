@@ -114,6 +114,7 @@ model Contrato {
   Pago            Pago[]
   Disputa         Disputa[]
   EntregaContrato EntregaContrato[]
+  Liquidacion     Liquidacion?
 
   @@index([clienteId])
   @@index([freelancerId])
@@ -188,6 +189,7 @@ model Freelancer {
   PortafolioItem        PortafolioItem[]
   Propuesta             Propuesta[]
   Servicio              Servicio[]
+  Liquidacion           Liquidacion[]
 }
 
 model FreelancerHabilidad {
@@ -405,19 +407,20 @@ model MeGustaPublicacion {
 
 /// Entrega de un contrato: el freelancer adjunta un archivo o enlace y el cliente la revisa.
 model EntregaContrato {
-  id            Int       @id @default(autoincrement())
-  contratoId    Int
-  autorId       Int
-  mensaje       String?
-  archivoUrl    String?   @db.VarChar(500)
-  enlaceUrl     String?   @db.VarChar(500)
-  estado        String    @default("enviada") @db.VarChar(20)
-  fechaEntrega  DateTime  @default(now())
-  fechaRevision DateTime?
-  revisadoPorId Int?
-  Contrato      Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  Autor         Usuario   @relation("EntregaAutor", fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  RevisadoPor   Usuario?  @relation("EntregaRevisor", fields: [revisadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                  Int       @id @default(autoincrement())
+  contratoId          Int
+  autorId             Int
+  mensaje             String?
+  archivoUrl          String?   @db.VarChar(500)
+  enlaceUrl           String?   @db.VarChar(500)
+  estado              String    @default("enviada") @db.VarChar(20)
+  observacionRevision String?
+  fechaEntrega        DateTime  @default(now())
+  fechaRevision       DateTime?
+  revisadoPorId       Int?
+  Contrato            Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Autor               Usuario   @relation("EntregaAutor", fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  RevisadoPor         Usuario?  @relation("EntregaRevisor", fields: [revisadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([contratoId, estado])
   @@index([autorId])
@@ -459,4 +462,23 @@ model Notificacion {
   Usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([usuarioId, leida, fechaCreacion])
+}
+
+/// Liquidacion del freelancer generada al completar un contrato.
+model Liquidacion {
+  id             Int        @id @default(autoincrement())
+  freelancerId   Int
+  contratoId     Int?       @unique
+  montoBruto     Decimal    @db.Decimal(12, 2)
+  comision       Decimal    @db.Decimal(12, 2)
+  montoNeto      Decimal    @db.Decimal(12, 2)
+  estado         String     @default("pendiente") @db.VarChar(20)
+  referencia     String?    @db.VarChar(100)
+  fechaCreacion  DateTime   @default(now())
+  fechaSolicitud DateTime?
+  fechaPago      DateTime?
+  Freelancer     Freelancer @relation(fields: [freelancerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Contrato       Contrato?  @relation(fields: [contratoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([freelancerId, estado])
 }
