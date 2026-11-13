@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+﻿import { describe, expect, it, vi } from 'vitest';
 import { ObtenerPerfilPublicoUseCase } from '../../src/application/use-cases/ObtenerPerfilPublicoUseCase';
 import { PerfilRepository } from '../../src/domain/ports/repositories/PerfilRepository';
 import { EstadisticaFreelancerRepository } from '../../src/domain/ports/repositories/EstadisticaFreelancerRepository';
@@ -9,15 +9,18 @@ const perfilFreelancerBase: PerfilPublico = {
   id: 10,
   nombre: 'Alex Dev',
   fotoPerfil: null,
-  ciudad: 'Medellín',
-  departamento: 'Antioquia',
+  rolId: 2,
+  rolNombre: 'Freelancer',
+  fechaRegistro: new Date('2026-01-01T00:00:00.000Z'),
+  cliente: null,
   freelancer: {
     tituloProfesional: 'Fullstack TS',
-    descripcion: 'Senior Dev',
-    tarifaHora: 40000,
+    biografia: 'Senior Dev',
     calificacionPromedio: 4.8,
-    trabajosCompletados: 12,
     habilidades: [],
+    portafolio: [],
+    servicios: [],
+    calificaciones: [],
   },
 };
 
@@ -25,18 +28,24 @@ const perfilClienteBase: PerfilPublico = {
   id: 20,
   nombre: 'Empresa XYZ',
   fotoPerfil: null,
-  ciudad: 'Bogotá',
-  departamento: 'Cundinamarca',
+  rolId: 3,
+  rolNombre: 'Cliente',
+  fechaRegistro: new Date('2026-01-01T00:00:00.000Z'),
+  cliente: {
+    nombreEmpresa: 'Empresa XYZ',
+    tipoCliente: 'empresa',
+    descripcion: null,
+  },
   freelancer: null,
 };
 
 describe('ObtenerPerfilPublicoUseCase', () => {
-  it('obtiene el perfil público correctamente', async () => {
+  it('obtiene el perfil p├║blico correctamente', async () => {
     const perfilRepo: PerfilRepository = {
-      obtenerCliente: vi.fn(),
-      actualizarCliente: vi.fn(),
-      obtenerFreelancer: vi.fn(),
-      actualizarFreelancer: vi.fn(),
+      obtenerPerfilCliente: vi.fn(),
+      actualizarPerfilCliente: vi.fn(),
+      obtenerPerfilFreelancer: vi.fn(),
+      actualizarPerfilFreelancer: vi.fn(),
       obtenerPerfilPublico: vi.fn().mockResolvedValue(perfilFreelancerBase),
     };
     const caso = new ObtenerPerfilPublicoUseCase(perfilRepo);
@@ -47,10 +56,10 @@ describe('ObtenerPerfilPublicoUseCase', () => {
 
   it('lanza ErrorNoEncontrado si el usuario no existe', async () => {
     const perfilRepo: PerfilRepository = {
-      obtenerCliente: vi.fn(),
-      actualizarCliente: vi.fn(),
-      obtenerFreelancer: vi.fn(),
-      actualizarFreelancer: vi.fn(),
+      obtenerPerfilCliente: vi.fn(),
+      actualizarPerfilCliente: vi.fn(),
+      obtenerPerfilFreelancer: vi.fn(),
+      actualizarPerfilFreelancer: vi.fn(),
       obtenerPerfilPublico: vi.fn().mockResolvedValue(null),
     };
     const caso = new ObtenerPerfilPublicoUseCase(perfilRepo);
@@ -58,12 +67,12 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     await expect(caso.ejecutar(999)).rejects.toThrow(ErrorNoEncontrado);
   });
 
-  it('registra métrica de visita si es freelancer y el visitante es diferente al dueño', async () => {
+  it('registra m├®trica de visita si es freelancer y el visitante es diferente al due├▒o', async () => {
     const perfilRepo: PerfilRepository = {
-      obtenerCliente: vi.fn(),
-      actualizarCliente: vi.fn(),
-      obtenerFreelancer: vi.fn(),
-      actualizarFreelancer: vi.fn(),
+      obtenerPerfilCliente: vi.fn(),
+      actualizarPerfilCliente: vi.fn(),
+      obtenerPerfilFreelancer: vi.fn(),
+      actualizarPerfilFreelancer: vi.fn(),
       obtenerPerfilPublico: vi.fn().mockResolvedValue(perfilFreelancerBase),
     };
     const estadisticasRepo: EstadisticaFreelancerRepository = {
@@ -78,12 +87,12 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     expect(estadisticasRepo.registrarVisitaPerfil).toHaveBeenCalledWith(10);
   });
 
-  it('NO registra métrica si el visitante es el propio dueño del perfil', async () => {
+  it('NO registra m├®trica si el visitante es el propio due├▒o del perfil', async () => {
     const perfilRepo: PerfilRepository = {
-      obtenerCliente: vi.fn(),
-      actualizarCliente: vi.fn(),
-      obtenerFreelancer: vi.fn(),
-      actualizarFreelancer: vi.fn(),
+      obtenerPerfilCliente: vi.fn(),
+      actualizarPerfilCliente: vi.fn(),
+      obtenerPerfilFreelancer: vi.fn(),
+      actualizarPerfilFreelancer: vi.fn(),
       obtenerPerfilPublico: vi.fn().mockResolvedValue(perfilFreelancerBase),
     };
     const estadisticasRepo: EstadisticaFreelancerRepository = {
@@ -93,17 +102,17 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     };
 
     const caso = new ObtenerPerfilPublicoUseCase(perfilRepo, estadisticasRepo);
-    await caso.ejecutar(10, 10); // visitado: 10, visitante: 10 (mismo dueño)
+    await caso.ejecutar(10, 10); // visitado: 10, visitante: 10 (mismo due├▒o)
 
     expect(estadisticasRepo.registrarVisitaPerfil).not.toHaveBeenCalled();
   });
 
-  it('NO registra métrica si el perfil consultado no es freelancer', async () => {
+  it('NO registra m├®trica si el perfil consultado no es freelancer', async () => {
     const perfilRepo: PerfilRepository = {
-      obtenerCliente: vi.fn(),
-      actualizarCliente: vi.fn(),
-      obtenerFreelancer: vi.fn(),
-      actualizarFreelancer: vi.fn(),
+      obtenerPerfilCliente: vi.fn(),
+      actualizarPerfilCliente: vi.fn(),
+      obtenerPerfilFreelancer: vi.fn(),
+      actualizarPerfilFreelancer: vi.fn(),
       obtenerPerfilPublico: vi.fn().mockResolvedValue(perfilClienteBase),
     };
     const estadisticasRepo: EstadisticaFreelancerRepository = {

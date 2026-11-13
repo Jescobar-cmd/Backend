@@ -5,6 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerDocument } from './swagger';
 import { autenticacionRouter } from './routes/autenticacion.routes';
 import { clienteRouter, usuariosRouter } from './routes/perfil.routes';
+import { clienteRolRouter } from './routes/cliente.routes';
 import { ofertasRouter } from './routes/oferta.routes';
 import { categoriasRouter } from './routes/categoria.routes';
 import { publicacionesRouter } from './routes/publicacion.routes';
@@ -40,6 +41,7 @@ export function createApp() {
   // Rutas de la API
   app.use('/api/auth', autenticacionRouter);
   app.use('/api/cliente', clienteRouter);
+  app.use('/api/cliente', clienteRolRouter);
   app.use('/api/cliente/ofertas', ofertasRouter);
   app.use('/api/usuarios', usuariosRouter);
   app.use('/api/categorias', categoriasRouter);
