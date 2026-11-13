@@ -136,6 +136,8 @@ const notificaciones = new PrismaNotificacionRepository(prisma);
 const entregas = new PrismaEntregaContratoRepository(prisma);
 const disputas = new PrismaDisputaRepository(prisma);
 const liquidaciones = new PrismaLiquidacionRepository(prisma);
+const comisionFreelancerPorcentaje =
+  entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
 const hasheador = new HasheadorContrasenaBcrypt();
 // En Render (BREVO_API_KEY presente) se envía por API HTTPS;
 // en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
@@ -223,7 +225,12 @@ export const contenedor = {
   obtenerDashboardFreelancer: new ObtenerDashboardFreelancerUseCase(dashboardFreelancer),
   buscarFreelancers: new BuscarFreelancersUseCase(directorioFreelancers),
   obtenerDashboardCliente: new ObtenerDashboardClienteUseCase(dashboardCliente),
-  contratarServicio: new ContratarServicioUseCase(servicios, contratos, notificaciones),
+  contratarServicio: new ContratarServicioUseCase(
+    servicios,
+    contratos,
+    notificaciones,
+    entorno.COMISION_CLIENTE_PORCENTAJE
+  ),
   registrarEntregaContrato: new RegistrarEntregaContratoUseCase(
     contratos,
     entregas,
@@ -240,7 +247,7 @@ export const contenedor = {
     entregas,
     notificaciones,
     liquidaciones,
-    entorno.COMISION_PLATAFORMA_PORCENTAJE
+    comisionFreelancerPorcentaje
   ),
   rechazarEntrega: new RechazarEntregaUseCase(contratos, entregas, notificaciones),
   abrirDisputa: new AbrirDisputaUseCase(contratos, disputas, notificaciones),
@@ -270,7 +277,7 @@ export const contenedor = {
   cambiarEstadoContrato: new CambiarEstadoContratoUseCase(
     contratos,
     liquidaciones,
-    entorno.COMISION_PLATAFORMA_PORCENTAJE
+    comisionFreelancerPorcentaje
   ),
   calificarContrato: new CalificarContratoUseCase(calificaciones, contratos),
   listarCalificacionesContrato: new ListarCalificacionesContratoUseCase(

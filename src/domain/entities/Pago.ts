@@ -10,7 +10,12 @@ export interface FacturaCliente {
 export interface PagoCliente {
   id: number;
   contratoId: number;
+  /** Monto total cobrado al cliente, incluyendo la comision de servicio. */
   monto: number;
+  /** Monto base acordado en el contrato. */
+  montoBase: number;
+  /** Comision de servicio cobrada al cliente. */
+  comisionCliente: number;
   metodoPago: string | null;
   estado: string;
   referenciaPasarela: string | null;

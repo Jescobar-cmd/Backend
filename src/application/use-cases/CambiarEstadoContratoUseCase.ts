@@ -17,7 +17,7 @@ export class CambiarEstadoContratoUseCase {
   constructor(
     private contratoRepository: ContratoRepository,
     private liquidacionRepository: LiquidacionRepository,
-    private comisionPorcentaje: number
+    private comisionFreelancerPorcentaje: number
   ) {}
 
   async ejecutar(
@@ -41,7 +41,7 @@ export class CambiarEstadoContratoUseCase {
     if (estado === 'completado') {
       const calculo = calcularLiquidacion(
         contrato.montoAcordado,
-        this.comisionPorcentaje
+        this.comisionFreelancerPorcentaje
       );
       await this.liquidacionRepository.crearParaContrato({
         freelancerId: contrato.freelancer.id,

@@ -23,7 +23,7 @@ export class AprobarEntregaUseCase {
     private entregaRepository: EntregaContratoRepository,
     private notificacionRepository: NotificacionRepository,
     private liquidacionRepository: LiquidacionRepository,
-    private comisionPorcentaje: number
+    private comisionFreelancerPorcentaje: number
   ) {}
 
   async ejecutar(contratoId: number, clienteId: number): Promise<AprobacionEntrega> {
@@ -51,7 +51,7 @@ export class AprobarEntregaUseCase {
 
     const calculo = calcularLiquidacion(
       contrato.montoAcordado,
-      this.comisionPorcentaje
+      this.comisionFreelancerPorcentaje
     );
     await this.liquidacionRepository.crearParaContrato({
       freelancerId: contrato.freelancer.id,

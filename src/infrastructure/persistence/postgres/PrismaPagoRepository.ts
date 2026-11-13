@@ -12,6 +12,7 @@ const pagoInclude = {
     select: {
       id: true,
       estado: true,
+      montoAcordado: true,
       Cliente: { include: { Usuario: true } },
       Proyecto: { select: { titulo: true } },
       Servicio: { select: { titulo: true } },
@@ -21,14 +22,22 @@ const pagoInclude = {
 
 type PagoConRelaciones = Prisma.PagoGetPayload<{ include: typeof pagoInclude }>;
 
+function redondearDos(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
 function toPagoCliente(pago: PagoConRelaciones): PagoCliente {
   const titulo =
     pago.Contrato.Proyecto?.titulo ?? pago.Contrato.Servicio?.titulo ?? 'Contrato';
+  const monto = Number(pago.monto);
+  const montoBase = Number(pago.Contrato.montoAcordado);
 
   return {
     id: pago.id,
     contratoId: pago.contratoId,
-    monto: Number(pago.monto),
+    monto,
+    montoBase,
+    comisionCliente: redondearDos(monto - montoBase),
     metodoPago: pago.metodoPago,
     estado: pago.estado,
     referenciaPasarela: pago.referenciaPasarela,

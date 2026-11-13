@@ -52,7 +52,9 @@ const entrega: EntregaContrato = {
 const pago: PagoFreelancer = {
   id: 1,
   contratoId: 1,
-  monto: 1000,
+  monto: 1030,
+  montoBase: 1000,
+  comisionCliente: 30,
   metodoPago: 'mercado_pago',
   estado: 'pagado',
   referenciaPasarela: 'MP-123',
@@ -67,8 +69,8 @@ const liquidacion: Liquidacion = {
   freelancerId: 20,
   contratoId: 1,
   montoBruto: 1000,
-  comision: 100,
-  montoNeto: 900,
+  comision: 120,
+  montoNeto: 880,
   estado: 'pendiente',
   referencia: null,
   fechaCreacion: new Date('2026-01-03T00:00:00.000Z'),
@@ -207,10 +209,10 @@ describe('FreelancerUseCases', () => {
 
   it('obtiene resumen e historial de liquidaciones', async () => {
     const resumen = {
-      saldoDisponible: 900,
+      saldoDisponible: 880,
       saldoEnProceso: 0,
       totalPagado: 0,
-      comisionTotal: 100,
+      comisionTotal: 120,
       totalLiquidaciones: 1,
     };
     const liquidaciones = {

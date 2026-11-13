@@ -1022,7 +1022,10 @@ export const swaggerDocument = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
-          '201': { description: 'Contrato creado con pago pendiente' },
+          '201': {
+            description:
+              'Contrato creado con pago pendiente. El pago incluye la comisión de servicio al cliente (3% por defecto).',
+          },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol cliente' },
@@ -1568,7 +1571,7 @@ export const swaggerDocument = {
         responses: {
           '200': {
             description:
-              '{ resumen: { saldoDisponible, saldoEnProceso, totalPagado, comisionTotal, totalLiquidaciones }, liquidaciones }',
+              '{ resumen: { saldoDisponible, saldoEnProceso, totalPagado, comisionTotal, totalLiquidaciones }, liquidaciones }. La comisión del freelancer es 12% por defecto (15% total menos 3% del cliente).',
           },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol freelancer' },

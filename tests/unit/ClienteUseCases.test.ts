@@ -108,7 +108,9 @@ const disputaBase: Disputa = {
 const pagoBase: PagoCliente = {
   id: 1,
   contratoId: 1,
-  monto: 100,
+  monto: 103,
+  montoBase: 100,
+  comisionCliente: 3,
   metodoPago: 'mercado_pago',
   estado: 'pendiente',
   referenciaPasarela: null,
@@ -170,10 +172,12 @@ describe('ClienteUseCases', () => {
     const resultado = await new ContratarServicioUseCase(
       servicioRepo,
       contratos,
-      notificaciones
+      notificaciones,
+      3
     ).ejecutar(10, 5);
 
     expect(resultado.id).toBe(1);
+    expect(contratos.crearCompraDirecta).toHaveBeenCalledWith(10, 5, 103);
     expect(notificaciones.crear).toHaveBeenCalledWith(
       expect.objectContaining({ usuarioId: 20, tipo: 'contrato_creado' })
     );
@@ -190,10 +194,12 @@ describe('ClienteUseCases', () => {
     const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
 
     await expect(
-      new ContratarServicioUseCase(servicioRepo, contratos, notificaciones).ejecutar(
-        10,
-        5
-      )
+      new ContratarServicioUseCase(
+        servicioRepo,
+        contratos,
+        notificaciones,
+        3
+      ).ejecutar(10, 5)
     ).rejects.toThrow(ErrorConflicto);
   });
 
@@ -222,7 +228,7 @@ describe('ClienteUseCases', () => {
       entregas,
       notificaciones,
       liquidaciones,
-      10
+      12
     ).ejecutar(1, 10);
 
     expect(resultado.contrato.estado).toBe('completado');
@@ -232,8 +238,8 @@ describe('ClienteUseCases', () => {
       freelancerId: 20,
       contratoId: 1,
       montoBruto: 100,
-      comision: 10,
-      montoNeto: 90,
+      comision: 12,
+      montoNeto: 88,
     });
   });
 

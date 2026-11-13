@@ -50,3 +50,11 @@ export function calcularLiquidacion(
     montoNeto: redondearDos(montoBruto - comision),
   };
 }
+
+/** Monto total que paga el cliente, incluyendo la comision de servicio. */
+export function calcularMontoCliente(
+  montoBruto: number,
+  comisionClientePorcentaje: number
+): number {
+  return redondearDos(montoBruto * (1 + comisionClientePorcentaje / 100));
+}

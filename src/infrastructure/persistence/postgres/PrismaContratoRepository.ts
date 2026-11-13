@@ -30,7 +30,8 @@ export class PrismaContratoRepository implements ContratoRepository {
 
   async crearCompraDirecta(
     clienteId: number,
-    servicioId: number
+    servicioId: number,
+    montoPagoCliente: number
   ): Promise<ContratoDetalle> {
     const contrato = await this.db.$transaction(async (tx) => {
       await tx.cliente.upsert({
@@ -60,7 +61,7 @@ export class PrismaContratoRepository implements ContratoRepository {
           estado: 'activo',
           Pago: {
             create: {
-              monto: servicio.precio,
+              monto: montoPagoCliente,
               metodoPago: 'mercado_pago',
               estado: 'pendiente',
               Factura: {

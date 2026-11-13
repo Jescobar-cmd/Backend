@@ -1,4 +1,5 @@
 import { aContratoVista, ContratoVista } from '../../domain/entities/Contrato';
+import { calcularMontoCliente } from '../../domain/entities/Liquidacion';
 import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
 import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
 import { ServicioRepository } from '../../domain/ports/repositories/ServicioRepository';
@@ -12,7 +13,8 @@ export class ContratarServicioUseCase {
   constructor(
     private servicioRepository: ServicioRepository,
     private contratoRepository: ContratoRepository,
-    private notificacionRepository: NotificacionRepository
+    private notificacionRepository: NotificacionRepository,
+    private comisionClientePorcentaje: number
   ) {}
 
   async ejecutar(clienteId: number, servicioId: number): Promise<ContratoVista> {
@@ -30,9 +32,14 @@ export class ContratarServicioUseCase {
       throw new ErrorConflicto('Ya tienes un contrato activo para este servicio');
     }
 
+    const montoPagoCliente = calcularMontoCliente(
+      servicio.precio,
+      this.comisionClientePorcentaje
+    );
     const contrato = await this.contratoRepository.crearCompraDirecta(
       clienteId,
-      servicioId
+      servicioId,
+      montoPagoCliente
     );
 
     await this.notificacionRepository.crear({

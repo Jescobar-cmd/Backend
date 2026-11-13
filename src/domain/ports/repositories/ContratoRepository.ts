@@ -7,7 +7,11 @@ export interface ContratoRepository {
   obtener(contratoId: number): Promise<ContratoDetalle | null>;
 
   /** Crea un contrato de compra directa y deja un pago pendiente. */
-  crearCompraDirecta(clienteId: number, servicioId: number): Promise<ContratoDetalle>;
+  crearCompraDirecta(
+    clienteId: number,
+    servicioId: number,
+    montoPagoCliente: number
+  ): Promise<ContratoDetalle>;
 
   /** Evita contratar dos veces el mismo servicio mientras el contrato siga activo. */
   existeActivoPorServicio(clienteId: number, servicioId: number): Promise<boolean>;
