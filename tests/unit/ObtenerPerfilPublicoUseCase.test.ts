@@ -40,7 +40,7 @@ const perfilClienteBase: PerfilPublico = {
 };
 
 describe('ObtenerPerfilPublicoUseCase', () => {
-  it('obtiene el perfil p├║blico correctamente', async () => {
+  it('obtiene el perfil público correctamente', async () => {
     const perfilRepo: PerfilRepository = {
       obtenerPerfilCliente: vi.fn(),
       actualizarPerfilCliente: vi.fn(),
@@ -67,7 +67,7 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     await expect(caso.ejecutar(999)).rejects.toThrow(ErrorNoEncontrado);
   });
 
-  it('registra m├®trica de visita si es freelancer y el visitante es diferente al due├▒o', async () => {
+  it('registra métrica de visita si es freelancer y el visitante es diferente al dueño', async () => {
     const perfilRepo: PerfilRepository = {
       obtenerPerfilCliente: vi.fn(),
       actualizarPerfilCliente: vi.fn(),
@@ -87,7 +87,7 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     expect(estadisticasRepo.registrarVisitaPerfil).toHaveBeenCalledWith(10);
   });
 
-  it('NO registra m├®trica si el visitante es el propio due├▒o del perfil', async () => {
+  it('NO registra métrica si el visitante es el propio dueño del perfil', async () => {
     const perfilRepo: PerfilRepository = {
       obtenerPerfilCliente: vi.fn(),
       actualizarPerfilCliente: vi.fn(),
@@ -102,12 +102,12 @@ describe('ObtenerPerfilPublicoUseCase', () => {
     };
 
     const caso = new ObtenerPerfilPublicoUseCase(perfilRepo, estadisticasRepo);
-    await caso.ejecutar(10, 10); // visitado: 10, visitante: 10 (mismo due├▒o)
+    await caso.ejecutar(10, 10); // visitado: 10, visitante: 10 (mismo dueño)
 
     expect(estadisticasRepo.registrarVisitaPerfil).not.toHaveBeenCalled();
   });
 
-  it('NO registra m├®trica si el perfil consultado no es freelancer', async () => {
+  it('NO registra métrica si el perfil consultado no es freelancer', async () => {
     const perfilRepo: PerfilRepository = {
       obtenerPerfilCliente: vi.fn(),
       actualizarPerfilCliente: vi.fn(),

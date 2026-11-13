@@ -1,19 +1,5 @@
 import { z } from 'zod';
-
-const urlOpcional = z.preprocess(
-  (valor) => {
-    if (valor === undefined) return undefined;
-    if (valor === null || valor === '') return null;
-    return valor;
-  },
-  z
-    .string()
-    .trim()
-    .max(500, 'La URL no puede exceder 500 caracteres')
-    .regex(/^https?:\/\/.+/, 'La URL debe ser válida (http o https)')
-    .nullable()
-    .optional()
-);
+import { urlOpcional } from './comunes.schemas';
 
 export const registrarEntregaSchema = z
   .object({

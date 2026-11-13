@@ -1,19 +1,5 @@
 import { z } from 'zod';
-
-const evidenciaUrl = z.preprocess(
-  (valor) => {
-    if (valor === undefined) return undefined;
-    if (valor === null || valor === '') return null;
-    return valor;
-  },
-  z
-    .string()
-    .trim()
-    .max(500, 'La URL de evidencia no puede exceder 500 caracteres')
-    .regex(/^https?:\/\/.+/, 'La evidencia debe ser una URL válida (http o https)')
-    .nullable()
-    .optional()
-);
+import { urlOpcional as evidenciaUrl } from './comunes.schemas';
 
 export const abrirDisputaSchema = z
   .object({

@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { ClienteController } from '../controllers/ClienteController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
+import { validarQuery } from '../middlewares/validar';
+import { consultaNotificacionesSchema } from '../../../application/validators/notificacion.schemas';
 import { ROLES } from '../../../shared/constants/roles';
 
 // Funciones exclusivas del rol Cliente -> se monta en /api/cliente
@@ -19,6 +21,7 @@ clienteRolRouter.get('/pagos/:id/factura', ...soloCliente, ClienteController.fac
 clienteRolRouter.get(
   '/notificaciones',
   ...soloCliente,
+  validarQuery(consultaNotificacionesSchema),
   ClienteController.notificaciones
 );
 clienteRolRouter.patch(

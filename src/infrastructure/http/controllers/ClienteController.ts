@@ -4,8 +4,8 @@ import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
 import {
   obtenerUsuarioId,
   parsearIdParam,
-  parsearPaginacion,
 } from '../helpers/peticion.helper';
+import { NotificacionController } from './NotificacionController';
 
 export class ClienteController {
   /** GET /api/cliente/dashboard */
@@ -76,66 +76,8 @@ export class ClienteController {
     }
   }
 
-  /** GET /api/cliente/notificaciones?page=&limit=&soloNoLeidas= */
-  static async notificaciones(
-    req: SolicitudAutenticada,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const { page, limit } = parsearPaginacion(req.query, {
-        page: 1,
-        limit: 20,
-        maxLimit: 50,
-      });
-      const resultado = await contenedor.listarNotificaciones.ejecutar(usuarioId, {
-        page,
-        limit,
-        soloNoLeidas: req.query.soloNoLeidas === 'true',
-      });
-      res.json(resultado);
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  /** PATCH /api/cliente/notificaciones/:id/leida */
-  static async marcarNotificacionLeida(
-    req: SolicitudAutenticada,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const notificacionId = parsearIdParam(req.params.id, 'notificación');
-      const notificacion = await contenedor.marcarNotificacionLeida.ejecutar(
-        notificacionId,
-        usuarioId
-      );
-      res.json({ mensaje: 'Notificación marcada como leída', notificacion });
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  /** PATCH /api/cliente/notificaciones/leidas */
-  static async marcarTodasLeidas(
-    req: SolicitudAutenticada,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const resultado = await contenedor.marcarTodasNotificacionesLeidas.ejecutar(
-        usuarioId
-      );
-      res.json({
-        mensaje: 'Notificaciones marcadas como leídas',
-        actualizadas: resultado.actualizadas,
-      });
-    } catch (e) {
-      next(e);
-    }
-  }
+  // Delegación a NotificacionController (DRY y Single Responsibility)
+  static notificaciones = NotificacionController.listar;
+  static marcarNotificacionLeida = NotificacionController.marcarLeida;
+  static marcarTodasLeidas = NotificacionController.marcarTodasLeidas;
 }

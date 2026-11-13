@@ -21,6 +21,7 @@ import {
   crearPortafolioItemSchema,
 } from '../../../application/validators/portafolio.schemas';
 import { consultaEstadisticasSchema } from '../../../application/validators/estadistica.schemas';
+import { consultaNotificacionesSchema } from '../../../application/validators/notificacion.schemas';
 
 // Catálogo de servicios -> se monta en /api/servicios
 export const serviciosRouter = Router();
@@ -77,7 +78,11 @@ freelancerRouter.get(
   EstadisticaController.misEstadisticas
 );
 freelancerRouter.get('/dashboard', DashboardController.obtener);
-freelancerRouter.get('/notificaciones', FreelancerController.notificaciones);
+freelancerRouter.get(
+  '/notificaciones',
+  validarQuery(consultaNotificacionesSchema),
+  FreelancerController.notificaciones
+);
 freelancerRouter.patch(
   '/notificaciones/leidas',
   FreelancerController.marcarTodasLeidas
