@@ -1,0 +1,45 @@
+name: CI Backend
+
+on:
+  push:
+    branches: [main, produccion, develop]
+  pull_request:
+    branches: [main, produccion, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calidad:
+    name: Typecheck, tests y build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://usuario:clave@localhost:5432/firstgig_test
+      JWT_SECRET: secreto-de-pruebas-con-longitud-suficiente
+      NODE_ENV: test
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+
+      - name: Typecheck de tests
+        run: npm run test:typecheck
+
+      - name: Tests unitarios y de integración
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build

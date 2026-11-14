@@ -1,8 +1,7 @@
-import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
 import { LiquidacionRepository } from '../../domain/ports/repositories/LiquidacionRepository';
 import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
 import { Liquidacion, EstadoLiquidacion } from '../../domain/entities/Liquidacion';
-import { ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
+import { ErrorConflicto, ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
 
 export class AprobarRetiroUseCase {
   constructor(
@@ -21,7 +20,9 @@ export class AprobarRetiroUseCase {
       throw new ErrorNoEncontrado('Liquidación no encontrada');
     }
     if (liquidacion.estado !== 'solicitada') {
-      throw new ErrorNoEncontrado('La liquidación no está en solicitud de retiro');
+      throw new ErrorConflicto(
+        'La liquidación no está en solicitud de retiro'
+      );
     }
 
     const actualizada = await this.liquidacionRepository.aprobarRetiro(
@@ -31,11 +32,21 @@ export class AprobarRetiroUseCase {
       referencia
     );
 
+    const esPago = estado === 'pagada';
+    const titulo = esPago ? 'Retiro pagado' : 'Retiro rechazado';
+    const mensaje = esPago
+      ? `Tu retiro de liquidez fue pagado por la plataforma${
+          referencia ? `: ${referencia}` : ''
+        }`
+      : `Tu solicitud de retiro fue rechazada${
+          referencia ? `: ${referencia}` : ''
+        }`;
+
     await this.notificacionRepository.crear({
       usuarioId: liquidacion.freelancerId,
-      tipo: 'retiro_aprobado',
-      titulo: 'Retiro aprobado',
-      mensaje: `Tu retiro de liquidez fue aprobado por la plataforma${referencia ? `: ${referencia}` : ''}`,
+      tipo: esPago ? 'retiro_aprobado' : 'retiro_rechazado',
+      titulo,
+      mensaje,
       enlace: `/api/freelancer/liquidaciones`,
     });
 

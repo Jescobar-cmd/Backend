@@ -57,6 +57,14 @@ export class PrismaRepositorioUsuario implements RepositorioUsuario {
     return encontrado ? aEntidad(encontrado) : null;
   }
 
+  async listarIdsPorRoles(roles: number[]): Promise<number[]> {
+    const usuarios = await this.db.usuario.findMany({
+      where: { rolId: { in: roles } },
+      select: { id: true },
+    });
+    return usuarios.map((usuario) => usuario.id);
+  }
+
   async actualizar(usuario: Usuario): Promise<Usuario | null> {
     if (usuario.id === null) return null;
     const actualizado = await this.db.usuario.update({

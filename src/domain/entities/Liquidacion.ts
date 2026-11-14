@@ -1,4 +1,4 @@
-export type EstadoLiquidacion = 'pendiente' | 'solicitada' | 'pagada';
+export type EstadoLiquidacion = 'pendiente' | 'solicitada' | 'pagada' | 'rechazada';
 
 export interface Liquidacion {
   id: number;

@@ -14,6 +14,13 @@ export interface Reporte {
   fecha: Date;
 }
 
+/** Reporte con el contexto que necesita el panel de moderación. */
+export interface ReporteDetalle extends Reporte {
+  usuarioReporta: { id: number; nombre: string; fotoPerfil: string | null };
+  usuarioReportado: { id: number; nombre: string; fotoPerfil: string | null } | null;
+  proyecto: { id: number; titulo: string } | null;
+}
+
 export interface NuevaReporte {
   usuarioReportaId: number;
   usuarioReportadoId: number | null;

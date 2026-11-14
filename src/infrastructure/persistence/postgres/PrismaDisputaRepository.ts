@@ -71,6 +71,14 @@ export class PrismaDisputaRepository implements DisputaRepository {
     return items.map(toDisputa);
   }
 
+  async contar(filtros: { estado?: EstadoDisputa }): Promise<number> {
+    return this.db.disputa.count({
+      where: {
+        ...(filtros.estado ? { estado: filtros.estado } : {}),
+      },
+    });
+  }
+
   async obtenerPorId(id: number): Promise<Disputa | null> {
     const disputa = await this.db.disputa.findUnique({ where: { id } });
     return disputa ? toDisputa(disputa) : null;

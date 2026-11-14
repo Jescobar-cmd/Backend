@@ -1,15 +1,26 @@
+import { ContratoDetalle } from '../../domain/entities/Contrato';
 import { Disputa } from '../../domain/entities/Disputa';
+import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
 import { DisputaRepository } from '../../domain/ports/repositories/DisputaRepository';
 import { ErrorNoEncontrado } from '../../shared/errors/ErrorAplicacion';
 
-export class ObtenerDisputaAdminUseCase {
-  constructor(private disputaRepository: DisputaRepository) {}
+export interface DisputaDetalle extends Disputa {
+  contrato: ContratoDetalle | null;
+}
 
-  async ejecutar(id: number): Promise<Disputa> {
+export class ObtenerDisputaAdminUseCase {
+  constructor(
+    private disputaRepository: DisputaRepository,
+    private contratoRepository: ContratoRepository
+  ) {}
+
+  async ejecutar(id: number): Promise<DisputaDetalle> {
     const disputa = await this.disputaRepository.obtenerPorId(id);
     if (!disputa) {
       throw new ErrorNoEncontrado('Disputa no encontrada');
     }
-    return disputa;
+
+    const contrato = await this.contratoRepository.obtener(disputa.contratoId);
+    return { ...disputa, contrato };
   }
 }

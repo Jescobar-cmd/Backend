@@ -22,6 +22,8 @@ export interface LiquidacionRepository {
 
   listar(filtros: FiltrosLiquidacion): Promise<Liquidacion[]>;
 
+  contar(filtros: Omit<FiltrosLiquidacion, 'page' | 'limit'>): Promise<number>;
+
   obtenerPorId(id: number): Promise<Liquidacion | null>;
 
   aprobarRetiro(

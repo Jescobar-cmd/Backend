@@ -1665,6 +1665,35 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/reportes': {
+      post: {
+        summary: 'Crear un reporte de usuario o proyecto (cualquier rol autenticado)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['motivo'],
+                properties: {
+                  usuarioReportadoId: { type: 'integer', example: 8 },
+                  proyectoId: { type: 'integer', example: 12 },
+                  motivo: { type: 'string', minLength: 3, maxLength: 100, example: 'Spam' },
+                  descripcion: { type: 'string', maxLength: 1000, example: 'Envía enlaces maliciosos en los mensajes.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Reporte creado' },
+          '401': { description: 'Sin sesión o expirada' },
+          '409': { description: 'No puedes reportarte a ti mismo' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
     '/api/moderador/dashboard': {
       get: {
         summary: 'Resumen de moderación (admin o moderador)',
@@ -1702,7 +1731,7 @@ export const swaggerDocument = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
-          '200': { description: 'Reporte encontrado' },
+          '200': { description: 'Reporte con datos del reportante, reportado y proyecto' },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol admin o moderador' },
@@ -1723,6 +1752,7 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['resolucion'],
                 properties: {
+                  estado: { type: 'string', enum: ['resuelto', 'rechazado'], default: 'resuelto' },
                   resolucion: { type: 'string', minLength: 3, maxLength: 1000, example: 'Contenido ha sido moderado.' },
                 },
               },
@@ -1763,7 +1793,7 @@ export const swaggerDocument = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
-          '200': { description: 'Disputa encontrada' },
+          '200': { description: 'Disputa con los datos del contrato y sus partes' },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol admin o moderador' },
@@ -1807,7 +1837,7 @@ export const swaggerDocument = {
         summary: 'Listar liquidaciones administrativamente',
         security: [{ bearerAuth: [] }],
         parameters: [
-          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['pendiente', 'solicitada', 'pagada'] } },
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['pendiente', 'solicitada', 'pagada', 'rechazada'] } },
           { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
           { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
         ],
@@ -1821,7 +1851,7 @@ export const swaggerDocument = {
     },
     '/api/moderador/liquidaciones/{id}/pagar': {
       patch: {
-        summary: 'Aprobar pago de retiro (admin o moderador)',
+        summary: 'Aprobar o rechazar el pago de un retiro (admin o moderador)',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         requestBody: {
@@ -1831,6 +1861,7 @@ export const swaggerDocument = {
               schema: {
                 type: 'object',
                 properties: {
+                  estado: { type: 'string', enum: ['pagada', 'rechazada'], default: 'pagada' },
                   referencia: { type: 'string', nullable: true, example: 'MP-SIM-RET-001' },
                 },
               },
@@ -1838,11 +1869,12 @@ export const swaggerDocument = {
           },
         },
         responses: {
-          '200': { description: 'Retiro aprobado y liquidación pagada' },
+          '200': { description: 'Retiro pagado o rechazado según el estado enviado' },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'Requiere rol admin o moderador' },
           '404': { description: 'Liquidación no encontrada' },
+          '409': { description: 'La liquidación no está en solicitud de retiro' },
           '422': { description: 'Datos inválidos' },
         },
       },

@@ -30,16 +30,30 @@ export class ResolverReporteUseCase {
       estado
     );
 
-    let notificacionEnviada = false;
+    const veredicto = estado === 'rechazado' ? 'desestimado' : 'resuelto';
+
+    // El usuario reportado recibe el aviso de la decisión.
     if (reporte.usuarioReportadoId) {
       await this.notificacionRepository.crear({
         usuarioId: reporte.usuarioReportadoId,
         tipo: 'reporte_resuelto',
         titulo: 'Reporte resuelto',
-        mensaje: `Tu reporte fue resuelto por la plataforma: ${resolucion}`,
-        enlace: `/api/moderador/reportes/${id}`,
+        mensaje: `La plataforma revisó un reporte sobre tu cuenta y lo dejó ${veredicto}: ${resolucion}`,
+        enlace: `/notificaciones`,
       });
-      notificacionEnviada = true;
+    }
+
+    // El usuario que reportó también recibe la resolución.
+    if (
+      reporte.usuarioReportaId !== reporte.usuarioReportadoId
+    ) {
+      await this.notificacionRepository.crear({
+        usuarioId: reporte.usuarioReportaId,
+        tipo: 'reporte_resuelto',
+        titulo: 'Tu reporte fue atendido',
+        mensaje: `Tu reporte fue ${veredicto} por la plataforma: ${resolucion}`,
+        enlace: `/notificaciones`,
+      });
     }
 
     return actualizada;

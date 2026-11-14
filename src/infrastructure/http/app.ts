@@ -17,6 +17,7 @@ import { contratosRouter } from './routes/contrato.routes';
 import { habilidadesRouter } from './routes/habilidad.routes';
 import { directorioFreelancerRouter } from './routes/directorio.routes';
 import { moderadorRouter } from './routes/moderador.routes';
+import { reportesRouter } from './routes/reportes.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
 import { entorno } from '../../config/entorno';
 
@@ -57,6 +58,7 @@ export function createApp() {
   app.use('/api/habilidades', habilidadesRouter);
   app.use('/api/freelancers', directorioFreelancerRouter);
   app.use('/api/moderador', moderadorRouter);
+  app.use('/api/reportes', reportesRouter);
 
   // Documentación OpenAPI / Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

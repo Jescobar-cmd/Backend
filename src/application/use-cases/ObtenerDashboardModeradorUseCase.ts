@@ -11,28 +11,13 @@ export class ObtenerDashboardModeradorUseCase {
   ) {}
 
   async ejecutar(): Promise<ModeradorDashboard> {
-    const [reportesPendientes, disputasAbiertas, retirosPendientes] = await Promise.all([
-      this.reporteRepository.listar({
-        estado: 'pendiente',
-        page: 1,
-        limit: 50,
-      }),
-      this.disputaRepository.listar({
-        estado: 'abierta',
-        page: 1,
-        limit: 50,
-      }),
-      this.liquidacionRepository.listar({
-        estado: 'solicitada',
-        page: 1,
-        limit: 50,
-      }),
-    ]);
+    const [reportesPendientes, disputasAbiertas, retirosPendientes] =
+      await Promise.all([
+        this.reporteRepository.contar({ estado: 'pendiente' }),
+        this.disputaRepository.contar({ estado: 'abierta' }),
+        this.liquidacionRepository.contar({ estado: 'solicitada' }),
+      ]);
 
-    return {
-      reportesPendientes: reportesPendientes.length,
-      disputasAbiertas: disputasAbiertas.length,
-      retirosPendientes: retirosPendientes.length,
-    };
+    return { reportesPendientes, disputasAbiertas, retirosPendientes };
   }
 }

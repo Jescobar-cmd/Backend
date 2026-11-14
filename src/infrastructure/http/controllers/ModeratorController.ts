@@ -40,7 +40,7 @@ export class ModeratorController {
         page,
         limit,
       });
-      res.json({ total: reportes.length, reportes });
+      res.json(reportes);
     } catch (e) {
       next(e);
     }
@@ -77,7 +77,7 @@ export class ModeratorController {
         reporteId,
         adminId,
         req.body.resolucion,
-        'resuelto'
+        req.body.estado
       );
       res.json({ reporte });
     } catch (e) {
@@ -103,7 +103,7 @@ export class ModeratorController {
         page,
         limit,
       });
-      res.json({ total: disputas.length, disputas });
+      res.json(disputas);
     } catch (e) {
       next(e);
     }
@@ -166,7 +166,7 @@ export class ModeratorController {
         page,
         limit,
       });
-      res.json({ total: liquidaciones.length, liquidaciones });
+      res.json(liquidaciones);
     } catch (e) {
       next(e);
     }
@@ -183,11 +183,11 @@ export class ModeratorController {
       if (!adminId) {
         throw new ErrorNoAutorizado('No autorizado');
       }
-      const liquidacionId = parsearIdParam(req.params.id, 'liquidaci@QF3n');
+      const liquidacionId = parsearIdParam(req.params.id, 'liquidación');
       const liquidacion = await contenedor.aprobarRetiroAdmin.ejecutar(
         liquidacionId,
         adminId,
-        'pagada',
+        req.body.estado,
         req.body.referencia ?? null
       );
       res.json({ liquidacion });

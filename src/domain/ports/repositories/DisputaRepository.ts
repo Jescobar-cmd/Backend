@@ -17,6 +17,8 @@ export interface DisputaRepository {
     limit: number;
   }): Promise<Disputa[]>;
 
+  contar(filtros: Omit<FiltrosDisputa, 'page' | 'limit'>): Promise<number>;
+
   obtenerPorId(id: number): Promise<Disputa | null>;
 
   existeAbierta(contratoId: number): Promise<boolean>;

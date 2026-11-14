@@ -137,6 +137,14 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
     return liquidaciones.map(toLiquidacion);
   }
 
+  async contar(filtros: { estado?: Liquidacion['estado'] }): Promise<number> {
+    return this.db.liquidacion.count({
+      where: {
+        ...(filtros.estado ? { estado: filtros.estado } : {}),
+      },
+    });
+  }
+
   async obtenerPorId(id: number): Promise<Liquidacion | null> {
     const liquidacion = await this.db.liquidacion.findUnique({ where: { id } });
     return liquidacion ? toLiquidacion(liquidacion) : null;

@@ -6,5 +6,6 @@ export interface RepositorioUsuario {
   buscarPorEmail(email: string): Promise<Usuario | null>;
   buscarPorCedula(cedula: string): Promise<Usuario | null>;
   buscarPorGoogleId(googleId: string): Promise<Usuario | null>;
+  listarIdsPorRoles(roles: number[]): Promise<number[]>;
   actualizar(usuario: Usuario): Promise<Usuario | null>;
 }

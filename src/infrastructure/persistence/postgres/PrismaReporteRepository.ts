@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { EstadoReporte, Reporte } from '../../../domain/entities/Reporte';
+import { EstadoReporte, NuevaReporte, Reporte, ReporteDetalle } from '../../../domain/entities/Reporte';
 import { FiltrosReporte, ReporteRepository } from '../../../domain/ports/repositories/ReporteRepository';
 
 function toReporte(
@@ -36,9 +36,7 @@ function toReporte(
 export class PrismaReporteRepository implements ReporteRepository {
   constructor(private db: PrismaClient) {}
 
-  async crear(
-    datos: Omit<Reporte, 'id' | 'fecha' | 'fechaResolucion'>
-  ): Promise<Reporte> {
+  async crear(datos: NuevaReporte): Promise<Reporte> {
     const creada = await this.db.reporte.create({
       data: {
         usuarioReportaId: datos.usuarioReportaId,
@@ -65,9 +63,40 @@ export class PrismaReporteRepository implements ReporteRepository {
     return items.map(toReporte);
   }
 
+  async contar(filtros: Omit<FiltrosReporte, 'page' | 'limit'>): Promise<number> {
+    return this.db.reporte.count({
+      where: {
+        ...(filtros.estado ? { estado: filtros.estado } : {}),
+      },
+    });
+  }
+
   async obtenerPorId(id: number): Promise<Reporte | null> {
     const reporte = await this.db.reporte.findUnique({ where: { id } });
     return reporte ? toReporte(reporte) : null;
+  }
+
+  async obtenerDetallePorId(id: number): Promise<ReporteDetalle | null> {
+    const reporte = await this.db.reporte.findUnique({
+      where: { id },
+      include: {
+        Usuario_Reporte_usuarioReportaIdToUsuario: {
+          select: { id: true, nombre: true, fotoPerfil: true },
+        },
+        Usuario_Reporte_usuarioReportadoIdToUsuario: {
+          select: { id: true, nombre: true, fotoPerfil: true },
+        },
+        Proyecto: { select: { id: true, titulo: true } },
+      },
+    });
+    if (!reporte) return null;
+
+    return {
+      ...toReporte(reporte),
+      usuarioReporta: reporte.Usuario_Reporte_usuarioReportaIdToUsuario,
+      usuarioReportado: reporte.Usuario_Reporte_usuarioReportadoIdToUsuario,
+      proyecto: reporte.Proyecto,
+    };
   }
 
   async resolver(

@@ -11,6 +11,7 @@ export const consultaReportesSchema = z
 
 export const resolverReporteSchema = z
   .object({
+    estado: z.enum(['resuelto', 'rechazado']).optional().default('resuelto'),
     resolucion: z.string().trim().min(3, 'La resolución debe tener al menos 3 caracteres').max(1000, 'La resolución no puede exceder 1000 caracteres'),
   })
   .strict();
@@ -32,7 +33,7 @@ export const resolverDisputaSchema = z
 
 export const consultaLiquidacionesSchema = z
   .object({
-    estado: z.enum(['pendiente', 'solicitada', 'pagada']).optional(),
+    estado: z.enum(['pendiente', 'solicitada', 'pagada', 'rechazada']).optional(),
     page: z.preprocess(preprocesarEnteroPositivo, z.number().int().positive().optional().default(1)),
     limit: z.preprocess(preprocesarEnteroPositivo, z.number().int().min(1).max(50).optional().default(20)),
   })
@@ -40,6 +41,7 @@ export const consultaLiquidacionesSchema = z
 
 export const resolverRetiroSchema = z
   .object({
+    estado: z.enum(['pagada', 'rechazada']).optional().default('pagada'),
     referencia: z.string().trim().max(100, 'La referencia no puede exceder 100 caracteres').optional(),
   })
   .strict();

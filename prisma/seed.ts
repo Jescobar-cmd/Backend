@@ -16,6 +16,7 @@ const roles = [
   { id: 1, nombre: 'Administrador' },
   { id: 2, nombre: 'Freelancer' },
   { id: 3, nombre: 'Cliente' },
+  { id: 4, nombre: 'Moderador' },
 ];
 
 // Catálogo base de categorías (para clasificar ofertas y servicios).

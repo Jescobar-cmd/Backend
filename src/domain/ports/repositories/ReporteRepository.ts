@@ -1,4 +1,4 @@
-import { EstadoReporte, Reporte } from '../../entities/Reporte';
+import { EstadoReporte, NuevaReporte, Reporte, ReporteDetalle } from '../../entities/Reporte';
 
 export interface FiltrosReporte {
   estado?: EstadoReporte;
@@ -7,11 +7,15 @@ export interface FiltrosReporte {
 }
 
 export interface ReporteRepository {
-  crear(datos: Omit<Reporte, 'id' | 'fecha' | 'fechaResolucion'>): Promise<Reporte>;
+  crear(datos: NuevaReporte): Promise<Reporte>;
 
   listar(filtros: FiltrosReporte): Promise<Reporte[]>;
 
+  contar(filtros: Omit<FiltrosReporte, 'page' | 'limit'>): Promise<number>;
+
   obtenerPorId(id: number): Promise<Reporte | null>;
+
+  obtenerDetallePorId(id: number): Promise<ReporteDetalle | null>;
 
   resolver(
     id: number,

@@ -113,6 +113,7 @@ import { SolicitarRetiroUseCase } from '../../application/use-cases/SolicitarRet
 import { ActualizarEntregaContratoUseCase } from '../../application/use-cases/ActualizarEntregaContratoUseCase';
 import { RechazarEntregaUseCase } from '../../application/use-cases/RechazarEntregaUseCase';
 import { ObtenerReporteAdminUseCase } from '../../application/use-cases/ObtenerReporteAdminUseCase';
+import { CrearReporteUseCase } from '../../application/use-cases/CrearReporteUseCase';
 import { ListarReportesAdminUseCase } from '../../application/use-cases/ListarReportesAdminUseCase';
 import { ResolverReporteUseCase } from '../../application/use-cases/ResolverReporteUseCase';
 import { ListarDisputasAdminUseCase } from '../../application/use-cases/ListarDisputasAdminUseCase';
@@ -271,11 +272,12 @@ export const contenedor = {
     liquidaciones
   ),
   solicitarRetiro: new SolicitarRetiroUseCase(liquidaciones),
+  crearReporte: new CrearReporteUseCase(reportes, notificaciones, usuarios),
   listarReportesAdmin: new ListarReportesAdminUseCase(reportes),
   obtenerReporteAdmin: new ObtenerReporteAdminUseCase(reportes),
   resolverReporteAdmin: new ResolverReporteUseCase(reportes, notificaciones),
   listarDisputasAdmin: new ListarDisputasAdminUseCase(disputas),
-  obtenerDisputaAdmin: new ObtenerDisputaAdminUseCase(disputas),
+  obtenerDisputaAdmin: new ObtenerDisputaAdminUseCase(disputas, contratos),
   resolverDisputaAdmin: new ResolverDisputaUseCase(contratos, disputas, notificaciones),
   listarLiquidacionesAdmin: new ListarLiquidacionesAdminUseCase(liquidaciones),
   aprobarRetiroAdmin: new AprobarRetiroUseCase(liquidaciones, notificaciones),
