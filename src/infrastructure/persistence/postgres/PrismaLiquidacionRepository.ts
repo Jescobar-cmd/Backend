@@ -21,6 +21,7 @@ function toLiquidacion(liquidacion: {
   montoNeto: { toString(): string } | number;
   estado: string;
   referencia: string | null;
+  motivoRechazo: string | null;
   fechaCreacion: Date;
   fechaSolicitud: Date | null;
   fechaPago: Date | null;
@@ -34,6 +35,7 @@ function toLiquidacion(liquidacion: {
     montoNeto: Number(liquidacion.montoNeto),
     estado: liquidacion.estado as EstadoLiquidacion,
     referencia: liquidacion.referencia,
+    motivoRechazo: liquidacion.motivoRechazo,
     fechaCreacion: liquidacion.fechaCreacion,
     fechaSolicitud: liquidacion.fechaSolicitud,
     fechaPago: liquidacion.fechaPago,
@@ -154,15 +156,30 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
     id: number,
     adminId: number,
     estado: Liquidacion['estado'],
-    referencia: string | null
+    referencia: string | null,
+    motivoRechazo: string | null = null
   ): Promise<Liquidacion> {
+    // Un rechazo nunca puede hacer desaparecer el saldo del freelancer:
+    // la liquidación vuelve a 'pendiente' y queda disponible para reintentar.
+    const datos =
+      estado === 'rechazada'
+        ? {
+            estado: 'pendiente',
+            fechaSolicitud: null,
+            fechaPago: null,
+            referencia: null,
+            motivoRechazo,
+          }
+        : {
+            estado,
+            fechaPago: new Date(),
+            referencia,
+            motivoRechazo: null,
+          };
+
     const actualizada = await this.db.liquidacion.update({
       where: { id },
-      data: {
-        estado,
-        fechaPago: new Date(),
-        referencia,
-      },
+      data: datos,
     });
     return toLiquidacion(actualizada);
   }

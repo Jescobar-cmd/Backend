@@ -24,7 +24,7 @@ export class NotificacionController {
       const resultado = await contenedor.listarNotificaciones.ejecutar(usuarioId, {
         page,
         limit,
-        soloNoLeidas: req.query.soloNoLeidas === 'true',
+        soloNoLeidas: String(req.query.soloNoLeidas) === 'true',
       });
       res.json(resultado);
     } catch (e) {

@@ -14,6 +14,8 @@ import { LiquidacionRepository } from '../../src/domain/ports/repositories/Liqui
 import { NotificacionRepository } from '../../src/domain/ports/repositories/NotificacionRepository';
 import { ContratoRepository } from '../../src/domain/ports/repositories/ContratoRepository';
 import { RepositorioUsuario } from '../../src/domain/ports/repositories/RepositorioUsuario';
+import { PagoRepository } from '../../src/domain/ports/repositories/PagoRepository';
+import { PasarelaPago } from '../../src/domain/ports/services/PasarelaPago';
 import { Reporte } from '../../src/domain/entities/Reporte';
 import { Disputa } from '../../src/domain/entities/Disputa';
 import { Liquidacion } from '../../src/domain/entities/Liquidacion';
@@ -60,6 +62,7 @@ const liquidacionBase: Liquidacion = {
   montoNeto: 88,
   estado: 'solicitada',
   referencia: null,
+  motivoRechazo: null,
   fechaCreacion: new Date('2026-01-01T00:00:00.000Z'),
   fechaSolicitud: new Date('2026-01-02T00:00:00.000Z'),
   fechaPago: null,
@@ -192,6 +195,7 @@ describe('Moderador Use Cases', () => {
     const notificaciones = repoNotificaciones();
     const usuarios: Partial<RepositorioUsuario> = {
       listarIdsPorRoles: vi.fn().mockResolvedValue([1, 99]),
+      buscarPorId: vi.fn().mockResolvedValue({ id: 8 }),
     };
     const casoUso = new CrearReporteUseCase(
       reporteRepo as ReporteRepository,
@@ -276,16 +280,47 @@ describe('Moderador Use Cases', () => {
     };
     const contratoRepo: Partial<ContratoRepository> = {
       obtener: vi.fn().mockResolvedValue(contratoBase),
+      cambiarEstado: vi
+        .fn()
+        .mockResolvedValue({ ...contratoBase, estado: 'completado' }),
     };
     const notificaciones = repoNotificaciones();
+    const pagos: Partial<PagoRepository> = {
+      obtenerPorContrato: vi.fn().mockResolvedValue({
+        id: 1,
+        contratoId: 3,
+        monto: 103,
+        estado: 'retenido',
+        metodoPago: 'mercado_pago',
+        referenciaPasarela: 'MP-1',
+        preferenciaId: null,
+        fechaPago: new Date('2026-01-01T00:00:00.000Z'),
+      }),
+      liberar: vi.fn(),
+    };
+    const liquidaciones: Partial<LiquidacionRepository> = {
+      crearParaContrato: vi.fn(),
+    };
+    const pasarela = {
+      esSimulada: true,
+    } as unknown as PasarelaPago;
     const casoUso = new ResolverDisputaUseCase(
       contratoRepo as ContratoRepository,
       disputaRepo as DisputaRepository,
-      notificaciones
+      notificaciones,
+      pagos as PagoRepository,
+      liquidaciones as LiquidacionRepository,
+      pasarela,
+      12
     );
 
-    const resultado = await casoUso.ejecutar(10, 1, 'resuelta', 'Cliente prevalece');
+    const resultado = await casoUso.ejecutar(10, 1, {
+      estado: 'resuelta',
+      resultado: 'liberar_freelancer',
+      resolucion: 'Cliente prevalece',
+    });
     expect(resultado.estado).toBe('resuelta');
+    expect(pagos.liberar).toHaveBeenCalledWith(3);
     expect(notificaciones.crear).toHaveBeenCalledWith(
       expect.objectContaining({ usuarioId: contratoBase.cliente.id })
     );

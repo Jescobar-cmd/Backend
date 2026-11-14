@@ -18,6 +18,7 @@ import { habilidadesRouter } from './routes/habilidad.routes';
 import { directorioFreelancerRouter } from './routes/directorio.routes';
 import { moderadorRouter } from './routes/moderador.routes';
 import { reportesRouter } from './routes/reportes.routes';
+import { pagosRouter } from './routes/pagos.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
 import { entorno } from '../../config/entorno';
 import { prisma } from '../../config/conexionBd';
@@ -27,6 +28,10 @@ export function createApp() {
 
   // Seguridad y hardening HTTP
   app.disable('x-powered-by');
+  if (entorno.NODE_ENV === 'production') {
+    // Render/Heroku terminan TLS en un proxy: confiar en X-Forwarded-For.
+    app.set('trust proxy', 1);
+  }
   app.use(helmet());
   app.use(
     cors({
@@ -87,6 +92,7 @@ export function createApp() {
   app.use('/api/freelancers', directorioFreelancerRouter);
   app.use('/api/moderador', moderadorRouter);
   app.use('/api/reportes', reportesRouter);
+  app.use('/api/pagos', pagosRouter);
 
   // Documentación OpenAPI / Swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));

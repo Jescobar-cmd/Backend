@@ -35,3 +35,20 @@ export interface PagoFreelancer extends PagoCliente {
     fotoPerfil: string | null;
   };
 }
+
+/**
+ * Estados del dinero en modelo escrow:
+ * pendiente -> retenido (la plataforma lo guarda) -> liberado | reembolsado.
+ */
+export type EstadoPago = 'pendiente' | 'retenido' | 'liberado' | 'reembolsado';
+
+export interface PagoEscrow {
+  id: number;
+  contratoId: number;
+  monto: number;
+  estado: EstadoPago;
+  metodoPago: string | null;
+  referenciaPasarela: string | null;
+  preferenciaId: string | null;
+  fechaPago: Date;
+}

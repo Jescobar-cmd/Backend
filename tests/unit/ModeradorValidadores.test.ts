@@ -23,11 +23,17 @@ describe('Validadores del moderador', () => {
     ).toThrow();
   });
 
-  it('resolverRetiroSchema aplica pagada por defecto y permite rechazar', () => {
+  it('resolverRetiroSchema aplica pagada por defecto y permite rechazar con motivo', () => {
     expect(resolverRetiroSchema.parse({}).estado).toBe('pagada');
     expect(
-      resolverRetiroSchema.parse({ estado: 'rechazada', referencia: 'Cuenta inválida' }).estado
+      resolverRetiroSchema.parse({
+        estado: 'rechazada',
+        motivoRechazo: 'Cuenta inválida',
+      }).estado
     ).toBe('rechazada');
+    expect(() =>
+      resolverRetiroSchema.parse({ estado: 'rechazada' })
+    ).toThrow();
     expect(() => resolverRetiroSchema.parse({ estado: 'pendiente' })).toThrow();
   });
 

@@ -30,6 +30,7 @@ export interface LiquidacionRepository {
     id: number,
     adminId: number,
     estado: Liquidacion['estado'],
-    referencia: string | null
+    referencia: string | null,
+    motivoRechazo?: string | null
   ): Promise<Liquidacion>;
 }

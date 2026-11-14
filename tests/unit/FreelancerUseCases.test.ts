@@ -10,6 +10,7 @@ import { EntregaContratoRepository } from '../../src/domain/ports/repositories/E
 import { NotificacionRepository } from '../../src/domain/ports/repositories/NotificacionRepository';
 import { PagoRepository } from '../../src/domain/ports/repositories/PagoRepository';
 import { LiquidacionRepository } from '../../src/domain/ports/repositories/LiquidacionRepository';
+import { RepositorioUsuario } from '../../src/domain/ports/repositories/RepositorioUsuario';
 import { ContratoDetalle } from '../../src/domain/entities/Contrato';
 import { EntregaContrato } from '../../src/domain/entities/EntregaContrato';
 import { Liquidacion } from '../../src/domain/entities/Liquidacion';
@@ -73,6 +74,7 @@ const liquidacion: Liquidacion = {
   montoNeto: 880,
   estado: 'pendiente',
   referencia: null,
+  motivoRechazo: null,
   fechaCreacion: new Date('2026-01-03T00:00:00.000Z'),
   fechaSolicitud: null,
   fechaPago: null,
@@ -229,19 +231,27 @@ describe('FreelancerUseCases', () => {
     const liquidaciones = {
       solicitarRetiro: vi.fn().mockResolvedValue({ cantidad: 1, total: 900 }),
     } as unknown as LiquidacionRepository;
+    const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const usuarios = {
+      listarIdsPorRoles: vi.fn().mockResolvedValue([]),
+    } as unknown as RepositorioUsuario;
 
-    await expect(new SolicitarRetiroUseCase(liquidaciones).ejecutar(20)).resolves.toEqual(
-      { cantidad: 1, total: 900 }
-    );
+    await expect(
+      new SolicitarRetiroUseCase(liquidaciones, notificaciones, usuarios).ejecutar(20)
+    ).resolves.toEqual({ cantidad: 1, total: 900 });
   });
 
   it('rechaza el retiro si no hay saldo disponible', async () => {
     const liquidaciones = {
       solicitarRetiro: vi.fn().mockResolvedValue({ cantidad: 0, total: 0 }),
     } as unknown as LiquidacionRepository;
+    const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const usuarios = {
+      listarIdsPorRoles: vi.fn().mockResolvedValue([]),
+    } as unknown as RepositorioUsuario;
 
-    await expect(new SolicitarRetiroUseCase(liquidaciones).ejecutar(20)).rejects.toThrow(
-      ErrorConflicto
-    );
+    await expect(
+      new SolicitarRetiroUseCase(liquidaciones, notificaciones, usuarios).ejecutar(20)
+    ).rejects.toThrow(ErrorConflicto);
   });
 });

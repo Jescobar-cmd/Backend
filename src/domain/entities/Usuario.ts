@@ -1,4 +1,4 @@
-export type EstadoUsuario = 'activo' | 'inactivo';
+export type EstadoUsuario = 'activo' | 'inactivo' | 'suspendido';
 
 export interface PropsUsuario {
   id?: number | null;
@@ -73,6 +73,18 @@ export class Usuario {
 
   esActivo(): boolean {
     return this.estado === 'activo';
+  }
+
+  estaSuspendido(): boolean {
+    return this.estado === 'suspendido';
+  }
+
+  suspender(): void {
+    this.estado = 'suspendido';
+  }
+
+  reactivar(): void {
+    this.estado = 'activo';
   }
 
   esRegistroGoogle(): boolean {

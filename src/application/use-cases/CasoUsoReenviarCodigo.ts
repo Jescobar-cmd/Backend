@@ -3,6 +3,7 @@ import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioU
 import { RepositorioToken } from '../../domain/ports/repositories/RepositorioToken';
 import { TokenRecuperacion } from '../../domain/entities/TokenRecuperacion';
 import { EnviadorCorreo } from '../../domain/ports/services/EnviadorCorreo';
+import { HasheadorCodigo } from '../../domain/ports/services/HasheadorCodigo';
 
 const TIEMPO_EXPIRACION_CODIGO_MS = 15 * 60 * 1000; // 15 minutos
 
@@ -11,6 +12,7 @@ export class CasoUsoReenviarCodigo {
     private repositorioUsuario: RepositorioUsuario,
     private repositorioToken: RepositorioToken,
     private enviadorCorreo: EnviadorCorreo,
+    private hasheadorCodigo: HasheadorCodigo,
   ) {}
 
   async ejecutar(email: string): Promise<void> {
@@ -28,7 +30,7 @@ export class CasoUsoReenviarCodigo {
     const token = new TokenRecuperacion(
       null,
       usuario.id,
-      codigo,
+      this.hasheadorCodigo.hashear(codigo),
       new Date(Date.now() + TIEMPO_EXPIRACION_CODIGO_MS)
     );
 

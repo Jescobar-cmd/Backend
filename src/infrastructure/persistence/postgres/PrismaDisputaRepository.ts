@@ -108,4 +108,12 @@ export class PrismaDisputaRepository implements DisputaRepository {
     });
     return toDisputa(actualizada);
   }
+
+  async marcarEnRevision(id: number, adminId: number): Promise<Disputa> {
+    const actualizada = await this.db.disputa.update({
+      where: { id },
+      data: { estado: 'en_revision', resueltaPorId: adminId },
+    });
+    return toDisputa(actualizada);
+  }
 }

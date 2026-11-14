@@ -1,7 +1,11 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
-import { parsearIdParam, parsearPaginacion } from '../helpers/peticion.helper';
+import {
+  obtenerUsuarioId,
+  parsearIdParam,
+  parsearPaginacion,
+} from '../helpers/peticion.helper';
 import { ErrorNoAutorizado } from '../../../shared/errors/ErrorAplicacion';
 import { EstadoDisputa } from '../../../domain/entities/Disputa';
 import { EstadoLiquidacion } from '../../../domain/entities/Liquidacion';
@@ -124,6 +128,25 @@ export class ModeratorController {
     }
   }
 
+  /** PATCH /api/moderador/disputas/:id/revision */
+  static async marcarDisputaEnRevision(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const adminId = obtenerUsuarioId(req);
+      const disputaId = parsearIdParam(req.params.id, 'disputa');
+      const disputa = await contenedor.marcarDisputaEnRevision.ejecutar(
+        disputaId,
+        adminId
+      );
+      res.json({ disputa });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   /** PATCH /api/moderador/disputas/:id/resolver */
   static async resolverDisputa(
     req: SolicitudAutenticada,
@@ -131,16 +154,16 @@ export class ModeratorController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const adminId = req.usuario?.id;
-      if (!adminId) {
-        throw new ErrorNoAutorizado('No autorizado');
-      }
+      const adminId = obtenerUsuarioId(req);
       const disputaId = parsearIdParam(req.params.id, 'disputa');
       const disputa = await contenedor.resolverDisputaAdmin.ejecutar(
         disputaId,
         adminId,
-        req.body.estado,
-        req.body.resolucion
+        {
+          estado: req.body.estado,
+          ...(req.body.resultado ? { resultado: req.body.resultado } : {}),
+          resolucion: req.body.resolucion,
+        }
       );
       res.json({ disputa });
     } catch (e) {
@@ -188,9 +211,121 @@ export class ModeratorController {
         liquidacionId,
         adminId,
         req.body.estado,
-        req.body.referencia ?? null
+        req.body.referencia ?? null,
+        req.body.motivoRechazo ?? null
       );
       res.json({ liquidacion });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/moderador/usuarios/:id/suspender */
+  static async suspenderUsuario(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const moderadorId = obtenerUsuarioId(req);
+      const usuarioId = parsearIdParam(req.params.id, 'usuario');
+      const usuario = await contenedor.suspenderUsuario.ejecutar(
+        usuarioId,
+        moderadorId,
+        req.body.motivo
+      );
+      res.json({
+        mensaje: 'Cuenta suspendida correctamente',
+        usuario: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          estado: usuario.estado,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/moderador/usuarios/:id/reactivar */
+  static async reactivarUsuario(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = parsearIdParam(req.params.id, 'usuario');
+      const usuario = await contenedor.reactivarUsuario.ejecutar(usuarioId);
+      res.json({
+        mensaje: 'Cuenta reactivada correctamente',
+        usuario: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          estado: usuario.estado,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** GET /api/moderador/notificaciones */
+  static async notificaciones(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = obtenerUsuarioId(req);
+      const { page, limit } = parsearPaginacion(req.query, {
+        page: 1,
+        limit: 20,
+        maxLimit: 50,
+      });
+      const resultado = await contenedor.listarNotificaciones.ejecutar(usuarioId, {
+        page,
+        limit,
+        soloNoLeidas: String(req.query.soloNoLeidas) === 'true',
+      });
+      res.json(resultado);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/moderador/notificaciones/leidas */
+  static async marcarNotificacionesLeidas(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = obtenerUsuarioId(req);
+      const actualizadas = await contenedor.marcarTodasNotificacionesLeidas.ejecutar(
+        usuarioId
+      );
+      res.json({ mensaje: 'Notificaciones marcadas como leídas', actualizadas });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** PATCH /api/moderador/notificaciones/:id/leida */
+  static async marcarNotificacionLeida(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = obtenerUsuarioId(req);
+      const notificacionId = parsearIdParam(req.params.id, 'notificación');
+      const notificacion = await contenedor.marcarNotificacionLeida.ejecutar(
+        notificacionId,
+        usuarioId
+      );
+      res.json({ notificacion });
     } catch (e) {
       next(e);
     }

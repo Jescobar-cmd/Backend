@@ -1,6 +1,7 @@
 import { Usuario } from '../../domain/entities/Usuario';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { RepositorioToken } from '../../domain/ports/repositories/RepositorioToken';
+import { HasheadorCodigo } from '../../domain/ports/services/HasheadorCodigo';
 import { ErrorSolicitudInvalida } from '../../shared/errors/ErrorAplicacion';
 
 export interface DTOConfirmarCodigo {
@@ -12,6 +13,7 @@ export class CasoUsoConfirmarCodigo {
   constructor(
     private repositorioUsuario: RepositorioUsuario,
     private repositorioToken: RepositorioToken,
+    private hasheadorCodigo: HasheadorCodigo,
   ) {}
 
   async ejecutar(dto: DTOConfirmarCodigo): Promise<Usuario> {
@@ -27,7 +29,10 @@ export class CasoUsoConfirmarCodigo {
       return usuario;
     }
 
-    const token = await this.repositorioToken.buscarValidoPorUsuarioYToken(usuario.id, codigo);
+    const token = await this.repositorioToken.buscarValidoPorUsuarioYToken(
+      usuario.id,
+      this.hasheadorCodigo.hashear(codigo)
+    );
     if (!token || !token.esValido()) {
       throw new ErrorSolicitudInvalida('Código inválido o vencido, solicita uno nuevo');
     }

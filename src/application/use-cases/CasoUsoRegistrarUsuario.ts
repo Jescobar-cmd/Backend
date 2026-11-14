@@ -4,6 +4,7 @@ import { TokenRecuperacion } from '../../domain/entities/TokenRecuperacion';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { RepositorioToken } from '../../domain/ports/repositories/RepositorioToken';
 import { HasheadorContrasena } from '../../domain/ports/services/HasheadorContrasena';
+import { HasheadorCodigo } from '../../domain/ports/services/HasheadorCodigo';
 import { EnviadorCorreo } from '../../domain/ports/services/EnviadorCorreo';
 import { ErrorSolicitudInvalida, ErrorConflicto } from '../../shared/errors/ErrorAplicacion';
 import { ROLES } from '../../shared/constants/roles';
@@ -26,6 +27,7 @@ export class CasoUsoRegistrarUsuario {
     private repositorioToken: RepositorioToken,
     private hasheadorContrasena: HasheadorContrasena,
     private enviadorCorreo: EnviadorCorreo,
+    private hasheadorCodigo: HasheadorCodigo,
   ) {}
 
   async ejecutar(dto: DTORegistroUsuario): Promise<Usuario> {
@@ -73,7 +75,7 @@ export class CasoUsoRegistrarUsuario {
       const token = new TokenRecuperacion(
         null,
         usuarioGuardado.id,
-        codigo,
+        this.hasheadorCodigo.hashear(codigo),
         new Date(Date.now() + TIEMPO_EXPIRACION_CODIGO_MS)
       );
       await this.repositorioToken.guardar(token);

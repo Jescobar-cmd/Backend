@@ -23,7 +23,20 @@ const esquemaEntorno = z.object({
     .min(8, 'JWT_SECRET debe tener al menos 8 caracteres para garantizar seguridad'),
   JWT_EXPIRES_IN: z.string().optional().default('24h'),
   FRONTEND_URL: z.string().optional().default('http://localhost:5173'),
+  BACKEND_URL: z.string().optional().default('http://localhost:4000'),
   SWAGGER_SERVER_URL: z.string().optional(),
+
+  // Mercado Pago (Checkout Pro + Payments API). Sin token se usa el modo simulado
+  // fuera de producción; en producción la pasarela real es obligatoria.
+  MERCADOPAGO_ACCESS_TOKEN: z.string().optional(),
+  MERCADOPAGO_WEBHOOK_SECRET: z.string().optional(),
+  MERCADOPAGO_API_URL: z
+    .string()
+    .optional()
+    .default('https://api.mercadopago.com'),
+
+  // Secreto para hashear códigos de verificación/recuperación antes de guardarlos.
+  CODIGOS_SECRETO: z.string().optional(),
 
   // Proveedor de correo: Brevo HTTP API
   BREVO_API_KEY: z.string().optional(),

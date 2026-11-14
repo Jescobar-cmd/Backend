@@ -11,7 +11,9 @@ import {
   resolverDisputaSchema,
   resolverReporteSchema,
   resolverRetiroSchema,
+  suspenderUsuarioSchema,
 } from '../../../application/validators/moderador.schemas';
+import { consultaNotificacionesSchema } from '../../../application/validators/notificacion.schemas';
 
 // Rutas administrativas/moderadoras -> se monta en /api/moderador
 export const moderadorRouter = Router();
@@ -33,6 +35,10 @@ moderadorRouter.patch(
 moderadorRouter.get('/disputas', validar(consultaDisputasSchema, 'query'), ModeratorController.disputas);
 moderadorRouter.get('/disputas/:id', ModeratorController.disputa);
 moderadorRouter.patch(
+  '/disputas/:id/revision',
+  ModeratorController.marcarDisputaEnRevision
+);
+moderadorRouter.patch(
   '/disputas/:id/resolver',
   validar(resolverDisputaSchema, 'body'),
   ModeratorController.resolverDisputa
@@ -47,4 +53,30 @@ moderadorRouter.patch(
   '/liquidaciones/:id/pagar',
   validar(resolverRetiroSchema, 'body'),
   ModeratorController.aprobarRetiro
+);
+
+// Suspensión de cuentas (moderación)
+moderadorRouter.patch(
+  '/usuarios/:id/suspender',
+  validar(suspenderUsuarioSchema, 'body'),
+  ModeratorController.suspenderUsuario
+);
+moderadorRouter.patch(
+  '/usuarios/:id/reactivar',
+  ModeratorController.reactivarUsuario
+);
+
+// Notificaciones del moderador autenticado
+moderadorRouter.get(
+  '/notificaciones',
+  validar(consultaNotificacionesSchema, 'query'),
+  ModeratorController.notificaciones
+);
+moderadorRouter.patch(
+  '/notificaciones/leidas',
+  ModeratorController.marcarNotificacionesLeidas
+);
+moderadorRouter.patch(
+  '/notificaciones/:id/leida',
+  ModeratorController.marcarNotificacionLeida
 );

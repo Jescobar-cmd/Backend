@@ -1,7 +1,7 @@
 import { Usuario } from '../../domain/entities/Usuario';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { HasheadorContrasena } from '../../domain/ports/services/HasheadorContrasena';
-import { ErrorNoAutorizado } from '../../shared/errors/ErrorAplicacion';
+import { ErrorNoAutorizado, ErrorProhibido } from '../../shared/errors/ErrorAplicacion';
 
 export interface DTOInicioSesion {
   email: string;
@@ -32,6 +32,12 @@ export class CasoUsoIniciarSesion {
     const esContrasenaValida = await this.hasheadorContrasena.comparar(dto.password, usuario.passwordHash);
     if (!esContrasenaValida) {
       throw new ErrorNoAutorizado('Correo o contraseña incorrectos');
+    }
+
+    if (usuario.estaSuspendido()) {
+      throw new ErrorProhibido(
+        'Tu cuenta está suspendida. Contacta a la moderación de FirstGig.'
+      );
     }
 
     if (!usuario.esActivo()) {

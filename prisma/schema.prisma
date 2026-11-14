@@ -103,7 +103,8 @@ model Contrato {
   montoAcordado   Decimal           @db.Decimal(12, 2)
   fechaInicio     DateTime?         @db.Date
   fechaFin        DateTime?         @db.Date
-  estado          String            @default("activo") @db.VarChar(20)
+  /// pendiente_pago -> activo (pago retenido) -> completado | cancelado
+  estado          String            @default("pendiente_pago") @db.VarChar(20)
   Calificacion    Calificacion[]
   Cliente         Cliente           @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   Freelancer      Freelancer        @relation(fields: [freelancerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -235,13 +236,16 @@ model Pago {
   contratoId         Int
   monto              Decimal  @db.Decimal(12, 2)
   metodoPago         String?  @db.VarChar(30)
+  /// pendiente -> retenido (escrow) -> liberado | reembolsado
   estado             String   @default("pendiente") @db.VarChar(20)
   referenciaPasarela String?  @db.VarChar(100)
+  preferenciaId      String?  @unique @db.VarChar(100)
   fechaPago          DateTime @default(now())
   Factura            Factura?
   Contrato           Contrato @relation(fields: [contratoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([contratoId])
+  @@index([estado])
 }
 
 model PortafolioItem {
@@ -476,6 +480,7 @@ model Liquidacion {
   montoNeto      Decimal    @db.Decimal(12, 2)
   estado         String     @default("pendiente") @db.VarChar(20)
   referencia     String?    @db.VarChar(100)
+  motivoRechazo  String?    @db.VarChar(255)
   fechaCreacion  DateTime   @default(now())
   fechaSolicitud DateTime?
   fechaPago      DateTime?

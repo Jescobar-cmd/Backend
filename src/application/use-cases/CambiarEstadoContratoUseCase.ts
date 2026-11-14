@@ -3,21 +3,23 @@ import {
   ContratoVista,
   EstadoContratoFinal,
 } from '../../domain/entities/Contrato';
-import { calcularLiquidacion } from '../../domain/entities/Liquidacion';
 import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
-import { LiquidacionRepository } from '../../domain/ports/repositories/LiquidacionRepository';
+import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
 import {
   ErrorConflicto,
   ErrorNoEncontrado,
   ErrorProhibido,
 } from '../../shared/errors/ErrorAplicacion';
 
-/** Caso de uso: un participante cierra el contrato como completado o cancelado. */
+/**
+ * Caso de uso: cancelar un contrato que todavía no tiene pago confirmado.
+ * Completar un contrato ya no se hace por aquí: lo hace la aprobación de
+ * entrega, que es la única que puede liberar el dinero del escrow.
+ */
 export class CambiarEstadoContratoUseCase {
   constructor(
     private contratoRepository: ContratoRepository,
-    private liquidacionRepository: LiquidacionRepository,
-    private comisionFreelancerPorcentaje: number
+    private notificacionRepository: NotificacionRepository
   ) {}
 
   async ejecutar(
@@ -32,25 +34,31 @@ export class CambiarEstadoContratoUseCase {
     if (contrato.cliente.id !== usuarioId && contrato.freelancer.id !== usuarioId) {
       throw new ErrorProhibido('No participas en este contrato');
     }
-    if (contrato.estado !== 'activo') {
-      throw new ErrorConflicto('El contrato ya no está activo');
-    }
-
-    const actualizado = await this.contratoRepository.cambiarEstado(contratoId, estado);
-
     if (estado === 'completado') {
-      const calculo = calcularLiquidacion(
-        contrato.montoAcordado,
-        this.comisionFreelancerPorcentaje
+      throw new ErrorConflicto(
+        'El contrato solo se completa cuando el cliente aprueba la entrega'
       );
-      await this.liquidacionRepository.crearParaContrato({
-        freelancerId: contrato.freelancer.id,
-        contratoId: contrato.id,
-        montoBruto: contrato.montoAcordado,
-        comision: calculo.comision,
-        montoNeto: calculo.montoNeto,
-      });
     }
+    if (contrato.estado !== 'pendiente_pago') {
+      throw new ErrorConflicto(
+        contrato.estado === 'activo'
+          ? 'El contrato ya tiene pago retenido; abre una disputa para resolverlo'
+          : 'El contrato ya no se puede cancelar'
+      );
+    }
+
+    const actualizado = await this.contratoRepository.cambiarEstado(contratoId, 'cancelado');
+
+    await this.notificacionRepository.crear({
+      usuarioId:
+        contrato.cliente.id === usuarioId
+          ? contrato.freelancer.id
+          : contrato.cliente.id,
+      tipo: 'contrato_cancelado',
+      titulo: 'Contrato cancelado',
+      mensaje: 'El contrato fue cancelado antes de recibir el pago.',
+      enlace: `/contratos/${contrato.id}`,
+    });
 
     return aContratoVista(actualizado, usuarioId);
   }

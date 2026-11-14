@@ -9,7 +9,7 @@ export interface OfertaChatRepository {
   obtenerDetalle(ofertaId: number): Promise<OfertaChatDetalle | null>;
 
   /** Acepta en transacción: oferta, otras pendientes, proyecto (si aplica) y contrato. */
-  aceptar(ofertaId: number): Promise<ContratoDetalle>;
+  aceptar(ofertaId: number, montoPagoCliente: number): Promise<ContratoDetalle>;
 
   rechazar(ofertaId: number): Promise<void>;
 

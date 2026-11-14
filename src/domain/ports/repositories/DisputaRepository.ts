@@ -29,4 +29,7 @@ export interface DisputaRepository {
     estado: EstadoDisputa,
     resolucion: string
   ): Promise<Disputa>;
+
+  /** El moderador toma la disputa y la deja en revisión. */
+  marcarEnRevision(id: number, adminId: number): Promise<Disputa>;
 }

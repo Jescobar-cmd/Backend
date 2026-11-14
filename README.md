@@ -15,7 +15,61 @@ src/
 1. `npm install`
 2. Copiar `.env.example` a `.env` y completar (DB, JWT, Gmail SMTP, GOOGLE_CLIENT_ID).
 3. Aplicar el schema a la base de datos: `npx prisma db push`.
-4. `npm run dev`
+4. Si la base ya existe, aplicar la migración manual de escrow y suspensión:
+   `psql "$DATABASE_URL" -f prisma/manual-migrations/2026-11-13-escrow-suspension.sql`
+   y regenerar el cliente con `npx prisma generate`.
+5. `npm run dev`
+
+## 💸 Flujo de dinero (escrow con Mercado Pago)
+
+El dinero no se mueve directo entre cliente y freelancer: la plataforma lo retiene
+hasta que el servicio se completa satisfactoriamente.
+
+```
+pendiente_pago ──(pago aprobado)──► activo ──(cliente aprueba entrega)──► completado
+       │                              │
+       └──(cancelar sin pago)──► cancelado
+                                      └──(disputa: reembolso_cliente)──► cancelado
+```
+
+| Concepto | Valor por defecto |
+| --- | --- |
+| Comisión total de la plataforma | `15%` (`COMISION_PLATAFORMA_PORCENTAJE`) |
+| Comisión que paga el cliente | `3%` (`COMISION_CLIENTE_PORCENTAJE`) |
+| Comisión que paga el freelancer | `12%` (resto) |
+
+Estados del pago: `pendiente → retenido → liberado | reembolsado`.
+
+- El cliente inicia el pago con `POST /api/contratos/:id/pago/preferencia`.
+- Mercado Pago confirma por `POST /api/pagos/webhook`; el pago pasa a `retenido`
+  y el contrato a `activo`.
+- `PATCH /api/contratos/:id/aprobar-entrega` libera el escrow, completa el
+  contrato y genera la liquidación del freelancer.
+- `PATCH /api/contratos/:id/estado` solo puede **cancelar** contratos que aún no
+  tienen pago; completar siempre pasa por la aprobación de entrega.
+- Una disputa abierta bloquea la aprobación de entrega. El moderador la resuelve
+  con `resultado`: `reembolso_cliente` o `liberar_freelancer`.
+- Rechazar un retiro exige `motivoRechazo` y devuelve el saldo a `pendiente`.
+
+### Modo simulado (sin credenciales)
+
+Si no existe `MERCADOPAGO_ACCESS_TOKEN`, se usa una pasarela simulada que solo
+funciona fuera de producción. Para probar el flujo sin Mercado Pago:
+
+```bash
+curl -X POST http://localhost:4000/api/contratos/1/pago/simular \
+  -H "Authorization: Bearer <token-cliente>"
+```
+
+En producción la pasarela real es obligatoria: sin token, el backend responde
+`503` al intentar iniciar un pago.
+
+### Suspensión de cuentas
+
+`PATCH /api/moderador/usuarios/:id/suspender` (admin/moderador) marca la cuenta
+como `suspendido`. El login queda bloqueado y cada petición revalida el estado
+del usuario contra la base de datos, así que los tokens emitidos dejan de servir
+de inmediato. `PATCH /api/moderador/usuarios/:id/reactivar` restaura el acceso.
 
 ## 🐳 Docker (entrega de la actividad)
 
@@ -39,7 +93,13 @@ Las variables del `.env` (JWT, SMTP, Google) se toman automáticamente; si no ex
 
 ### Automatización (GitHub Actions)
 
-Cada push a `main` construye la imagen y levanta el stack completo con `docker compose` en los servidores de GitHub (`.github/workflows/docker.yml`). Si el flujo sale en verde, el Dockerfile y el compose funcionan — sin necesidad de Docker instalado en tu PC.
+Cada push a `main`, `produccion` o `desarrollo` ejecuta typecheck, tests, cobertura y build (`.github/workflows/ci.yml`). El flujo de Docker (`.github/workflows/docker.yml`) construye la imagen y levanta el stack completo con `docker compose` en los servidores de GitHub. Si sale en verde, el Dockerfile y el compose funcionan — sin necesidad de Docker instalado en tu PC.
+
+```bash
+npm test                 # suite completa
+npm run test:coverage    # suite + reporte de cobertura
+npm run test:typecheck   # typecheck de los tests
+```
 
 ## 🧭 Los 12 factores
 

@@ -19,6 +19,7 @@ import { EntregaContratoRepository } from '../../src/domain/ports/repositories/E
 import { DisputaRepository } from '../../src/domain/ports/repositories/DisputaRepository';
 import { PagoRepository } from '../../src/domain/ports/repositories/PagoRepository';
 import { LiquidacionRepository } from '../../src/domain/ports/repositories/LiquidacionRepository';
+import { RepositorioUsuario } from '../../src/domain/ports/repositories/RepositorioUsuario';
 import { ContratoDetalle } from '../../src/domain/entities/Contrato';
 import { Servicio } from '../../src/domain/entities/Servicio';
 import { EntregaContrato } from '../../src/domain/entities/EntregaContrato';
@@ -222,11 +223,29 @@ describe('ClienteUseCases', () => {
     const liquidaciones = {
       crearParaContrato: vi.fn().mockResolvedValue({}),
     } as unknown as LiquidacionRepository;
+    const pagos = {
+      obtenerPorContrato: vi.fn().mockResolvedValue({
+        id: 1,
+        contratoId: 1,
+        monto: 103,
+        estado: 'retenido',
+        metodoPago: 'mercado_pago',
+        referenciaPasarela: 'MP-1',
+        preferenciaId: null,
+        fechaPago: new Date('2026-01-01T00:00:00.000Z'),
+      }),
+      liberar: vi.fn(),
+    } as unknown as PagoRepository;
+    const disputas = {
+      existeAbierta: vi.fn().mockResolvedValue(false),
+    } as unknown as DisputaRepository;
 
     const resultado = await new AprobarEntregaUseCase(
       contratos,
       entregas,
       notificaciones,
+      pagos,
+      disputas,
       liquidaciones,
       12
     ).ejecutar(1, 10);
@@ -234,6 +253,7 @@ describe('ClienteUseCases', () => {
     expect(resultado.contrato.estado).toBe('completado');
     expect(resultado.entrega.estado).toBe('aprobada');
     expect(contratos.cambiarEstado).toHaveBeenCalledWith(1, 'completado');
+    expect(pagos.liberar).toHaveBeenCalledWith(1);
     expect(liquidaciones.crearParaContrato).toHaveBeenCalledWith({
       freelancerId: 20,
       contratoId: 1,
@@ -252,12 +272,29 @@ describe('ClienteUseCases', () => {
     } as unknown as EntregaContratoRepository;
     const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
     const liquidaciones = {} as unknown as LiquidacionRepository;
+    const pagos = {
+      obtenerPorContrato: vi.fn().mockResolvedValue({
+        id: 1,
+        contratoId: 1,
+        monto: 103,
+        estado: 'retenido',
+        metodoPago: 'mercado_pago',
+        referenciaPasarela: 'MP-1',
+        preferenciaId: null,
+        fechaPago: new Date(),
+      }),
+    } as unknown as PagoRepository;
+    const disputas = {
+      existeAbierta: vi.fn().mockResolvedValue(false),
+    } as unknown as DisputaRepository;
 
     await expect(
       new AprobarEntregaUseCase(
         contratos,
         entregas,
         notificaciones,
+        pagos,
+        disputas,
         liquidaciones,
         10
       ).ejecutar(1, 10)
@@ -277,6 +314,8 @@ describe('ClienteUseCases', () => {
         contratos,
         entregas,
         notificaciones,
+        {} as unknown as PagoRepository,
+        {} as unknown as DisputaRepository,
         liquidaciones,
         10
       ).ejecutar(1, 99)
@@ -294,11 +333,15 @@ describe('ClienteUseCases', () => {
     const notificaciones = {
       crear: vi.fn().mockResolvedValue(notificacionBase),
     } as unknown as NotificacionRepository;
+    const usuarios = {
+      listarIdsPorRoles: vi.fn().mockResolvedValue([]),
+    } as unknown as RepositorioUsuario;
 
     const resultado = await new AbrirDisputaUseCase(
       contratos,
       disputas,
-      notificaciones
+      notificaciones,
+      usuarios
     ).ejecutar(1, 10, {
       motivo: 'Entrega incompleta',
       descripcion: 'Faltan dos pantallas',
@@ -318,9 +361,17 @@ describe('ClienteUseCases', () => {
       existeAbierta: vi.fn().mockResolvedValue(true),
     } as unknown as DisputaRepository;
     const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const usuarios = {
+      listarIdsPorRoles: vi.fn().mockResolvedValue([]),
+    } as unknown as RepositorioUsuario;
 
     await expect(
-      new AbrirDisputaUseCase(contratos, disputas, notificaciones).ejecutar(1, 10, {
+      new AbrirDisputaUseCase(
+        contratos,
+        disputas,
+        notificaciones,
+        usuarios
+      ).ejecutar(1, 10, {
         motivo: 'Entrega incompleta',
         descripcion: 'Faltan dos pantallas',
       })

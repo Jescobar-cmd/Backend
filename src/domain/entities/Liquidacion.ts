@@ -9,6 +9,7 @@ export interface Liquidacion {
   montoNeto: number;
   estado: EstadoLiquidacion;
   referencia: string | null;
+  motivoRechazo: string | null;
   fechaCreacion: Date;
   fechaSolicitud: Date | null;
   fechaPago: Date | null;

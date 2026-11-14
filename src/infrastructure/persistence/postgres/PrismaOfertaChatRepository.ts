@@ -90,7 +90,10 @@ export class PrismaOfertaChatRepository implements OfertaChatRepository {
     };
   }
 
-  async aceptar(ofertaId: number): Promise<ContratoDetalle> {
+  async aceptar(
+    ofertaId: number,
+    montoPagoCliente: number
+  ): Promise<ContratoDetalle> {
     const contrato = await this.db.$transaction(async (tx) => {
       const oferta = await tx.ofertaChat.findUnique({
         where: { id: ofertaId },
@@ -134,8 +137,16 @@ export class PrismaOfertaChatRepository implements OfertaChatRepository {
           clienteId: oferta.Conversacion.clienteId,
           freelancerId: oferta.Conversacion.freelancerId,
           montoAcordado: oferta.monto,
-          fechaInicio: new Date(),
-          estado: 'activo',
+          fechaInicio: null,
+          estado: 'pendiente_pago',
+          Pago: {
+            create: {
+              monto: montoPagoCliente,
+              metodoPago: 'mercado_pago',
+              estado: 'pendiente',
+              Factura: { create: { estado: 'pendiente' } },
+            },
+          },
         },
         include: contratoInclude,
       });

@@ -1,7 +1,7 @@
 import { Usuario } from '../../domain/entities/Usuario';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { VerificadorOAuth } from '../../domain/ports/services/VerificadorOAuth';
-import { ErrorSolicitudInvalida, ErrorConflicto } from '../../shared/errors/ErrorAplicacion';
+import { ErrorSolicitudInvalida, ErrorConflicto, ErrorProhibido } from '../../shared/errors/ErrorAplicacion';
 import { ROLES } from '../../shared/constants/roles';
 
 export interface EntradaInicioSesionGoogle {
@@ -29,6 +29,11 @@ export class CasoUsoIniciarSesionGoogle {
     // 1. ¿Ya existe cuenta con este Google? Entra directo si está activa.
     const porGoogle = await this.repositorioUsuario.buscarPorGoogleId(perfil.googleId);
     if (porGoogle) {
+      if (porGoogle.estaSuspendido()) {
+        throw new ErrorProhibido(
+          'Tu cuenta está suspendida. Contacta a la moderación de FirstGig.'
+        );
+      }
       if (porGoogle.esActivo()) return { estado: 'autenticado', usuario: porGoogle };
       return { estado: 'requiere_registro', usuario: porGoogle };
     }
@@ -36,6 +41,11 @@ export class CasoUsoIniciarSesionGoogle {
     // 2. ¿Existe cuenta de formulario con ese correo? Se enlaza el Google.
     const porEmail = await this.repositorioUsuario.buscarPorEmail(perfil.email);
     if (porEmail) {
+      if (porEmail.estaSuspendido()) {
+        throw new ErrorProhibido(
+          'Tu cuenta está suspendida. Contacta a la moderación de FirstGig.'
+        );
+      }
       porEmail.googleId = perfil.googleId;
       const vinculado = await this.repositorioUsuario.actualizar(porEmail);
       const usuario = vinculado ?? porEmail;

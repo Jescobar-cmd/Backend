@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ContratoController } from '../controllers/ContratoController';
 import { EntregaContratoController } from '../controllers/EntregaContratoController';
 import { DisputaContratoController } from '../controllers/DisputaContratoController';
+import { PagoController } from '../controllers/PagoController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar } from '../middlewares/validar';
@@ -22,6 +23,20 @@ contratosRouter.use(requiereAutenticacion);
 
 contratosRouter.get('/', ContratoController.listar);
 contratosRouter.get('/:id', ContratoController.detalle);
+
+// Flujo de pago escrow: el cliente inicia, la pasarela confirma por webhook.
+contratosRouter.get('/:id/pago', PagoController.consultar);
+contratosRouter.post(
+  '/:id/pago/preferencia',
+  requiereRol(ROLES.CLIENTE),
+  PagoController.iniciar
+);
+contratosRouter.post(
+  '/:id/pago/simular',
+  requiereRol(ROLES.CLIENTE),
+  PagoController.simular
+);
+
 contratosRouter.patch(
   '/:id/estado',
   validar(cambiarEstadoContratoSchema),

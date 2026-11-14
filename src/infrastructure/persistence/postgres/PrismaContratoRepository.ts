@@ -57,8 +57,8 @@ export class PrismaContratoRepository implements ContratoRepository {
           freelancerId: servicio.freelancerId,
           servicioId,
           montoAcordado: servicio.precio,
-          fechaInicio: new Date(),
-          estado: 'activo',
+          fechaInicio: null,
+          estado: 'pendiente_pago',
           Pago: {
             create: {
               monto: montoPagoCliente,
@@ -84,7 +84,11 @@ export class PrismaContratoRepository implements ContratoRepository {
     servicioId: number
   ): Promise<boolean> {
     const total = await this.db.contrato.count({
-      where: { clienteId, servicioId, estado: 'activo' },
+      where: {
+        clienteId,
+        servicioId,
+        estado: { in: ['pendiente_pago', 'activo'] },
+      },
     });
     return total > 0;
   }

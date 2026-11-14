@@ -2,6 +2,8 @@ import { Disputa } from '../../domain/entities/Disputa';
 import { ContratoRepository } from '../../domain/ports/repositories/ContratoRepository';
 import { DisputaRepository } from '../../domain/ports/repositories/DisputaRepository';
 import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
+import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
+import { ROLES } from '../../shared/constants/roles';
 import {
   ErrorConflicto,
   ErrorNoEncontrado,
@@ -19,7 +21,8 @@ export class AbrirDisputaUseCase {
   constructor(
     private contratoRepository: ContratoRepository,
     private disputaRepository: DisputaRepository,
-    private notificacionRepository: NotificacionRepository
+    private notificacionRepository: NotificacionRepository,
+    private usuarioRepository: RepositorioUsuario
   ) {}
 
   async ejecutar(
@@ -59,6 +62,22 @@ export class AbrirDisputaUseCase {
       mensaje: `Se abrió una disputa en el contrato por: ${datos.motivo}.`,
       enlace: `/contratos/${contrato.id}`,
     });
+
+    const moderadores = await this.usuarioRepository.listarIdsPorRoles([
+      ROLES.ADMIN,
+      ROLES.MODERADOR,
+    ]);
+    await Promise.all(
+      moderadores.map((moderadorId) =>
+        this.notificacionRepository.crear({
+          usuarioId: moderadorId,
+          tipo: 'disputa_abierta',
+          titulo: 'Nueva disputa pendiente',
+          mensaje: `Contrato #${contrato.id}: ${datos.motivo}. Revísala en moderación.`,
+          enlace: `/api/moderador/disputas/${disputa.id}`,
+        })
+      )
+    );
 
     return disputa;
   }

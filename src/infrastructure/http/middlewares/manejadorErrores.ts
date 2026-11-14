@@ -41,6 +41,13 @@ export function manejadorErrores(
       });
       return;
     }
+    if (errorPrisma.code === 'P2003') {
+      res.status(404).json({
+        success: false,
+        error: 'El recurso relacionado no existe o ya no está disponible',
+      });
+      return;
+    }
   }
 
   // 3. Errores no controlados (500) - Se loguean internamente sin filtrar detalles al cliente

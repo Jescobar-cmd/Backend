@@ -1008,6 +1008,87 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/contratos/{id}/pago': {
+      get: {
+        summary: 'Consultar el estado del pago escrow del contrato',
+        description:
+          'Devuelve el pago con su estado: pendiente, retenido (escrow), liberado o reembolsado.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ pago } o { pago: null }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No participas en el contrato' },
+          '404': { description: 'Contrato no encontrado' },
+        },
+      },
+    },
+    '/api/contratos/{id}/pago/preferencia': {
+      post: {
+        summary: 'Iniciar el pago del contrato en Mercado Pago (cliente)',
+        description:
+          'Crea una preferencia de Checkout Pro. El contrato sigue en pendiente_pago hasta que el webhook confirme el pago.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '201': { description: '{ preferenciaId, initPoint, monto, simulado }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No eres el cliente del contrato' },
+          '404': { description: 'Contrato o pago no encontrado' },
+          '409': { description: 'El contrato ya tiene pago confirmado' },
+          '503': { description: 'Pasarela de pagos no disponible o no configurada' },
+        },
+      },
+    },
+    '/api/contratos/{id}/pago/simular': {
+      post: {
+        summary: 'Simular la confirmación del pago (solo desarrollo/pruebas)',
+        description:
+          'Confirma el pago sin Mercado Pago y lo deja retenido en escrow. Bloqueado en producción.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Pago retenido en escrow' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'No eres el cliente o la simulación está deshabilitada' },
+          '404': { description: 'Contrato o pago no encontrado' },
+          '409': { description: 'El contrato no está pendiente de pago' },
+        },
+      },
+    },
+    '/api/pagos/webhook': {
+      post: {
+        summary: 'Webhook de Mercado Pago (sin autenticación)',
+        description:
+          'Valida la firma HMAC si está configurada y concilia el pago consultando la API. Es idempotente ante reintentos.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', example: 'payment' },
+                  data: {
+                    type: 'object',
+                    properties: { id: { type: 'string', example: '1234567890' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '{ received: true }' },
+          '400': { description: 'Webhook sin identificador de pago' },
+          '401': { description: 'Firma del webhook inválida' },
+          '429': { description: 'Demasiadas notificaciones' },
+        },
+      },
+    },
     '/api/cliente/dashboard': {
       get: {
         summary: 'Dashboard del cliente',
@@ -1184,16 +1265,19 @@ export const swaggerDocument = {
     },
     '/api/contratos/{id}/aprobar-entrega': {
       patch: {
-        summary: 'Aprobar la entrega y completar el contrato (cliente)',
+        summary: 'Aprobar la entrega y liberar el pago escrow (cliente)',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: {
-          '200': { description: 'Entrega aprobada y contrato completado' },
+          '200': { description: 'Entrega aprobada, pago liberado y contrato completado' },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'No eres el cliente del contrato' },
           '404': { description: 'Contrato no encontrado' },
-          '409': { description: 'Contrato inactivo o sin entrega pendiente' },
+          '409': {
+            description:
+              'Contrato inactivo, pago no retenido, disputa abierta o sin entrega pendiente',
+          },
         },
       },
     },
@@ -1338,7 +1422,9 @@ export const swaggerDocument = {
     },
     '/api/contratos/{id}/estado': {
       patch: {
-        summary: 'Completar o cancelar un contrato propio',
+        summary: 'Cancelar un contrato que aún no tiene pago confirmado',
+        description:
+          'Completar un contrato solo ocurre al aprobar la entrega (liberación del escrow).',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
         requestBody: {
@@ -1356,12 +1442,15 @@ export const swaggerDocument = {
           },
         },
         responses: {
-          '200': { description: 'Contrato cerrado y oferta sincronizada' },
+          '200': { description: 'Contrato cancelado y oferta sincronizada' },
           '400': { description: 'Id inválido' },
           '401': { description: 'Sin sesión o expirada' },
           '403': { description: 'No participas en el contrato' },
           '404': { description: 'Contrato no encontrado' },
-          '409': { description: 'El contrato ya no está activo' },
+          '409': {
+            description:
+              'El contrato ya tiene pago retenido o no está pendiente de pago',
+          },
           '422': { description: 'Estado inválido' },
         },
       },
@@ -1807,6 +1896,21 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/moderador/disputas/{id}/revision': {
+      patch: {
+        summary: 'Pasar una disputa abierta a en_revision (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Disputa en revisión' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Disputa no encontrada' },
+          '409': { description: 'La disputa no está abierta' },
+        },
+      },
+    },
     '/api/moderador/disputas/{id}/resolver': {
       patch: {
         summary: 'Resolver una disputa (admin o moderador)',
@@ -1821,6 +1925,12 @@ export const swaggerDocument = {
                 required: ['estado', 'resolucion'],
                 properties: {
                   estado: { type: 'string', enum: ['resuelta', 'rechazada'] },
+                  resultado: {
+                    type: 'string',
+                    enum: ['reembolso_cliente', 'liberar_freelancer'],
+                    description:
+                      'Obligatorio cuando estado es resuelta: destino del dinero retenido.',
+                  },
                   resolucion: { type: 'string', minLength: 3, maxLength: 1000, example: 'Cliente prevalece.' },
                 },
               },
@@ -1869,6 +1979,13 @@ export const swaggerDocument = {
                 properties: {
                   estado: { type: 'string', enum: ['pagada', 'rechazada'], default: 'pagada' },
                   referencia: { type: 'string', nullable: true, example: 'MP-SIM-RET-001' },
+                  motivoRechazo: {
+                    type: 'string',
+                    nullable: true,
+                    example: 'Cuenta bancaria inválida',
+                    description:
+                      'Obligatorio al rechazar: el saldo vuelve a estar disponible para el freelancer.',
+                  },
                 },
               },
             },
@@ -1882,6 +1999,101 @@ export const swaggerDocument = {
           '404': { description: 'Liquidación no encontrada' },
           '409': { description: 'La liquidación no está en solicitud de retiro' },
           '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/moderador/usuarios/{id}/suspender': {
+      patch: {
+        summary: 'Suspender una cuenta de cliente o freelancer (admin o moderador)',
+        description:
+          'La suspensión es inmediata: bloquea el login y revoca los tokens en la siguiente petición.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['motivo'],
+                properties: {
+                  motivo: {
+                    type: 'string',
+                    minLength: 3,
+                    maxLength: 500,
+                    example: 'Incumplimiento reiterado de las normas de la comunidad.',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '{ mensaje, usuario } con estado suspendido' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': {
+            description: 'Requiere rol admin/moderador o se intentó suspender una cuenta privilegiada',
+          },
+          '404': { description: 'Usuario no encontrado' },
+          '409': { description: 'La cuenta ya está suspendida' },
+          '422': { description: 'Motivo inválido' },
+        },
+      },
+    },
+    '/api/moderador/usuarios/{id}/reactivar': {
+      patch: {
+        summary: 'Reactivar una cuenta suspendida (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ mensaje, usuario } con estado activo' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Usuario no encontrado' },
+          '409': { description: 'La cuenta no está suspendida' },
+        },
+      },
+    },
+    '/api/moderador/notificaciones': {
+      get: {
+        summary: 'Listar las notificaciones del moderador autenticado',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 50 } },
+          { name: 'soloNoLeidas', in: 'query', schema: { type: 'boolean', default: false } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, noLeidas, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/notificaciones/leidas': {
+      patch: {
+        summary: 'Marcar todas las notificaciones del moderador como leídas',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '{ mensaje, actualizadas }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/notificaciones/{id}/leida': {
+      patch: {
+        summary: 'Marcar una notificación del moderador como leída',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: 'Notificación actualizada' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Notificación no encontrada' },
         },
       },
     },

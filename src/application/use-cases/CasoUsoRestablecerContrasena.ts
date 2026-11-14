@@ -1,6 +1,7 @@
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { RepositorioToken } from '../../domain/ports/repositories/RepositorioToken';
 import { HasheadorContrasena } from '../../domain/ports/services/HasheadorContrasena';
+import { HasheadorCodigo } from '../../domain/ports/services/HasheadorCodigo';
 import { ErrorSolicitudInvalida } from '../../shared/errors/ErrorAplicacion';
 
 export interface DTOReestablecerContrasena {
@@ -14,6 +15,7 @@ export class CasoUsoRestablecerContrasena {
     private repositorioUsuario: RepositorioUsuario,
     private repositorioToken: RepositorioToken,
     private hasheadorContrasena: HasheadorContrasena,
+    private hasheadorCodigo: HasheadorCodigo,
   ) {}
 
   async ejecutar(entrada: DTOReestablecerContrasena): Promise<void> {
@@ -27,7 +29,7 @@ export class CasoUsoRestablecerContrasena {
 
     const token = await this.repositorioToken.buscarValidoPorUsuarioYToken(
       usuario.id,
-      codigoLimpiado
+      this.hasheadorCodigo.hashear(codigoLimpiado)
     );
     if (!token || !token.esValido()) {
       throw new ErrorSolicitudInvalida('Código inválido o vencido, solicita uno nuevo');

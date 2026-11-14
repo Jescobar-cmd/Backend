@@ -25,10 +25,14 @@ import { PrismaDisputaRepository } from '../persistence/postgres/PrismaDisputaRe
 import { PrismaReporteRepository } from '../persistence/postgres/PrismaReporteRepository';
 import { PrismaLiquidacionRepository } from '../persistence/postgres/PrismaLiquidacionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
+import { HasheadorCodigoHmac } from '../security/HasheadorCodigoHmac';
 import { ServicioJwt } from '../security/ServicioJwt';
 import { EnviadorCorreoNodemailer } from '../email/EnviadorCorreoNodemailer';
 import { EnviadorCorreoBrevo } from '../email/EnviadorCorreoBrevo';
 import { ServicioAutenticacionGoogle } from '../google/ServicioAutenticacionGoogle';
+import { PasarelaPago } from '../../domain/ports/services/PasarelaPago';
+import { MercadoPagoPasarela } from '../pagos/MercadoPagoPasarela';
+import { PasarelaPagoSimulada } from '../pagos/PasarelaPagoSimulada';
 import { CasoUsoRegistrarUsuario } from '../../application/use-cases/CasoUsoRegistrarUsuario';
 import { CasoUsoConfirmarCodigo } from '../../application/use-cases/CasoUsoConfirmarCodigo';
 import { CasoUsoReenviarCodigo } from '../../application/use-cases/CasoUsoReenviarCodigo';
@@ -122,6 +126,13 @@ import { ResolverDisputaUseCase } from '../../application/use-cases/ResolverDisp
 import { ListarLiquidacionesAdminUseCase } from '../../application/use-cases/ListarLiquidacionesAdminUseCase';
 import { AprobarRetiroUseCase } from '../../application/use-cases/AprobarRetiroUseCase';
 import { ObtenerDashboardModeradorUseCase } from '../../application/use-cases/ObtenerDashboardModeradorUseCase';
+import { IniciarPagoUseCase } from '../../application/use-cases/IniciarPagoUseCase';
+import { ConfirmarPagoUseCase } from '../../application/use-cases/ConfirmarPagoUseCase';
+import { ConsultarPagoContratoUseCase } from '../../application/use-cases/ConsultarPagoContratoUseCase';
+import { SimularPagoUseCase } from '../../application/use-cases/SimularPagoUseCase';
+import { MarcarDisputaEnRevisionUseCase } from '../../application/use-cases/MarcarDisputaEnRevisionUseCase';
+import { SuspenderUsuarioUseCase } from '../../application/use-cases/SuspenderUsuarioUseCase';
+import { ReactivarUsuarioUseCase } from '../../application/use-cases/ReactivarUsuarioUseCase';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -151,6 +162,16 @@ const liquidaciones = new PrismaLiquidacionRepository(prisma);
 const comisionFreelancerPorcentaje =
   entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
 const hasheador = new HasheadorContrasenaBcrypt();
+const hasheadorCodigo = new HasheadorCodigoHmac(
+  entorno.CODIGOS_SECRETO ?? entorno.JWT_SECRET
+);
+const pasarela: PasarelaPago = entorno.MERCADOPAGO_ACCESS_TOKEN
+  ? new MercadoPagoPasarela(
+      entorno.MERCADOPAGO_ACCESS_TOKEN,
+      entorno.MERCADOPAGO_API_URL
+    )
+  : new PasarelaPagoSimulada(entorno.FRONTEND_URL);
+const entornoProduccion = entorno.NODE_ENV === 'production';
 // Selección desacoplada de proveedor de correo (Factor IV - Backing Services)
 const usarBrevo =
   entorno.EMAIL_PROVIDER === 'brevo' ||
@@ -184,17 +205,19 @@ export const contenedor = {
   disputas,
   liquidaciones,
   hasheador,
+  hasheadorCodigo,
+  pasarela,
   correo,
   jwt,
-  registrar: new CasoUsoRegistrarUsuario(usuarios, tokens, hasheador, correo),
-  confirmarCodigo: new CasoUsoConfirmarCodigo(usuarios, tokens),
-  reenviarCodigo: new CasoUsoReenviarCodigo(usuarios, tokens, correo),
+  registrar: new CasoUsoRegistrarUsuario(usuarios, tokens, hasheador, correo, hasheadorCodigo),
+  confirmarCodigo: new CasoUsoConfirmarCodigo(usuarios, tokens, hasheadorCodigo),
+  reenviarCodigo: new CasoUsoReenviarCodigo(usuarios, tokens, correo, hasheadorCodigo),
   iniciarSesion: new CasoUsoIniciarSesion(usuarios, hasheador),
   iniciarSesionGoogle: new CasoUsoIniciarSesionGoogle(usuarios, google),
   completarPerfilGoogle: new CasoUsoCompletarPerfilGoogle(usuarios, google),
   cambiarContrasena: new CasoUsoCambiarContrasena(usuarios, hasheador),
-  solicitarRecuperacion: new CasoUsoSolicitarRecuperacionContrasena(usuarios, tokens, correo),
-  restablecerContrasena: new CasoUsoRestablecerContrasena(usuarios, tokens, hasheador),
+  solicitarRecuperacion: new CasoUsoSolicitarRecuperacionContrasena(usuarios, tokens, correo, hasheadorCodigo),
+  restablecerContrasena: new CasoUsoRestablecerContrasena(usuarios, tokens, hasheador, hasheadorCodigo),
   obtenerMiPerfil: new ObtenerMiPerfilUseCase(perfiles),
   actualizarMiPerfil: new ActualizarMiPerfilUseCase(perfiles),
   obtenerMiPerfilFreelancer: new ObtenerMiPerfilFreelancerUseCase(perfiles),
@@ -260,11 +283,13 @@ export const contenedor = {
     contratos,
     entregas,
     notificaciones,
+    pagos,
+    disputas,
     liquidaciones,
     comisionFreelancerPorcentaje
   ),
   rechazarEntrega: new RechazarEntregaUseCase(contratos, entregas, notificaciones),
-  abrirDisputa: new AbrirDisputaUseCase(contratos, disputas, notificaciones),
+  abrirDisputa: new AbrirDisputaUseCase(contratos, disputas, notificaciones, usuarios),
   listarDisputasContrato: new ListarDisputasContratoUseCase(contratos, disputas),
   listarPagosCliente: new ListarPagosClienteUseCase(pagos),
   obtenerFacturaPago: new ObtenerFacturaPagoUseCase(pagos),
@@ -273,14 +298,27 @@ export const contenedor = {
   obtenerLiquidacionesFreelancer: new ObtenerLiquidacionesFreelancerUseCase(
     liquidaciones
   ),
-  solicitarRetiro: new SolicitarRetiroUseCase(liquidaciones),
+  solicitarRetiro: new SolicitarRetiroUseCase(
+    liquidaciones,
+    notificaciones,
+    usuarios
+  ),
   crearReporte: new CrearReporteUseCase(reportes, notificaciones, usuarios),
   listarReportesAdmin: new ListarReportesAdminUseCase(reportes),
   obtenerReporteAdmin: new ObtenerReporteAdminUseCase(reportes),
   resolverReporteAdmin: new ResolverReporteUseCase(reportes, notificaciones),
   listarDisputasAdmin: new ListarDisputasAdminUseCase(disputas),
   obtenerDisputaAdmin: new ObtenerDisputaAdminUseCase(disputas, contratos),
-  resolverDisputaAdmin: new ResolverDisputaUseCase(contratos, disputas, notificaciones),
+  resolverDisputaAdmin: new ResolverDisputaUseCase(
+    contratos,
+    disputas,
+    notificaciones,
+    pagos,
+    liquidaciones,
+    pasarela,
+    comisionFreelancerPorcentaje
+  ),
+  marcarDisputaEnRevision: new MarcarDisputaEnRevisionUseCase(disputas),
   listarLiquidacionesAdmin: new ListarLiquidacionesAdminUseCase(liquidaciones),
   aprobarRetiroAdmin: new AprobarRetiroUseCase(liquidaciones, notificaciones),
   obtenerDashboardModerador: new ObtenerDashboardModeradorUseCase(
@@ -294,18 +332,23 @@ export const contenedor = {
     notificaciones
   ),
   listarMisPropuestas: new ListarMisPropuestasUseCase(propuestas),
-  aceptarPropuesta: new AceptarPropuestaUseCase(propuestas),
+  aceptarPropuesta: new AceptarPropuestaUseCase(
+    propuestas,
+    entorno.COMISION_CLIENTE_PORCENTAJE
+  ),
   rechazarPropuesta: new RechazarPropuestaUseCase(propuestas),
   crearOfertaChat: new CrearOfertaChatUseCase(conversaciones, ofertasChat),
-  aceptarOfertaChat: new AceptarOfertaChatUseCase(ofertasChat),
+  aceptarOfertaChat: new AceptarOfertaChatUseCase(
+    ofertasChat,
+    entorno.COMISION_CLIENTE_PORCENTAJE
+  ),
   rechazarOfertaChat: new RechazarOfertaChatUseCase(ofertasChat),
   contraofertar: new ContraofertarUseCase(ofertasChat),
   listarContratos: new ListarContratosUseCase(contratos),
   obtenerContrato: new ObtenerContratoUseCase(contratos),
   cambiarEstadoContrato: new CambiarEstadoContratoUseCase(
     contratos,
-    liquidaciones,
-    comisionFreelancerPorcentaje
+    notificaciones
   ),
   calificarContrato: new CalificarContratoUseCase(calificaciones, contratos),
   listarCalificacionesContrato: new ListarCalificacionesContratoUseCase(
@@ -313,4 +356,31 @@ export const contenedor = {
     contratos
   ),
   listarCalificacionesFreelancer: new ListarCalificacionesFreelancerUseCase(calificaciones),
+  iniciarPago: new IniciarPagoUseCase(
+    contratos,
+    pagos,
+    usuarios,
+    pasarela,
+    {
+      frontendUrl: entorno.FRONTEND_URL,
+      backendUrl: entorno.BACKEND_URL,
+      entornoProduccion,
+    }
+  ),
+  confirmarPago: new ConfirmarPagoUseCase(
+    contratos,
+    pagos,
+    notificaciones,
+    pasarela
+  ),
+  consultarPagoContrato: new ConsultarPagoContratoUseCase(contratos, pagos),
+  simularPago: new SimularPagoUseCase(
+    contratos,
+    pagos,
+    notificaciones,
+    pasarela,
+    entornoProduccion
+  ),
+  suspenderUsuario: new SuspenderUsuarioUseCase(usuarios, notificaciones),
+  reactivarUsuario: new ReactivarUsuarioUseCase(usuarios, notificaciones),
 };

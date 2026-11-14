@@ -13,7 +13,8 @@ export class AprobarRetiroUseCase {
     liquidacionId: number,
     adminId: number,
     estado: EstadoLiquidacion,
-    referencia: string | null
+    referencia: string | null,
+    motivoRechazo: string | null = null
   ): Promise<Liquidacion> {
     const liquidacion = await this.liquidacionRepository.obtenerPorId(liquidacionId);
     if (!liquidacion) {
@@ -24,12 +25,18 @@ export class AprobarRetiroUseCase {
         'La liquidación no está en solicitud de retiro'
       );
     }
+    if (estado === 'rechazada' && !motivoRechazo) {
+      throw new ErrorConflicto(
+        'Debes indicar el motivo del rechazo para devolver el saldo al freelancer'
+      );
+    }
 
     const actualizada = await this.liquidacionRepository.aprobarRetiro(
       liquidacionId,
       adminId,
       estado,
-      referencia
+      referencia,
+      motivoRechazo
     );
 
     const esPago = estado === 'pagada';
@@ -38,9 +45,7 @@ export class AprobarRetiroUseCase {
       ? `Tu retiro de liquidez fue pagado por la plataforma${
           referencia ? `: ${referencia}` : ''
         }`
-      : `Tu solicitud de retiro fue rechazada${
-          referencia ? `: ${referencia}` : ''
-        }`;
+      : `Tu solicitud de retiro fue rechazada: ${motivoRechazo}. El saldo volvió a estar disponible.`;
 
     await this.notificacionRepository.crear({
       usuarioId: liquidacion.freelancerId,

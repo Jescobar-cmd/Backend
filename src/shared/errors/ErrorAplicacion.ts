@@ -54,3 +54,19 @@ export class ErrorInternoServidor extends ErrorAplicacion {
     super(message, 500);
   }
 }
+
+export class ErrorServicioNoDisponible extends ErrorAplicacion {
+  constructor(
+    message: string = 'El servicio no está disponible en este momento'
+  ) {
+    super(message, 503);
+  }
+}
+
+export class ErrorDemasiadasSolicitudes extends ErrorAplicacion {
+  constructor(
+    message: string = 'Demasiadas solicitudes, intenta de nuevo más tarde'
+  ) {
+    super(message, 429);
+  }
+}

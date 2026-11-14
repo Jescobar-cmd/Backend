@@ -10,7 +10,7 @@ export interface PropuestaRepository {
   obtenerDetalle(propuestaId: number): Promise<PropuestaDetalle | null>;
 
   /** Acepta en transacción: propuesta, demás propuestas, proyecto y contrato. */
-  aceptar(propuestaId: number): Promise<ContratoDetalle>;
+  aceptar(propuestaId: number, montoPagoCliente: number): Promise<ContratoDetalle>;
 
   rechazar(propuestaId: number): Promise<void>;
 

@@ -5,6 +5,7 @@ import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioU
 import { ROLES } from '../../shared/constants/roles';
 import {
   ErrorConflicto,
+  ErrorNoEncontrado,
   ErrorValidacion,
 } from '../../shared/errors/ErrorAplicacion';
 
@@ -36,6 +37,13 @@ export class CrearReporteUseCase {
 
     if (usuarioReportadoId === datos.usuarioReportaId) {
       throw new ErrorConflicto('No puedes reportarte a ti mismo');
+    }
+
+    if (usuarioReportadoId) {
+      const reportado = await this.usuarioRepository.buscarPorId(usuarioReportadoId);
+      if (!reportado) {
+        throw new ErrorNoEncontrado('El usuario reportado no existe');
+      }
     }
 
     const reporte = await this.reporteRepository.crear({

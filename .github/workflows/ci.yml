@@ -2,9 +2,9 @@ name: CI Backend
 
 on:
   push:
-    branches: [main, produccion, develop]
+    branches: [main, produccion, preproduccion, desarrollo]
   pull_request:
-    branches: [main, produccion, develop]
+    branches: [main, produccion, preproduccion, desarrollo]
   workflow_dispatch:
 
 concurrency:
@@ -40,6 +40,9 @@ jobs:
 
       - name: Tests unitarios y de integración
         run: npm test
+
+      - name: Cobertura de pruebas
+        run: npm run test:coverage
 
       - name: Build de producción
         run: npm run build
