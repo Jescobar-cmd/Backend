@@ -51,7 +51,7 @@ export class EnviadorCorreoBrevo implements EnviadorCorreo {
 
   private async enviar(destinatario: string, asunto: string, contenidoHtml: string): Promise<void> {
     try {
-      const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const respuesta = await fetch(entorno.BREVO_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'api-key': this.claveApi },
         body: JSON.stringify({

@@ -2,6 +2,7 @@ import { Usuario } from '../../domain/entities/Usuario';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
 import { VerificadorOAuth } from '../../domain/ports/services/VerificadorOAuth';
 import { ErrorSolicitudInvalida, ErrorConflicto } from '../../shared/errors/ErrorAplicacion';
+import { ROLES } from '../../shared/constants/roles';
 
 export interface EntradaInicioSesionGoogle {
   idToken: string; // lo entrega el botón "Continuar con Google" del frontend
@@ -43,11 +44,11 @@ export class CasoUsoIniciarSesionGoogle {
     }
 
     // 3. Cuenta nueva: se crea activa porque Google ya validó el email.
-    const rolId = entrada.rolId === 2 ? 2 : 3;
+    const rolId = entrada.rolId === ROLES.FREELANCER ? ROLES.FREELANCER : ROLES.CLIENTE;
     const cedula = entrada.cedula?.trim() ? entrada.cedula.trim() : null;
     const telefono = entrada.telefono?.trim() ? entrada.telefono.trim() : null;
 
-    if (rolId === 2 && !cedula) {
+    if (rolId === ROLES.FREELANCER && !cedula) {
       throw new ErrorSolicitudInvalida('La cédula es obligatoria para freelancers');
     }
 
@@ -59,18 +60,17 @@ export class CasoUsoIniciarSesionGoogle {
     }
 
     const creado = await this.repositorioUsuario.guardar(
-      new Usuario(
-        null,
-        perfil.nombre,
-        perfil.email,
-        null, // sin contraseña: entra siempre con Google
+      Usuario.crear({
+        nombre: perfil.nombre,
+        email: perfil.email,
+        passwordHash: null, // sin contraseña: entra siempre con Google
         rolId,
         telefono,
         cedula,
-        true,
-        'activo',
-        perfil.googleId,
-      ),
+        esMayorDeEdad: true,
+        estado: 'activo',
+        googleId: perfil.googleId,
+      })
     );
 
     return { estado: 'autenticado', usuario: creado };

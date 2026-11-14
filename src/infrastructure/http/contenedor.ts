@@ -151,9 +151,11 @@ const liquidaciones = new PrismaLiquidacionRepository(prisma);
 const comisionFreelancerPorcentaje =
   entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
 const hasheador = new HasheadorContrasenaBcrypt();
-// En Render (BREVO_API_KEY presente) se envía por API HTTPS;
-// en local sin esa variable se usa Gmail SMTP, que ahí sí funciona.
-const correo = entorno.BREVO_API_KEY ? new EnviadorCorreoBrevo() : new EnviadorCorreoNodemailer();
+// Selección desacoplada de proveedor de correo (Factor IV - Backing Services)
+const usarBrevo =
+  entorno.EMAIL_PROVIDER === 'brevo' ||
+  (!entorno.EMAIL_PROVIDER && Boolean(entorno.BREVO_API_KEY));
+const correo = usarBrevo ? new EnviadorCorreoBrevo() : new EnviadorCorreoNodemailer();
 const jwt = new ServicioJwt();
 const google = new ServicioAutenticacionGoogle();
 

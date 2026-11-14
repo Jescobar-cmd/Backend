@@ -18,7 +18,9 @@ export class ObtenerPerfilPublicoUseCase {
 
     // Métrica de negocio: registrar visita al perfil de freelancer si el visitante no es el propio dueño
     if (perfil.freelancer && visitanteId !== usuarioId && this.estadisticaRepository) {
-      void this.estadisticaRepository.registrarVisitaPerfil(usuarioId).catch(() => undefined);
+      void this.estadisticaRepository.registrarVisitaPerfil(usuarioId).catch((error) => {
+        console.warn(`[Metrica] Error registrando visita al perfil ${usuarioId}:`, error);
+      });
     }
 
     return perfil;

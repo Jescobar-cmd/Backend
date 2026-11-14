@@ -1,4 +1,6 @@
-// Documento OpenAPI manual: describe los 10 endpoints de Auth + health.
+import { entorno } from '../../config/entorno';
+
+// Documento OpenAPI manual: describe los endpoints del sistema.
 // Manual (no anotaciones) para que el comité vea exactamente qué recibe y devuelve cada ruta.
 export const swaggerDocument = {
   openapi: '3.0.3',
@@ -8,10 +10,14 @@ export const swaggerDocument = {
     description:
       'Auth + Perfil cliente/freelancer + Habilidades + Ofertas + Categorías + Blog + Servicios + Feed por rol + Chat (polling) + Propuestas, ofertas de chat, contratos, entregas, disputas, pagos, liquidaciones, notificaciones, cierre y calificaciones + Portafolio, directorio, métricas y dashboards de cliente y freelancer.',
   },
-  servers: [
-    { url: 'http://localhost:4000', description: 'Local' },
-    { url: 'https://backend-2n7n.onrender.com', description: 'Render (producción)' },
-  ],
+  servers: entorno.SWAGGER_SERVER_URL
+    ? [{ url: entorno.SWAGGER_SERVER_URL, description: 'Servidor Configurado' }]
+    : [
+        { url: `http://localhost:${entorno.PORT}`, description: 'Local' },
+        ...(entorno.NODE_ENV === 'production'
+          ? [{ url: 'https://backend-2n7n.onrender.com', description: 'Render (producción)' }]
+          : []),
+      ],
   components: {
     securitySchemes: {
       bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

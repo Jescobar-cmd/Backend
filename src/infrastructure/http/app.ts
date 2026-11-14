@@ -36,6 +36,18 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
 
+  // Factor XI (12-Factor App) - Logs como flujo de eventos por stdout
+  if (entorno.NODE_ENV !== 'test') {
+    app.use((req, res, next) => {
+      const inicio = Date.now();
+      res.on('finish', () => {
+        const duracion = Date.now() - inicio;
+        console.log(`[HTTP] ${req.method} ${req.originalUrl || req.url} ${res.statusCode} ${duracion}ms`);
+      });
+      next();
+    });
+  }
+
   // Factor IX (12-Factor App) - Healthcheck de vida: no toca servicios externos.
   app.get('/health', (_req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });

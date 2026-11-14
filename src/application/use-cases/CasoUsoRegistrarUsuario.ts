@@ -6,6 +6,9 @@ import { RepositorioToken } from '../../domain/ports/repositories/RepositorioTok
 import { HasheadorContrasena } from '../../domain/ports/services/HasheadorContrasena';
 import { EnviadorCorreo } from '../../domain/ports/services/EnviadorCorreo';
 import { ErrorSolicitudInvalida, ErrorConflicto } from '../../shared/errors/ErrorAplicacion';
+import { ROLES } from '../../shared/constants/roles';
+
+const TIEMPO_EXPIRACION_CODIGO_MS = 15 * 60 * 1000; // 15 minutos
 
 export interface DTORegistroUsuario {
   nombre: string;
@@ -32,11 +35,11 @@ export class CasoUsoRegistrarUsuario {
       throw new ErrorConflicto('El correo electrónico ya está registrado');
     }
 
-    const rolId = dto.rolId === 2 ? 2 : 3;
+    const rolId = dto.rolId === ROLES.FREELANCER ? ROLES.FREELANCER : ROLES.CLIENTE;
     const cedula = dto.cedula?.trim() ? dto.cedula.trim() : null;
     const telefono = dto.telefono?.trim() ? dto.telefono.trim() : null;
 
-    if (rolId === 2 && !cedula) {
+    if (rolId === ROLES.FREELANCER && !cedula) {
       throw new ErrorSolicitudInvalida('La cédula es obligatoria para freelancers');
     }
 
@@ -48,20 +51,18 @@ export class CasoUsoRegistrarUsuario {
     }
 
     const contrasenaHasheada = await this.hasheadorContrasena.hashear(dto.password);
-
     const nombreCompleto = `${dto.nombre.trim()} ${dto.apellido.trim()}`.trim();
-    const usuarioNuevo = new Usuario(
-      null,
-      nombreCompleto,
-      correo,
-      contrasenaHasheada,
+
+    const usuarioNuevo = Usuario.crear({
+      nombre: nombreCompleto,
+      email: correo,
+      passwordHash: contrasenaHasheada,
       rolId,
       telefono,
       cedula,
-      true,
-      'inactivo',
-      null
-    );
+      esMayorDeEdad: true,
+      estado: 'inactivo',
+    });
 
     const usuarioGuardado = await this.repositorioUsuario.guardar(usuarioNuevo);
 
@@ -73,7 +74,7 @@ export class CasoUsoRegistrarUsuario {
         null,
         usuarioGuardado.id,
         codigo,
-        new Date(Date.now() + 15 * 60 * 1000)
+        new Date(Date.now() + TIEMPO_EXPIRACION_CODIGO_MS)
       );
       await this.repositorioToken.guardar(token);
       await this.enviadorCorreo.enviarCorreoVerificacion(usuarioGuardado.email, codigo);

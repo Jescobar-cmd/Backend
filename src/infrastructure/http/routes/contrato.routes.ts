@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ContratoController } from '../controllers/ContratoController';
+import { EntregaContratoController } from '../controllers/EntregaContratoController';
+import { DisputaContratoController } from '../controllers/DisputaContratoController';
 import { requiereAutenticacion } from '../middlewares/middlewareAutenticacion';
 import { requiereRol } from '../middlewares/requiereRol';
 import { validar } from '../middlewares/validar';
@@ -33,36 +35,36 @@ contratosRouter.post(
 );
 
 // Entregas del contrato: el freelancer entrega y el cliente aprueba.
-contratosRouter.get('/:id/entregas', ContratoController.entregas);
+contratosRouter.get('/:id/entregas', EntregaContratoController.entregas);
 contratosRouter.post(
   '/:id/entregas',
   requiereRol(ROLES.FREELANCER),
   validar(registrarEntregaSchema),
-  ContratoController.registrarEntrega
+  EntregaContratoController.registrarEntrega
 );
 contratosRouter.patch(
   '/:id/entregas/:entregaId',
   requiereRol(ROLES.FREELANCER),
   validar(registrarEntregaSchema),
-  ContratoController.actualizarEntrega
+  EntregaContratoController.actualizarEntrega
 );
 contratosRouter.patch(
   '/:id/aprobar-entrega',
   requiereRol(ROLES.CLIENTE),
-  ContratoController.aprobarEntrega
+  EntregaContratoController.aprobarEntrega
 );
 contratosRouter.patch(
   '/:id/rechazar-entrega',
   requiereRol(ROLES.CLIENTE),
   validar(rechazarEntregaSchema),
-  ContratoController.rechazarEntrega
+  EntregaContratoController.rechazarEntrega
 );
 
 // Disputas formales del contrato.
-contratosRouter.get('/:id/disputas', ContratoController.disputas);
+contratosRouter.get('/:id/disputas', DisputaContratoController.disputas);
 contratosRouter.post(
   '/:id/disputas',
   requiereRol(ROLES.CLIENTE, ROLES.FREELANCER),
   validar(abrirDisputaSchema),
-  ContratoController.abrirDisputa
+  DisputaContratoController.abrirDisputa
 );

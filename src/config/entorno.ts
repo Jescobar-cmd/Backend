@@ -23,9 +23,12 @@ const esquemaEntorno = z.object({
     .min(8, 'JWT_SECRET debe tener al menos 8 caracteres para garantizar seguridad'),
   JWT_EXPIRES_IN: z.string().optional().default('24h'),
   FRONTEND_URL: z.string().optional().default('http://localhost:5173'),
+  SWAGGER_SERVER_URL: z.string().optional(),
 
   // Proveedor de correo: Brevo HTTP API
   BREVO_API_KEY: z.string().optional(),
+  BREVO_API_URL: z.string().optional().default('https://api.brevo.com/v3/smtp/email'),
+  EMAIL_PROVIDER: z.enum(['brevo', 'smtp']).optional(),
   EMAIL_FROM: z.string().optional(),
   EMAIL_FROM_NAME: z.string().optional().default('FirstGig'),
 

@@ -4,6 +4,8 @@ import { RepositorioToken } from '../../domain/ports/repositories/RepositorioTok
 import { TokenRecuperacion } from '../../domain/entities/TokenRecuperacion';
 import { EnviadorCorreo } from '../../domain/ports/services/EnviadorCorreo';
 
+const TIEMPO_EXPIRACION_CODIGO_MS = 15 * 60 * 1000; // 15 minutos
+
 export class CasoUsoReenviarCodigo {
   constructor(
     private repositorioUsuario: RepositorioUsuario,
@@ -27,7 +29,7 @@ export class CasoUsoReenviarCodigo {
       null,
       usuario.id,
       codigo,
-      new Date(Date.now() + 15 * 60 * 1000)
+      new Date(Date.now() + TIEMPO_EXPIRACION_CODIGO_MS)
     );
 
     await this.repositorioToken.guardar(token);

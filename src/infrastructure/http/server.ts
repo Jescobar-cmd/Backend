@@ -9,6 +9,11 @@ const server = app.listen(port, () => {
   console.log(`FirstGig backend escuchando en el puerto ${port} [entorno: ${entorno.NODE_ENV}]`);
 });
 
+// Factor IX: Resiliencia frente a proxies inversos (Render / AWS ALB / Nginx).
+// keepAliveTimeout superior al timeout del balanceador (60s) para evitar 502 Bad Gateway.
+server.keepAliveTimeout = 61000;
+server.headersTimeout = 65000;
+
 // Factor IX (12-Factor App) - Disposabilidad y apagado elegante ante señales del sistema
 let cerrando = false;
 
