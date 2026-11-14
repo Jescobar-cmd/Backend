@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
+import { NotificacionController } from './NotificacionController';
 import {
   obtenerUsuarioId,
   parsearIdParam,
@@ -277,22 +278,7 @@ export class ModeratorController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const { page, limit } = parsearPaginacion(req.query, {
-        page: 1,
-        limit: 20,
-        maxLimit: 50,
-      });
-      const resultado = await contenedor.listarNotificaciones.ejecutar(usuarioId, {
-        page,
-        limit,
-        soloNoLeidas: String(req.query.soloNoLeidas) === 'true',
-      });
-      res.json(resultado);
-    } catch (e) {
-      next(e);
-    }
+    return NotificacionController.listar(req, res, next);
   }
 
   /** PATCH /api/moderador/notificaciones/leidas */
@@ -301,15 +287,7 @@ export class ModeratorController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const actualizadas = await contenedor.marcarTodasNotificacionesLeidas.ejecutar(
-        usuarioId
-      );
-      res.json({ mensaje: 'Notificaciones marcadas como leídas', actualizadas });
-    } catch (e) {
-      next(e);
-    }
+    return NotificacionController.marcarTodasLeidas(req, res, next);
   }
 
   /** PATCH /api/moderador/notificaciones/:id/leida */
@@ -318,17 +296,7 @@ export class ModeratorController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    try {
-      const usuarioId = obtenerUsuarioId(req);
-      const notificacionId = parsearIdParam(req.params.id, 'notificación');
-      const notificacion = await contenedor.marcarNotificacionLeida.ejecutar(
-        notificacionId,
-        usuarioId
-      );
-      res.json({ notificacion });
-    } catch (e) {
-      next(e);
-    }
+    return NotificacionController.marcarLeida(req, res, next);
   }
 }
 

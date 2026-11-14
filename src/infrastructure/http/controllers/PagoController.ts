@@ -1,13 +1,10 @@
-import crypto from 'crypto';
 import { Response, NextFunction } from 'express';
 import { contenedor } from '../contenedor';
 import { SolicitudAutenticada } from '../middlewares/middlewareAutenticacion';
 import { obtenerUsuarioId, parsearIdParam } from '../helpers/peticion.helper';
 import { entorno } from '../../../config/entorno';
-import {
-  ErrorNoAutorizado,
-  ErrorSolicitudInvalida,
-} from '../../../shared/errors/ErrorAplicacion';
+import { ErrorSolicitudInvalida } from '../../../shared/errors/ErrorAplicacion';
+import { verificarFirmaWebhookMercadoPago } from '../../pagos/verificadorFirmaMercadoPago';
 
 interface CuerpoWebhook {
   type?: string;
@@ -101,51 +98,17 @@ export class PagoController {
         throw new ErrorSolicitudInvalida('Webhook sin identificador de pago');
       }
 
-      PagoController.verificarFirma(req, String(idPago));
+      verificarFirmaWebhookMercadoPago({
+        idPago: String(idPago),
+        firma: req.headers['x-signature'],
+        requestId: req.headers['x-request-id'],
+        secreto: entorno.MERCADOPAGO_WEBHOOK_SECRET,
+      });
 
       await contenedor.confirmarPago.ejecutar(String(idPago));
       res.json({ received: true });
     } catch (e) {
       next(e);
-    }
-  }
-
-  private static verificarFirma(
-    req: SolicitudAutenticada,
-    idPago: string
-  ): void {
-    const secreto = entorno.MERCADOPAGO_WEBHOOK_SECRET;
-    if (!secreto) return; // desarrollo sin secreto configurado
-
-    const firma = req.headers['x-signature'];
-    const requestId = req.headers['x-request-id'];
-    if (typeof firma !== 'string' || typeof requestId !== 'string') {
-      throw new ErrorNoAutorizado('Webhook sin firma');
-    }
-
-    const partes = Object.fromEntries(
-      firma.split(',').map((parte) => {
-        const [clave, valor] = parte.split('=');
-        return [clave?.trim(), valor?.trim()];
-      })
-    ) as Record<string, string>;
-    if (!partes.ts || !partes.v1) {
-      throw new ErrorNoAutorizado('Webhook con firma inválida');
-    }
-
-    const manifiesto = `id:${idPago};request-id:${requestId};ts:${partes.ts};`;
-    const esperado = crypto
-      .createHmac('sha256', secreto)
-      .update(manifiesto)
-      .digest('hex');
-
-    const recibido = Buffer.from(partes.v1);
-    const calculado = Buffer.from(esperado);
-    if (
-      recibido.length !== calculado.length ||
-      !crypto.timingSafeEqual(recibido, calculado)
-    ) {
-      throw new ErrorNoAutorizado('Firma del webhook inválida');
     }
   }
 }

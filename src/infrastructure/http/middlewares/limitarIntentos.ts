@@ -22,6 +22,16 @@ export function limitarIntentos(opciones: OpcionesLimite) {
 
   return (req: Request, _res: Response, next: NextFunction): void => {
     const ahora = Date.now();
+
+    // Limpieza oportunista para evitar consumo ilimitado de memoria (Factor VI)
+    if (registros.size > 500) {
+      for (const [claveExistente, reg] of registros.entries()) {
+        if (reg.reiniciaEn <= ahora) {
+          registros.delete(claveExistente);
+        }
+      }
+    }
+
     const clave = `${req.ip ?? 'desconocido'}|${req.method}|${req.baseUrl}${req.path}`;
     const registro = registros.get(clave);
 
