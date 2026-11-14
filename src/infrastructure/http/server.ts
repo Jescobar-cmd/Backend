@@ -12,7 +12,7 @@ const server = app.listen(port, () => {
 // Factor IX (12-Factor App) - Disposabilidad y apagado elegante ante señales del sistema
 let cerrando = false;
 
-const gracefulShutdown = async (signal: string) => {
+const gracefulShutdown = async (signal: string, codigoSalida = 0) => {
   if (cerrando) return;
   cerrando = true;
 
@@ -28,7 +28,7 @@ const gracefulShutdown = async (signal: string) => {
     try {
       await prisma.$disconnect();
       console.log('[DB] Conexión con PostgreSQL cerrada exitosamente.');
-      process.exit(0);
+      process.exit(codigoSalida);
     } catch (dbErr) {
       console.error('[DB] Error cerrando conexión con la base de datos:', dbErr);
       process.exit(1);
@@ -45,11 +45,15 @@ const gracefulShutdown = async (signal: string) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
+// Factor VI y IX (12-Factor App): los procesos son desechables y no guardan
+// estado. Un fallo no controlado debe derribar el proceso para que el
+// orquestador lo reinicie en un estado limpio (crash-only design).
 process.on('unhandledRejection', (reason) => {
   console.error('[Proceso] Rechazo de promesa no controlado:', reason);
+  gracefulShutdown('UNHANDLED_REJECTION', 1);
 });
 
 process.on('uncaughtException', (error) => {
   console.error('[Proceso] Excepción no capturada:', error);
-  gracefulShutdown('UNCAUGHT_EXCEPTION');
+  gracefulShutdown('UNCAUGHT_EXCEPTION', 1);
 });

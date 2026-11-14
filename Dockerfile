@@ -38,7 +38,10 @@ COPY --from=build /app/dist ./dist
 # La imagen de Node ya trae un usuario sin privilegios
 USER node
 
+ENV PORT=4000
 EXPOSE 4000
+# Factor IX (12-Factor App): el orquestador debe poder pedir un apagado elegante.
+STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://127.0.0.1:4000/health || exit 1
 

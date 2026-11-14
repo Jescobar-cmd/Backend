@@ -20,6 +20,7 @@ import { moderadorRouter } from './routes/moderador.routes';
 import { reportesRouter } from './routes/reportes.routes';
 import { manejadorErrores } from './middlewares/manejadorErrores';
 import { entorno } from '../../config/entorno';
+import { prisma } from '../../config/conexionBd';
 
 export function createApp() {
   const app = express();
@@ -35,9 +36,24 @@ export function createApp() {
   );
   app.use(express.json({ limit: '1mb' }));
 
-  // Endpoint de salud (Factor IX - Healthcheck)
+  // Factor IX (12-Factor App) - Healthcheck de vida: no toca servicios externos.
   app.get('/health', (_req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  });
+
+  // Factor IV y IX - Readiness: confirma que la base de datos (backing service)
+  // responde antes de enviar tráfico real al proceso.
+  app.get('/health/ready', async (_req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: 'ready', timestamp: new Date().toISOString() });
+    } catch (error) {
+      console.error('[Health] La base de datos no responde:', error);
+      res.status(503).json({
+        status: 'unavailable',
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // Rutas de la API
