@@ -1,4 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { emitirFacturaSandbox } from '../../../domain/entities/FacturaSandbox';
 import {
   FacturaCliente,
   PagoCliente,
@@ -78,7 +80,16 @@ function toPagoCliente(pago: PagoConRelaciones): PagoCliente {
       ? {
           id: pago.Factura.id,
           numeroFactura: pago.Factura.numeroFactura,
+          uuidDemo: pago.Factura.uuidDemo,
           cufe: pago.Factura.cufe,
+          ambiente: 'sandbox',
+          moneda: pago.Factura.moneda,
+          subtotal: Number(pago.Factura.subtotal),
+          comisionCliente: Number(pago.Factura.comisionCliente),
+          total: Number(pago.Factura.total),
+          descripcion: pago.Factura.descripcion,
+          compradorNombre: pago.Factura.compradorNombre,
+          compradorDocumento: pago.Factura.compradorDocumento,
           fechaEmision: pago.Factura.fechaEmision,
           estado: pago.Factura.estado,
           urlPdf: pago.Factura.urlPdf,
@@ -101,7 +112,15 @@ function toPagoFreelancer(pago: PagoConRelaciones): PagoFreelancer {
 function toFactura(factura: {
   id: number;
   numeroFactura: string | null;
+  uuidDemo: string | null;
   cufe: string | null;
+  moneda: string;
+  subtotal: { toString(): string } | number;
+  comisionCliente: { toString(): string } | number;
+  total: { toString(): string } | number;
+  descripcion: string | null;
+  compradorNombre: string | null;
+  compradorDocumento: string | null;
   fechaEmision: Date | null;
   estado: string;
   urlPdf: string | null;
@@ -109,7 +128,16 @@ function toFactura(factura: {
   return {
     id: factura.id,
     numeroFactura: factura.numeroFactura,
+    uuidDemo: factura.uuidDemo,
     cufe: factura.cufe,
+    ambiente: 'sandbox',
+    moneda: factura.moneda,
+    subtotal: Number(factura.subtotal),
+    comisionCliente: Number(factura.comisionCliente),
+    total: Number(factura.total),
+    descripcion: factura.descripcion,
+    compradorNombre: factura.compradorNombre,
+    compradorDocumento: factura.compradorDocumento,
     fechaEmision: factura.fechaEmision,
     estado: factura.estado,
     urlPdf: factura.urlPdf,
@@ -203,7 +231,18 @@ export class PrismaPagoRepository implements PagoRepository {
 
       const contrato = await tx.contrato.findUnique({
         where: { id: contratoId },
-        select: { estado: true },
+        select: {
+          estado: true,
+          montoAcordado: true,
+          Cliente: {
+            select: {
+              nombreEmpresa: true,
+              Usuario: { select: { nombre: true, cedula: true } },
+            },
+          },
+          Proyecto: { select: { titulo: true } },
+          Servicio: { select: { titulo: true } },
+        },
       });
       if (!contrato) {
         throw new ErrorNoEncontrado('Contrato del pago no encontrado');
@@ -229,12 +268,29 @@ export class PrismaPagoRepository implements PagoRepository {
         data: { estado: 'activo', fechaInicio: new Date() },
       });
 
+      const titulo =
+        contrato.Proyecto?.titulo ?? contrato.Servicio?.titulo ?? `Contrato #${contratoId}`;
+      const compradorNombre =
+        contrato.Cliente.nombreEmpresa ?? contrato.Cliente.Usuario.nombre;
+      const factura = emitirFacturaSandbox({
+        pagoId: actual.id,
+        montoServicio: Number(contrato.montoAcordado),
+        montoCobrado: Number(actual.monto),
+        descripcion: `Servicio freelance: ${titulo}`,
+        compradorNombre,
+        compradorDocumento: contrato.Cliente.Usuario.cedula,
+        uuidDemo: randomUUID(),
+      });
+
+      // El identificador se deriva del pago, por lo que es único y no depende de Date.now().
+      // Solo se ejecuta al pasar de pendiente a retenido, así que los webhooks repetidos
+      // no emiten comprobantes adicionales.
       await tx.factura.updateMany({
         where: { pagoId: actual.id },
         data: {
-          estado: 'pagada',
+          estado: 'emitida_demo',
           fechaEmision: new Date(),
-          numeroFactura: `FG-${contratoId}-${Date.now()}`,
+          ...factura,
         },
       });
 

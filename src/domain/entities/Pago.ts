@@ -1,7 +1,17 @@
 export interface FacturaCliente {
   id: number;
   numeroFactura: string | null;
+  /** Identificador interno del comprobante académico; no es un CUFE DIAN. */
+  uuidDemo: string | null;
   cufe: string | null;
+  ambiente: 'sandbox';
+  moneda: string;
+  subtotal: number;
+  comisionCliente: number;
+  total: number;
+  descripcion: string | null;
+  compradorNombre: string | null;
+  compradorDocumento: string | null;
   fechaEmision: Date | null;
   estado: string;
   urlPdf: string | null;

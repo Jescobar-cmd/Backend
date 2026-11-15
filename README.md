@@ -64,6 +64,26 @@ curl -X POST http://localhost:4000/api/contratos/1/pago/simular \
 En producción la pasarela real es obligatoria: sin token, el backend responde
 `503` al intentar iniciar un pago.
 
+### Facturas sandbox académicas
+
+Cuando Mercado Pago confirma un pago aprobado, FirstGig emite un comprobante
+académico inmutable en la misma transacción: `FGS-########`, UUID de demostración,
+comprador, servicio, subtotal, comisión del cliente y total en COP. El documento
+queda marcado como `emitida_demo`; **no es una factura electrónica válida ante la
+DIAN** y no genera CUFE ni se transmite a una entidad tributaria.
+
+Antes de probarlo contra una base de datos existente, aplica la migración:
+
+```bash
+npx prisma db execute --file prisma/manual-migrations/2026-11-15-facturacion-sandbox.sql
+npx prisma generate
+```
+
+El cliente y el freelancer pueden consultar sus comprobantes mediante
+`GET /api/cliente/pagos` y `GET /api/freelancer/pagos`. En el frontend, la ruta
+`/facturas` muestra el detalle y permite imprimirlo o guardarlo como PDF desde el
+navegador.
+
 ### Suspensión de cuentas
 
 `PATCH /api/moderador/usuarios/:id/suspender` (admin/moderador) marca la cuenta

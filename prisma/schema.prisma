@@ -175,14 +175,24 @@ model EstadisticaProyecto {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Factura {
-  id            Int       @id @default(autoincrement())
-  pagoId        Int       @unique
-  numeroFactura String?   @unique @db.VarChar(50)
-  cufe          String?   @db.VarChar(255)
-  fechaEmision  DateTime?
-  estado        String    @default("pendiente") @db.VarChar(20)
-  urlPdf        String?
-  Pago          Pago      @relation(fields: [pagoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                   Int       @id @default(autoincrement())
+  pagoId               Int       @unique
+  numeroFactura        String?   @unique @db.VarChar(50)
+  /// No se genera CUFE en el modo académico. Se conserva para una futura integración DIAN.
+  cufe                 String?   @db.VarChar(255)
+  uuidDemo             String?   @unique @db.VarChar(36)
+  ambiente             String    @default("sandbox") @db.VarChar(20)
+  moneda               String    @default("COP") @db.VarChar(3)
+  subtotal             Decimal   @default(0) @db.Decimal(12, 2)
+  comisionCliente      Decimal   @default(0) @db.Decimal(12, 2)
+  total                Decimal   @default(0) @db.Decimal(12, 2)
+  descripcion          String?
+  compradorNombre      String?   @db.VarChar(150)
+  compradorDocumento   String?   @db.VarChar(50)
+  fechaEmision         DateTime?
+  estado               String    @default("pendiente") @db.VarChar(30)
+  urlPdf               String?
+  Pago                 Pago      @relation(fields: [pagoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Freelancer {
