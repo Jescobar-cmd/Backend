@@ -72,6 +72,29 @@ export const resolverRetiroSchema = z
     }
   });
 
+export const derivarReporteSchema = z
+  .object({
+    descripcion: z
+      .string()
+      .trim()
+      .max(1000, 'La descripción no puede exceder 1000 caracteres')
+      .optional(),
+  })
+  .strict();
+
+export const consultaUsuariosSchema = z
+  .object({
+    texto: z.string().trim().max(150).optional(),
+    rol: z.preprocess(
+      preprocesarEnteroPositivo,
+      z.number().int().min(1).max(4).optional()
+    ),
+    estado: z.enum(['activo', 'inactivo', 'suspendido']).optional(),
+    page: z.preprocess(preprocesarEnteroPositivo, z.number().int().positive().optional().default(1)),
+    limit: z.preprocess(preprocesarEnteroPositivo, z.number().int().min(1).max(50).optional().default(20)),
+  })
+  .strict();
+
 export const suspenderUsuarioSchema = z
   .object({
     motivo: z

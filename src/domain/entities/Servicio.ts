@@ -9,6 +9,8 @@ export interface ServicioFreelancer {
   fotoPerfil: string | null;
   tituloProfesional: string | null;
   calificacionPromedio: number;
+  /** Estado de la cuenta del freelancer (activo/inactivo/suspendido). */
+  estado?: string | null;
 }
 
 export interface Servicio {
@@ -21,6 +23,10 @@ export interface Servicio {
   fechaCreacion: Date;
   categoria: { id: number; nombre: string } | null;
   freelancer: ServicioFreelancer;
+  /** Campos de moderación: retiro temporal por parte del equipo. */
+  moderacionRetirada?: boolean;
+  moderacionEstadoAnterior?: string | null;
+  moderacionMotivo?: string | null;
 }
 
 /** Datos para crear un servicio. */

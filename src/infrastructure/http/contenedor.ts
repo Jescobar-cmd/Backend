@@ -24,6 +24,8 @@ import { PrismaEntregaContratoRepository } from '../persistence/postgres/PrismaE
 import { PrismaDisputaRepository } from '../persistence/postgres/PrismaDisputaRepository';
 import { PrismaReporteRepository } from '../persistence/postgres/PrismaReporteRepository';
 import { PrismaLiquidacionRepository } from '../persistence/postgres/PrismaLiquidacionRepository';
+import { PrismaModeracionPublicacionRepository } from '../persistence/postgres/PrismaModeracionPublicacionRepository';
+import { PrismaUsuarioModeracionRepository } from '../persistence/postgres/PrismaUsuarioModeracionRepository';
 import { HasheadorContrasenaBcrypt } from '../security/HasheadorContrasenaBcrypt';
 import { HasheadorCodigoHmac } from '../security/HasheadorCodigoHmac';
 import { ServicioJwt } from '../security/ServicioJwt';
@@ -133,6 +135,13 @@ import { SimularPagoUseCase } from '../../application/use-cases/SimularPagoUseCa
 import { MarcarDisputaEnRevisionUseCase } from '../../application/use-cases/MarcarDisputaEnRevisionUseCase';
 import { SuspenderUsuarioUseCase } from '../../application/use-cases/SuspenderUsuarioUseCase';
 import { ReactivarUsuarioUseCase } from '../../application/use-cases/ReactivarUsuarioUseCase';
+import { ListarPublicacionesModeracionUseCase } from '../../application/use-cases/ListarPublicacionesModeracionUseCase';
+import { ObtenerPublicacionModeracionUseCase } from '../../application/use-cases/ObtenerPublicacionModeracionUseCase';
+import { ModerarPublicacionUseCase } from '../../application/use-cases/ModerarPublicacionUseCase';
+import { DerivarReporteADisputaUseCase } from '../../application/use-cases/DerivarReporteADisputaUseCase';
+import { ListarUsuariosModeracionUseCase } from '../../application/use-cases/ListarUsuariosModeracionUseCase';
+import { ObtenerUsuarioModeracionUseCase } from '../../application/use-cases/ObtenerUsuarioModeracionUseCase';
+import { PrismaProyectoRepository } from '../persistence/postgres/PrismaProyectoRepository';
 
 // Raíz de composición: conecta puertos e infraestructura con casos de uso
 const usuarios = new PrismaRepositorioUsuario(prisma);
@@ -159,6 +168,9 @@ const entregas = new PrismaEntregaContratoRepository(prisma);
 const disputas = new PrismaDisputaRepository(prisma);
 const reportes = new PrismaReporteRepository(prisma);
 const liquidaciones = new PrismaLiquidacionRepository(prisma);
+const moderacionPublicacion = new PrismaModeracionPublicacionRepository(prisma);
+const proyecto = new PrismaProyectoRepository(prisma);
+const usuarioModeracion = new PrismaUsuarioModeracionRepository(prisma);
 const comisionFreelancerPorcentaje =
   entorno.COMISION_PLATAFORMA_PORCENTAJE - entorno.COMISION_CLIENTE_PORCENTAJE;
 const hasheador = new HasheadorContrasenaBcrypt();
@@ -381,6 +393,42 @@ export const contenedor = {
     pasarela,
     entornoProduccion
   ),
-  suspenderUsuario: new SuspenderUsuarioUseCase(usuarios, notificaciones),
-  reactivarUsuario: new ReactivarUsuarioUseCase(usuarios, notificaciones),
+  suspenderUsuario: new SuspenderUsuarioUseCase(
+    usuarios,
+    notificaciones,
+    usuarioModeracion
+  ),
+  reactivarUsuario: new ReactivarUsuarioUseCase(
+    usuarios,
+    notificaciones,
+    usuarioModeracion
+  ),
+  derivarReporteADisputa: new DerivarReporteADisputaUseCase(
+    reportes,
+    contratos,
+    disputas,
+    notificaciones
+  ),
+  listarUsuariosModeracion: new ListarUsuariosModeracionUseCase(usuarioModeracion),
+  obtenerUsuarioModeracion: new ObtenerUsuarioModeracionUseCase(usuarioModeracion),
+  listarPublicacionesModeracion: new ListarPublicacionesModeracionUseCase(
+    servicios,
+    proyecto,
+    contratos,
+    moderacionPublicacion
+  ),
+  obtenerPublicacionModeracion: new ObtenerPublicacionModeracionUseCase(
+    servicios,
+    proyecto,
+    contratos,
+    moderacionPublicacion
+  ),
+  moderarPublicacion: new ModerarPublicacionUseCase(
+    servicios,
+    proyecto,
+    contratos,
+    pagos,
+    moderacionPublicacion,
+    notificaciones
+  ),
 };

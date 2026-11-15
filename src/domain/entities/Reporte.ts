@@ -14,11 +14,29 @@ export interface Reporte {
   fecha: Date;
 }
 
+/** Contrato y pago que el moderador necesita para derivar el reporte a disputa. */
+export interface ReporteContratoResumen {
+  id: number;
+  estado: string;
+  montoAcordado: number;
+  pago: {
+    id: number;
+    estado: string;
+    monto: number;
+  } | null;
+}
+
 /** Reporte con el contexto que necesita el panel de moderación. */
 export interface ReporteDetalle extends Reporte {
   usuarioReporta: { id: number; nombre: string; fotoPerfil: string | null };
   usuarioReportado: { id: number; nombre: string; fotoPerfil: string | null } | null;
-  proyecto: { id: number; titulo: string } | null;
+  proyecto: {
+    id: number;
+    titulo: string;
+    estado: string;
+    /** Contrato vigente del proyecto (preferentemente activo), con su pago. */
+    contrato: ReporteContratoResumen | null;
+  } | null;
 }
 
 export interface NuevaReporte {

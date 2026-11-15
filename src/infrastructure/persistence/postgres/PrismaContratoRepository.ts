@@ -117,4 +117,32 @@ export class PrismaContratoRepository implements ContratoRepository {
 
     return toContratoDetalle(contrato);
   }
+
+  async listarPorPublicacion(
+    tipo: 'servicio' | 'proyecto',
+    publicacionId: number,
+    estados: string[]
+  ): Promise<ContratoDetalle[]> {
+    const where =
+      tipo === 'servicio'
+        ? { servicioId: publicacionId, estado: { in: estados } }
+        : { proyectoId: publicacionId, estado: { in: estados } };
+
+    const contratos = await this.db.contrato.findMany({
+      where,
+      include: contratoInclude,
+      orderBy: { id: 'desc' },
+    });
+
+    return contratos.map(toContratoDetalle);
+  }
+
+  async obtenerActivoPorProyecto(proyectoId: number): Promise<ContratoDetalle | null> {
+    const contrato = await this.db.contrato.findFirst({
+      where: { proyectoId, estado: { in: ['activo', 'pendiente_pago'] } },
+      include: contratoInclude,
+      orderBy: { id: 'desc' },
+    });
+    return contrato ? toContratoDetalle(contrato) : null;
+  }
 }

@@ -11,6 +11,9 @@ export interface PropsUsuario {
   esMayorDeEdad?: boolean;
   estado?: EstadoUsuario;
   googleId?: string | null;
+  motivoSuspension?: string | null;
+  suspendidoPorId?: number | null;
+  fechaSuspension?: Date | null;
 }
 
 export class Usuario {
@@ -24,6 +27,9 @@ export class Usuario {
   esMayorDeEdad: boolean;
   estado: EstadoUsuario;
   googleId: string | null;
+  motivoSuspension: string | null;
+  suspendidoPorId: number | null;
+  fechaSuspension: Date | null;
 
   constructor(
     idOrProps: number | null | PropsUsuario,
@@ -35,7 +41,10 @@ export class Usuario {
     cedula: string | null = null,
     esMayorDeEdad: boolean = true,
     estado: EstadoUsuario = 'inactivo',
-    googleId: string | null = null
+    googleId: string | null = null,
+    motivoSuspension: string | null = null,
+    suspendidoPorId: number | null = null,
+    fechaSuspension: Date | null = null
   ) {
     if (typeof idOrProps === 'object' && idOrProps !== null) {
       const props = idOrProps;
@@ -49,6 +58,9 @@ export class Usuario {
       this.esMayorDeEdad = props.esMayorDeEdad ?? true;
       this.estado = props.estado ?? 'inactivo';
       this.googleId = props.googleId ?? null;
+      this.motivoSuspension = props.motivoSuspension ?? null;
+      this.suspendidoPorId = props.suspendidoPorId ?? null;
+      this.fechaSuspension = props.fechaSuspension ?? null;
     } else {
       this.id = idOrProps;
       this.nombre = nombre!;
@@ -60,6 +72,9 @@ export class Usuario {
       this.esMayorDeEdad = esMayorDeEdad;
       this.estado = estado;
       this.googleId = googleId;
+      this.motivoSuspension = motivoSuspension;
+      this.suspendidoPorId = suspendidoPorId;
+      this.fechaSuspension = fechaSuspension;
     }
   }
 
@@ -79,12 +94,18 @@ export class Usuario {
     return this.estado === 'suspendido';
   }
 
-  suspender(): void {
+  suspender(motivo?: string | null, moderadorId?: number | null): void {
     this.estado = 'suspendido';
+    this.motivoSuspension = motivo ?? null;
+    this.suspendidoPorId = moderadorId ?? null;
+    this.fechaSuspension = new Date();
   }
 
   reactivar(): void {
     this.estado = 'activo';
+    this.motivoSuspension = null;
+    this.suspendidoPorId = null;
+    this.fechaSuspension = null;
   }
 
   esRegistroGoogle(): boolean {

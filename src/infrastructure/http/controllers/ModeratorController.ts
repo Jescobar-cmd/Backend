@@ -90,6 +90,27 @@ export class ModeratorController {
     }
   }
 
+  /** POST /api/moderador/reportes/:id/derivar-disputa */
+  static async derivarReporte(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const moderadorId = obtenerUsuarioId(req);
+      const reporteId = parsearIdParam(req.params.id, 'reporte');
+      const descripcion = (req.body as { descripcion?: string }).descripcion;
+      const resultado = await contenedor.derivarReporteADisputa.ejecutar(
+        reporteId,
+        moderadorId,
+        descripcion
+      );
+      res.json(resultado);
+    } catch (e) {
+      next(e);
+    }
+  }
+
   /** GET /api/moderador/disputas */
   static async disputas(
     req: SolicitudAutenticada,
@@ -221,6 +242,48 @@ export class ModeratorController {
     }
   }
 
+  /** GET /api/moderador/usuarios */
+  static async usuarios(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { page, limit, texto, rol, estado } = req.query as unknown as {
+        page: number;
+        limit: number;
+        texto?: string;
+        rol?: number;
+        estado?: 'activo' | 'inactivo' | 'suspendido';
+      };
+      const usuarios = await contenedor.listarUsuariosModeracion.ejecutar({
+        ...(texto ? { texto } : {}),
+        ...(rol ? { rolId: rol } : {}),
+        ...(estado ? { estado } : {}),
+        page,
+        limit,
+      });
+      res.json(usuarios);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /** GET /api/moderador/usuarios/:id */
+  static async usuario(
+    req: SolicitudAutenticada,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const usuarioId = parsearIdParam(req.params.id, 'usuario');
+      const usuario = await contenedor.obtenerUsuarioModeracion.ejecutar(usuarioId);
+      res.json({ usuario });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   /** PATCH /api/moderador/usuarios/:id/suspender */
   static async suspenderUsuario(
     req: SolicitudAutenticada,
@@ -256,8 +319,9 @@ export class ModeratorController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const moderadorId = obtenerUsuarioId(req);
       const usuarioId = parsearIdParam(req.params.id, 'usuario');
-      const usuario = await contenedor.reactivarUsuario.ejecutar(usuarioId);
+      const usuario = await contenedor.reactivarUsuario.ejecutar(usuarioId, moderadorId);
       res.json({
         mensaje: 'Cuenta reactivada correctamente',
         usuario: {

@@ -13,7 +13,10 @@ function aEntidad(registro: PrismaUsuario): Usuario {
     registro.cedula,
     registro.esMayorDeEdad,
     registro.estado as EstadoUsuario,
-    registro.googleId
+    registro.googleId,
+    registro.motivoSuspension,
+    registro.suspendidoPorId,
+    registro.fechaSuspension
   );
 }
 
@@ -32,6 +35,9 @@ export class PrismaRepositorioUsuario implements RepositorioUsuario {
         esMayorDeEdad: usuario.esMayorDeEdad,
         estado: usuario.estado,
         googleId: usuario.googleId,
+        motivoSuspension: usuario.motivoSuspension,
+        suspendidoPorId: usuario.suspendidoPorId,
+        fechaSuspension: usuario.fechaSuspension,
       },
     });
     return aEntidad(creado);
@@ -79,6 +85,9 @@ export class PrismaRepositorioUsuario implements RepositorioUsuario {
         esMayorDeEdad: usuario.esMayorDeEdad,
         estado: usuario.estado,
         googleId: usuario.googleId,
+        motivoSuspension: usuario.motivoSuspension,
+        suspendidoPorId: usuario.suspendidoPorId,
+        fechaSuspension: usuario.fechaSuspension,
       },
     });
     return aEntidad(actualizado);

@@ -21,4 +21,14 @@ export interface ContratoRepository {
     contratoId: number,
     estado: EstadoContratoFinal
   ): Promise<ContratoDetalle>;
+
+  /** Lista contratos de una publicación (servicio o proyecto) con estados dados. */
+  listarPorPublicacion(
+    tipo: 'servicio' | 'proyecto',
+    publicacionId: number,
+    estados: string[]
+  ): Promise<ContratoDetalle[]>;
+
+  /** Obtiene el contrato activo por proyecto. */
+  obtenerActivoPorProyecto(proyectoId: number): Promise<ContratoDetalle | null>;
 }

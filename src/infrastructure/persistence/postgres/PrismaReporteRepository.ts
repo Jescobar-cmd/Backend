@@ -86,16 +86,53 @@ export class PrismaReporteRepository implements ReporteRepository {
         Usuario_Reporte_usuarioReportadoIdToUsuario: {
           select: { id: true, nombre: true, fotoPerfil: true },
         },
-        Proyecto: { select: { id: true, titulo: true } },
+        Proyecto: { select: { id: true, titulo: true, estado: true } },
       },
     });
     if (!reporte) return null;
+
+    // El contrato que interesa a moderación es el vigente; si no hay activo
+    // se muestra el más reciente para dar contexto de la disputa potencial.
+    let proyecto: ReporteDetalle['proyecto'] = null;
+    if (reporte.Proyecto) {
+      const contrato =
+        (await this.db.contrato.findFirst({
+          where: { proyectoId: reporte.Proyecto.id, estado: 'activo' },
+          include: { Pago: { orderBy: { id: 'desc' }, take: 1 } },
+          orderBy: { id: 'desc' },
+        })) ??
+        (await this.db.contrato.findFirst({
+          where: { proyectoId: reporte.Proyecto.id },
+          include: { Pago: { orderBy: { id: 'desc' }, take: 1 } },
+          orderBy: { id: 'desc' },
+        }));
+
+      proyecto = {
+        id: reporte.Proyecto.id,
+        titulo: reporte.Proyecto.titulo,
+        estado: reporte.Proyecto.estado,
+        contrato: contrato
+          ? {
+              id: contrato.id,
+              estado: contrato.estado,
+              montoAcordado: Number(contrato.montoAcordado),
+              pago: contrato.Pago[0]
+                ? {
+                    id: contrato.Pago[0].id,
+                    estado: contrato.Pago[0].estado,
+                    monto: Number(contrato.Pago[0].monto),
+                  }
+                : null,
+            }
+          : null,
+      };
+    }
 
     return {
       ...toReporte(reporte),
       usuarioReporta: reporte.Usuario_Reporte_usuarioReportaIdToUsuario,
       usuarioReportado: reporte.Usuario_Reporte_usuarioReportadoIdToUsuario,
-      proyecto: reporte.Proyecto,
+      proyecto,
     };
   }
 

@@ -34,7 +34,11 @@ function toServicio(servicio: ServicioConRelaciones): Servicio {
       fotoPerfil: servicio.Freelancer.Usuario.fotoPerfil,
       tituloProfesional: servicio.Freelancer.tituloProfesional,
       calificacionPromedio: Number(servicio.Freelancer.calificacionPromedio),
+      estado: servicio.Freelancer.Usuario.estado,
     },
+    moderacionRetirada: servicio.moderacionRetirada,
+    moderacionEstadoAnterior: servicio.moderacionEstadoAnterior,
+    moderacionMotivo: servicio.moderacionMotivo,
   };
 }
 
@@ -122,6 +126,52 @@ export class PrismaServicioRepository implements ServicioRepository {
     ]);
 
     return { page: filtros.page, limit: filtros.limit, total, items: items.map(toServicio) };
+  }
+
+  async listarParaModeracion(filtros: FiltrosServicio): Promise<ServicioPaginado> {
+    const where: Prisma.ServicioWhereInput = {};
+    if (filtros.estado) {
+      where.estado = filtros.estado;
+    }
+    if (filtros.texto) {
+      where.OR = [
+        { titulo: { contains: filtros.texto, mode: 'insensitive' } },
+        { descripcion: { contains: filtros.texto, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, items] = await Promise.all([
+      this.db.servicio.count({ where }),
+      this.db.servicio.findMany({
+        where,
+        include: servicioInclude,
+        orderBy: { fechaCreacion: 'desc' },
+        skip: (filtros.page - 1) * filtros.limit,
+        take: filtros.limit,
+      }),
+    ]);
+
+    return { page: filtros.page, limit: filtros.limit, total, items: items.map(toServicio) };
+  }
+
+  async actualizarModeracion(
+    servicioId: number,
+    datos: {
+      moderacionRetirada: boolean;
+      moderacionEstadoAnterior: string | null;
+      moderacionMotivo: string | null;
+    }
+  ): Promise<Servicio> {
+    const actualizado = await this.db.servicio.update({
+      where: { id: servicioId },
+      data: {
+        moderacionRetirada: datos.moderacionRetirada,
+        moderacionEstadoAnterior: datos.moderacionEstadoAnterior,
+        moderacionMotivo: datos.moderacionMotivo,
+      },
+      include: servicioInclude,
+    });
+    return toServicio(actualizado);
   }
 
   async obtenerPorId(servicioId: number): Promise<Servicio | null> {

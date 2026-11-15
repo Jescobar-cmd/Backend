@@ -1865,6 +1865,40 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/moderador/reportes/{id}/derivar-disputa': {
+      post: {
+        summary: 'Derivar un reporte pendiente a disputa formal (admin o moderador)',
+        description:
+          'Abre una disputa sobre el contrato activo del proyecto reportado y notifica a las partes.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  descripcion: { type: 'string', maxLength: 1000 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '{ reporte, disputa }' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Reporte no encontrado' },
+          '409': {
+            description:
+              'El reporte no está pendiente, no hay contrato activo o ya existe una disputa abierta',
+          },
+          '422': { description: 'El reporte no está asociado a un proyecto' },
+        },
+      },
+    },
     '/api/moderador/disputas': {
       get: {
         summary: 'Listar disputas (admin o moderador)',
@@ -2002,6 +2036,38 @@ export const swaggerDocument = {
         },
       },
     },
+    '/api/moderador/usuarios': {
+      get: {
+        summary: 'Listar usuarios para moderación (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'texto', in: 'query', schema: { type: 'string' }, description: 'Busca por nombre o correo' },
+          { name: 'rol', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 4 }, description: '1=Admin, 2=Freelancer, 3=Cliente, 4=Moderador' },
+          { name: 'estado', in: 'query', schema: { type: 'string', enum: ['activo', 'inactivo', 'suspendido'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, items } con datos de suspensión' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+        },
+      },
+    },
+    '/api/moderador/usuarios/{id}': {
+      get: {
+        summary: 'Ficha de moderación de un usuario (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          '200': { description: '{ usuario } con contacto, totales y sanciones' },
+          '400': { description: 'Id inválido' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Usuario no encontrado' },
+        },
+      },
+    },
     '/api/moderador/usuarios/{id}/suspender': {
       patch: {
         summary: 'Suspender una cuenta de cliente o freelancer (admin o moderador)',
@@ -2053,6 +2119,93 @@ export const swaggerDocument = {
           '403': { description: 'Requiere rol admin o moderador' },
           '404': { description: 'Usuario no encontrado' },
           '409': { description: 'La cuenta no está suspendida' },
+        },
+      },
+    },
+    '/api/moderador/publicaciones': {
+      get: {
+        summary: 'Listar publicaciones para moderación (admin o moderador)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'tipo', in: 'query', required: true, schema: { type: 'string', enum: ['servicio', 'proyecto'] } },
+          { name: 'estado', in: 'query', schema: { type: 'string' } },
+          { name: 'texto', in: 'query', schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50 } },
+        ],
+        responses: {
+          '200': { description: '{ page, limit, total, items }' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '422': { description: 'Parámetros inválidos' },
+        },
+      },
+    },
+    '/api/moderador/publicaciones/{tipo}/{id}': {
+      get: {
+        summary: 'Detalle de una publicación con historial de moderación',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'tipo', in: 'path', required: true, schema: { type: 'string', enum: ['servicio', 'proyecto'] } },
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': { description: '{ publicacion } con autor, contratos y moderación' },
+          '400': { description: 'Parámetros inválidos' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Publicación no encontrada' },
+        },
+      },
+    },
+    '/api/moderador/publicaciones/{tipo}/{id}/retirar': {
+      patch: {
+        summary: 'Retirar una publicación por moderación',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'tipo', in: 'path', required: true, schema: { type: 'string', enum: ['servicio', 'proyecto'] } },
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['motivo'],
+                properties: {
+                  motivo: { type: 'string', minLength: 5, maxLength: 300 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '{ mensaje, publicacion }' },
+          '400': { description: 'Parámetros inválidos' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Publicación no encontrada' },
+          '409': { description: 'La publicación no se puede retirar en su estado actual' },
+          '422': { description: 'Datos inválidos' },
+        },
+      },
+    },
+    '/api/moderador/publicaciones/{tipo}/{id}/reactivar': {
+      patch: {
+        summary: 'Reactivar una publicación retirada por moderación',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'tipo', in: 'path', required: true, schema: { type: 'string', enum: ['servicio', 'proyecto'] } },
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': { description: '{ mensaje, publicacion }' },
+          '400': { description: 'Parámetros inválidos' },
+          '401': { description: 'Sin sesión o expirada' },
+          '403': { description: 'Requiere rol admin o moderador' },
+          '404': { description: 'Publicación no encontrada' },
+          '409': { description: 'La publicación no está retirada por moderación' },
         },
       },
     },

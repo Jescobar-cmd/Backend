@@ -1,6 +1,7 @@
 import { Usuario } from '../../domain/entities/Usuario';
 import { NotificacionRepository } from '../../domain/ports/repositories/NotificacionRepository';
 import { RepositorioUsuario } from '../../domain/ports/repositories/RepositorioUsuario';
+import { UsuarioModeracionRepository } from '../../domain/ports/repositories/UsuarioModeracionRepository';
 import { ROLES } from '../../shared/constants/roles';
 import {
   ErrorConflicto,
@@ -12,7 +13,8 @@ import {
 export class SuspenderUsuarioUseCase {
   constructor(
     private usuarioRepository: RepositorioUsuario,
-    private notificacionRepository: NotificacionRepository
+    private notificacionRepository: NotificacionRepository,
+    private moderacionRepository?: UsuarioModeracionRepository
   ) {}
 
   async ejecutar(
@@ -37,8 +39,18 @@ export class SuspenderUsuarioUseCase {
       throw new ErrorConflicto('La cuenta ya está suspendida');
     }
 
-    usuario.suspender();
+    usuario.suspender(motivo, moderadorId);
     const actualizado = await this.usuarioRepository.actualizar(usuario);
+
+    // La sanción queda en el historial aunque la cuenta se reactive después.
+    if (this.moderacionRepository) {
+      await this.moderacionRepository.registrarSancion({
+        usuarioId,
+        moderadorId,
+        tipo: 'suspension',
+        motivo,
+      });
+    }
 
     await this.notificacionRepository.crear({
       usuarioId,
