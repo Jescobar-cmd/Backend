@@ -14,7 +14,8 @@ ALTER TABLE "Reporte" DROP CONSTRAINT IF EXISTS "Reporte_estado_check";
 ALTER TABLE "Reporte" ADD CONSTRAINT "Reporte_estado_check"
   CHECK (estado IN ('pendiente', 'resuelto', 'rechazado'));
 
--- El código marca la factura como 'pagada' al confirmar el pago.
+-- El código marca la factura como 'pagada' al confirmar el pago y, con la
+-- facturación sandbox, como 'emitida_demo'.
 ALTER TABLE "Factura" DROP CONSTRAINT IF EXISTS "Factura_estado_check";
 ALTER TABLE "Factura" ADD CONSTRAINT "Factura_estado_check"
-  CHECK (estado IN ('pendiente', 'pagada'));
+  CHECK (estado IN ('pendiente', 'pagada', 'emitida_demo'));
