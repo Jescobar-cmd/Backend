@@ -78,7 +78,6 @@ export class MercadoPagoPasarela implements PasarelaPago {
               unit_price: Math.round(datos.monto),
             },
           ],
-          payer: { email: datos.emailCliente },
           external_reference: String(datos.contratoId),
           notification_url: datos.urlNotificacion,
           back_urls: {
