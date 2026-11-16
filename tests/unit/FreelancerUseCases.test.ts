@@ -224,7 +224,11 @@ describe('FreelancerUseCases', () => {
 
     await expect(
       new ObtenerLiquidacionesFreelancerUseCase(liquidaciones).ejecutar(20)
-    ).resolves.toEqual({ resumen, liquidaciones: [liquidacion] });
+    ).resolves.toEqual({
+      resumen,
+      liquidaciones: [liquidacion],
+      diasValidacion: 3,
+    });
   });
 
   it('solicita retiro si hay saldo disponible', async () => {
@@ -253,5 +257,21 @@ describe('FreelancerUseCases', () => {
     await expect(
       new SolicitarRetiroUseCase(liquidaciones, notificaciones, usuarios).ejecutar(20)
     ).rejects.toThrow(ErrorConflicto);
+  });
+
+  it('rechaza el retiro si el saldo sigue en validación', async () => {
+    const liquidaciones = {
+      solicitarRetiro: vi
+        .fn()
+        .mockResolvedValue({ cantidad: 0, total: 0, enValidacion: 500 }),
+    } as unknown as LiquidacionRepository;
+    const notificaciones = { crear: vi.fn() } as unknown as NotificacionRepository;
+    const usuarios = {
+      listarIdsPorRoles: vi.fn().mockResolvedValue([]),
+    } as unknown as RepositorioUsuario;
+
+    await expect(
+      new SolicitarRetiroUseCase(liquidaciones, notificaciones, usuarios).ejecutar(20)
+    ).rejects.toThrow(/periodo de validación/);
   });
 });

@@ -85,6 +85,19 @@ const esquemaEntorno = z.object({
       return porcentaje;
     }),
 
+  // Días de validación antes de poder retirar una liquidación liberada.
+  DIAS_VALIDACION_RETIRO: z
+    .string()
+    .optional()
+    .default('3')
+    .transform((valor) => {
+      const dias = Number(valor);
+      if (!Number.isInteger(dias) || dias < 0 || dias > 365) {
+        return 3;
+      }
+      return dias;
+    }),
+
   // Semilla de base de datos
   SEED_DEMO_USER: z
     .string()

@@ -308,12 +308,14 @@ export const contenedor = {
   listarPagosFreelancer: new ListarPagosFreelancerUseCase(pagos),
   obtenerFacturaPagoFreelancer: new ObtenerFacturaPagoFreelancerUseCase(pagos),
   obtenerLiquidacionesFreelancer: new ObtenerLiquidacionesFreelancerUseCase(
-    liquidaciones
+    liquidaciones,
+    entorno.DIAS_VALIDACION_RETIRO
   ),
   solicitarRetiro: new SolicitarRetiroUseCase(
     liquidaciones,
     notificaciones,
-    usuarios
+    usuarios,
+    entorno.DIAS_VALIDACION_RETIRO
   ),
   crearReporte: new CrearReporteUseCase(reportes, notificaciones, usuarios),
   listarReportesAdmin: new ListarReportesAdminUseCase(reportes),

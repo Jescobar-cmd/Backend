@@ -25,6 +25,7 @@ export interface NuevaLiquidacion {
 
 export interface ResumenLiquidaciones {
   saldoDisponible: number;
+  saldoEnValidacion: number;
   saldoEnProceso: number;
   totalPagado: number;
   comisionTotal: number;
@@ -34,6 +35,8 @@ export interface ResumenLiquidaciones {
 export interface ResultadoSolicitudRetiro {
   cantidad: number;
   total: number;
+  /** Monto aún en periodo de validación que no se pudo retirar. */
+  enValidacion: number;
 }
 
 function redondearDos(valor: number): number {

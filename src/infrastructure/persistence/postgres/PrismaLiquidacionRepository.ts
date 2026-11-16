@@ -69,12 +69,28 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
     return liquidaciones.map(toLiquidacion);
   }
 
-  async resumen(freelancerId: number): Promise<ResumenLiquidaciones> {
-    const [pendiente, solicitada, pagada, total] = await Promise.all([
+  async resumen(
+    freelancerId: number,
+    corteRetiro?: Date
+  ): Promise<ResumenLiquidaciones> {
+    const filtroPendiente = corteRetiro
+      ? { freelancerId, estado: 'pendiente' as const, fechaCreacion: { lte: corteRetiro } }
+      : { freelancerId, estado: 'pendiente' as const };
+    const [disponible, enValidacion, solicitada, pagada, total] = await Promise.all([
       this.db.liquidacion.aggregate({
-        where: { freelancerId, estado: 'pendiente' },
+        where: filtroPendiente,
         _sum: { montoNeto: true },
       }),
+      corteRetiro
+        ? this.db.liquidacion.aggregate({
+            where: {
+              freelancerId,
+              estado: 'pendiente',
+              fechaCreacion: { gt: corteRetiro },
+            },
+            _sum: { montoNeto: true },
+          })
+        : Promise.resolve({ _sum: { montoNeto: null } }),
       this.db.liquidacion.aggregate({
         where: { freelancerId, estado: 'solicitada' },
         _sum: { montoNeto: true },
@@ -91,7 +107,8 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
     ]);
 
     return {
-      saldoDisponible: redondearDos(Number(pendiente._sum.montoNeto ?? 0)),
+      saldoDisponible: redondearDos(Number(disponible._sum.montoNeto ?? 0)),
+      saldoEnValidacion: redondearDos(Number(enValidacion._sum.montoNeto ?? 0)),
       saldoEnProceso: redondearDos(Number(solicitada._sum.montoNeto ?? 0)),
       totalPagado: redondearDos(Number(pagada._sum.montoNeto ?? 0)),
       comisionTotal: redondearDos(Number(total._sum.comision ?? 0)),
@@ -99,14 +116,36 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
     };
   }
 
-  async solicitarRetiro(freelancerId: number): Promise<ResultadoSolicitudRetiro> {
+  async solicitarRetiro(
+    freelancerId: number,
+    corteRetiro?: Date
+  ): Promise<ResultadoSolicitudRetiro> {
     return this.db.$transaction(async (tx) => {
+      const filtroRetirables = {
+        freelancerId,
+        estado: 'pendiente' as const,
+        ...(corteRetiro ? { fechaCreacion: { lte: corteRetiro } } : {}),
+      };
       const pendientes = await tx.liquidacion.findMany({
-        where: { freelancerId, estado: 'pendiente' },
+        where: filtroRetirables,
         select: { id: true, montoNeto: true },
       });
+
+      // Liquidaciones aún dentro del periodo de validación.
+      const bloqueadas = corteRetiro
+        ? await tx.liquidacion.aggregate({
+            where: {
+              freelancerId,
+              estado: 'pendiente',
+              fechaCreacion: { gt: corteRetiro },
+            },
+            _sum: { montoNeto: true },
+          })
+        : { _sum: { montoNeto: null } };
+      const enValidacion = redondearDos(Number(bloqueadas._sum.montoNeto ?? 0));
+
       if (pendientes.length === 0) {
-        return { cantidad: 0, total: 0 };
+        return { cantidad: 0, total: 0, enValidacion };
       }
 
       await tx.liquidacion.updateMany({
@@ -119,6 +158,7 @@ export class PrismaLiquidacionRepository implements LiquidacionRepository {
         total: redondearDos(
           pendientes.reduce((suma, item) => suma + Number(item.montoNeto), 0)
         ),
+        enValidacion,
       };
     });
   }

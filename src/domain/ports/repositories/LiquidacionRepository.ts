@@ -16,9 +16,15 @@ export interface LiquidacionRepository {
 
   listarPorFreelancer(freelancerId: number): Promise<Liquidacion[]>;
 
-  resumen(freelancerId: number): Promise<ResumenLiquidaciones>;
+  resumen(
+    freelancerId: number,
+    corteRetiro?: Date
+  ): Promise<ResumenLiquidaciones>;
 
-  solicitarRetiro(freelancerId: number): Promise<ResultadoSolicitudRetiro>;
+  solicitarRetiro(
+    freelancerId: number,
+    corteRetiro?: Date
+  ): Promise<ResultadoSolicitudRetiro>;
 
   listar(filtros: FiltrosLiquidacion): Promise<Liquidacion[]>;
 
