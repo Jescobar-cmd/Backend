@@ -74,7 +74,8 @@ export class MercadoPagoPasarela implements PasarelaPago {
               title: datos.descripcion,
               quantity: 1,
               currency_id: 'COP',
-              unit_price: datos.monto,
+              // Mercado Pago exige unit_price entero; COP no maneja decimales.
+              unit_price: Math.round(datos.monto),
             },
           ],
           payer: { email: datos.emailCliente },
