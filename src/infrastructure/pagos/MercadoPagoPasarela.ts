@@ -90,7 +90,9 @@ export class MercadoPagoPasarela implements PasarelaPago {
       }
     );
 
-    const initPoint = preferencia.init_point ?? preferencia.sandbox_init_point;
+    // Con credenciales de prueba MP devuelve sandbox_init_point (checkout de
+    // pruebas); con credenciales reales solo init_point. Se prefiere sandbox.
+    const initPoint = preferencia.sandbox_init_point || preferencia.init_point;
     if (!initPoint) {
       throw new ErrorServicioNoDisponible(
         'Mercado Pago no devolvió una URL de pago'
