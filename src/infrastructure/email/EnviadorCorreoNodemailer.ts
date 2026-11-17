@@ -10,7 +10,8 @@ export class EnviadorCorreoNodemailer implements EnviadorCorreo {
   private readonly remitente: string;
 
   constructor() {
-    const urlFrontend = entorno.FRONTEND_URL.trim().replace(/\/+$/, '');
+    let urlFrontend = entorno.FRONTEND_URL.trim();
+    while (urlFrontend.endsWith('/')) urlFrontend = urlFrontend.slice(0, -1);
     this.baseEnlaceConfirmacion = `${urlFrontend}/confirm?token=`;
     this.baseEnlaceRestablecimiento = `${urlFrontend}/reset-password?token=`;
     this.remitente = entorno.SMTP_FROM;

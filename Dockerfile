@@ -6,7 +6,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # ── Etapa 2: compilación (cliente Prisma + TypeScript) ───────────────
 FROM node:22-alpine AS build
@@ -18,7 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json tsconfig.json prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
-RUN npx prisma generate && npm run build
+RUN npm run prisma:generate && npm run build
 
 # ── Etapa 3: imagen final (solo producción) ──────────────────────────
 FROM node:22-alpine AS runtime

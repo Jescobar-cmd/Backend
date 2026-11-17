@@ -47,18 +47,18 @@ const gracefulShutdown = async (signal: string, codigoSalida = 0) => {
   }, 10000).unref();
 };
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 
 // Factor VI y IX (12-Factor App): los procesos son desechables y no guardan
 // estado. Un fallo no controlado debe derribar el proceso para que el
 // orquestador lo reinicie en un estado limpio (crash-only design).
 process.on('unhandledRejection', (reason) => {
   console.error('[Proceso] Rechazo de promesa no controlado:', reason);
-  gracefulShutdown('UNHANDLED_REJECTION', 1);
+  void gracefulShutdown('UNHANDLED_REJECTION', 1);
 });
 
 process.on('uncaughtException', (error) => {
   console.error('[Proceso] Excepción no capturada:', error);
-  gracefulShutdown('UNCAUGHT_EXCEPTION', 1);
+  void gracefulShutdown('UNCAUGHT_EXCEPTION', 1);
 });

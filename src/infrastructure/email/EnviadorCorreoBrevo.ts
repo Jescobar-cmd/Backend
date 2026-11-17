@@ -24,7 +24,8 @@ export class EnviadorCorreoBrevo implements EnviadorCorreo {
     this.claveApi = claveApi;
     this.correoRemitente = entorno.EMAIL_FROM ?? entorno.SMTP_FROM ?? 'no-reply@firstgig.com';
     this.nombreRemitente = entorno.EMAIL_FROM_NAME ?? 'FirstGig';
-    const urlFrontend = entorno.FRONTEND_URL.trim().replace(/\/+$/, '');
+    let urlFrontend = entorno.FRONTEND_URL.trim();
+    while (urlFrontend.endsWith('/')) urlFrontend = urlFrontend.slice(0, -1);
     this.baseEnlaceConfirmacion = `${urlFrontend}/confirm?token=`;
     this.baseEnlaceRestablecimiento = `${urlFrontend}/reset-password?token=`;
   }
