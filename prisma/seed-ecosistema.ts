@@ -1,9 +1,10 @@
-// Seed del ecosistema de demostracion: 10 perfiles de freelancer
+// Seed del ecosistema de demostracion: 24 perfiles de freelancer
 // con habilidades, biografias y calificaciones variadas.
-// Cada freelancer publica varios servicios = ~44 ofertas en el catalogo,
-// con minimo 5 servicios por cada una de las 8 categorias.
+// Cada freelancer publica ~2 servicios = ~49 ofertas en el catalogo,
+// con minimo 5 servicios por cada una de las 8 categorias,
+// para que el catalogo muestre nombres de freelancers variados.
 // NOTA: los precios son valores decorativos en USD (la pasarela cobra en COP).
-// Idempotente: recrea los servicios de los freelancers demo sin duplicar perfiles.
+// Idempotente: recrea los datos de los freelancers demo sin duplicar perfiles.
 // Uso: npm run seed:ecosistema
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
@@ -53,7 +54,7 @@ const IMAGENES_POR_CATEGORIA: Record<string, string[]> = {
     'photo-1455390582262-044cdead277a',
     'photo-1455390582262-044cdead277a',
     'photo-1499750310107-5fef28a66643',
-    'photo-1516321318423-f06f85e504b3',
+    'photo-1519389950473-47ba0277781c',
   ],
   'Video y Animación': [
     'photo-1574717024653-61fd2cf4d44d',
@@ -67,6 +68,7 @@ const IMAGENES_POR_CATEGORIA: Record<string, string[]> = {
     'photo-1460925895917-afdab827c52f',
     'photo-1543286386-713bdd548da4',
     'photo-1526374965328-7f61d4dc18c5',
+    'photo-1519389950473-47ba0277781c',
   ],
   'Soporte Técnico': [
     'photo-1518770660439-4636190af475',
@@ -76,29 +78,6 @@ const IMAGENES_POR_CATEGORIA: Record<string, string[]> = {
     'photo-1522202176988-66273c2fd55f',
   ],
 };
-
-// Clientes demo que "contrataron" a los freelancers (para contratos y reseñas).
-const clientesDemo = [
-  { nombre: 'María Fernanda López', email: 'cliente1@firstgig.demo' },
-  { nombre: 'Carlos Andrés Peña', email: 'cliente2@firstgig.demo' },
-  { nombre: 'Ana Lucía Vargas', email: 'cliente3@firstgig.demo' },
-  { nombre: 'Jorge Iván Suárez', email: 'cliente4@firstgig.demo' },
-];
-
-// Pool de comentarios variados para las calificaciones.
-const COMENTARIOS_RESEÑA = [
-  'Excelente trabajo, entregó antes del plazo y la calidad superó mis expectativas.',
-  'Muy profesional y comunicativo. El resultado quedó genial.',
-  'Buen trabajo en general. Tardó un poco más de lo esperado pero valió la pena.',
-  'Cumplió con todo lo acordado. Lo recomiendo ampliamente.',
-  'Entregó exactamente lo que pedí, sin vueltas. Volvería a contratarlo.',
-  'Calidad aceptable y precio justo. La comunicación pudo ser más fluida.',
-  'Impecable atención al detalle. Súper recomendado para cualquier proyecto.',
-  'Trabajo sólido y entregas puntuales. Cumplió el presupuesto acordado.',
-];
-
-// Puntuaciones variadas (la mayoria 5, algunas 4 y un par de 3 para realismo).
-const PUNTUACIONES = [5, 4, 5, 5, 4, 5, 3, 5, 4, 5];
 
 function urlImagen(categoria: string, indice: number): string {
   const pool = IMAGENES_POR_CATEGORIA[categoria] ?? IMAGENES_POR_CATEGORIA['Desarrollo Web'];
@@ -136,8 +115,6 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Landing page one-page con formulario de contacto', descripcion: 'Diseño + desarrollo de landing page moderna, responsive y optimizada para conversión. Incluye formulario de contacto y SEO básico.', precio: 49, categoria: 'Desarrollo Web' },
       { titulo: 'Panel de control con gráficas en tiempo real', descripcion: 'Panel con gráficas, tablas y autenticación para visualizar métricas de tu negocio en tiempo real.', precio: 199, categoria: 'Desarrollo Web' },
-      { titulo: 'Speed optimization: Core Web Vitals de 60 a 95+', descripcion: 'Auditoría Core Web Vitals y optimización de carga, imágenes y bundle. Mejora tu puntuación de 60 a 90+.', precio: 99, categoria: 'Desarrollo Web' },
-      { titulo: 'Fix de bugs responsive en tu web (48h)', descripcion: 'Diagnóstico y solución de bugs en tu interfaz: responsive, formularios, estado y renderizado.', precio: 29, categoria: 'Soporte Técnico' },
     ],
   },
   {
@@ -153,6 +130,33 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Backend REST listo para producción con JWT', descripcion: 'Backend completo con registro, login, roles y documentación. Listo para conectar con tu frontend.', precio: 149, categoria: 'Desarrollo Web' },
       { titulo: 'Checkout con Mercado Pago integrado a tu app', descripcion: 'Conexión con Mercado Pago / Stripe, webhooks y conciliación de pagos en tu sistema.', precio: 129, categoria: 'Desarrollo Web' },
+    ],
+  },
+  {
+    nombre: 'Renata Pardo',
+    tituloProfesional: 'Desarrolladora Frontend',
+    biografia: 'React y CSS moderno. Me especializo en performance y en dejar sitios rápidos y accesibles.',
+    calificacion: 4.5,
+    habilidades: [
+      { nombre: 'React', nivel: 'avanzado' },
+      { nombre: 'TypeScript', nivel: 'intermedio' },
+    ],
+    servicios: [
+      { titulo: 'Speed optimization: Core Web Vitals de 60 a 95+', descripcion: 'Auditoría Core Web Vitals y optimización de carga, imágenes y bundle. Mejora tu puntuación de 60 a 90+.', precio: 99, categoria: 'Desarrollo Web' },
+      { titulo: 'Fix de bugs responsive en tu web (48h)', descripcion: 'Diagnóstico y solución de bugs en tu interfaz: responsive, formularios, estado y renderizado.', precio: 29, categoria: 'Soporte Técnico' },
+    ],
+  },
+  {
+    nombre: 'Mauricio Peña',
+    tituloProfesional: 'Ingeniero de Datos',
+    biografia: 'ETL, PostgreSQL y automatización de pipelines. Convierto datos sucios en datos útiles.',
+    calificacion: 4.6,
+    habilidades: [
+      { nombre: 'Python', nivel: 'avanzado' },
+      { nombre: 'PostgreSQL', nivel: 'avanzado' },
+      { nombre: 'SQL', nivel: 'experto' },
+    ],
+    servicios: [
       { titulo: 'Esquema de base de datos + migración desde Excel', descripcion: 'Diseño de esquema relacional, migración de datos desde Excel/CSV y optimización de consultas.', precio: 99, categoria: 'Desarrollo Web' },
       { titulo: 'Pipeline ETL: de tus CSV a PostgreSQL limpio', descripcion: 'Pipeline que extrae datos de tus fuentes, los limpia y los carga en tu base de datos automáticamente.', precio: 119, categoria: 'Datos y Análisis' },
     ],
@@ -169,9 +173,47 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Logo + paleta + manual de marca (branding kit)', descripcion: 'Logo, paleta de colores, tipografías y manual de marca. 3 propuestas iniciales.', precio: 59, categoria: 'Diseño Gráfico' },
       { titulo: 'UI de app móvil: 5 pantallas en Figma', descripcion: 'Wireframes + diseño visual de alta fidelidad para tu aplicación en Figma.', precio: 149, categoria: 'Diseño Gráfico' },
+    ],
+  },
+  {
+    nombre: 'Oscar Núñez',
+    tituloProfesional: 'Diseñador Gráfico',
+    biografia: 'Especialista en piezas para redes sociales y material impreso. Adobe Illustrator y Photoshop.',
+    calificacion: 4.4,
+    habilidades: [
+      { nombre: 'Adobe Illustrator', nivel: 'experto' },
+      { nombre: 'Adobe Photoshop', nivel: 'avanzado' },
+      { nombre: 'Figma', nivel: 'intermedio' },
+    ],
+    servicios: [
       { titulo: '30 plantillas editables para Instagram', descripcion: '30 plantillas editables para Instagram/Facebook: posts, historias y portadas.', precio: 39, categoria: 'Diseño Gráfico' },
       { titulo: 'Identidad rápida para emprendedores nuevos', descripcion: 'Nombre, isotipo, paleta y mini manual de marca para lanzar tu negocio.', precio: 69, categoria: 'Diseño Gráfico' },
+    ],
+  },
+  {
+    nombre: 'Paula Giraldo',
+    tituloProfesional: 'Diseñadora de Presentaciones',
+    biografia: 'Ayudo a equipos a comunicar mejor: pitch decks, propuestas y material comercial con diseño limpio.',
+    calificacion: 4.7,
+    habilidades: [
+      { nombre: 'Figma', nivel: 'avanzado' },
+      { nombre: 'Adobe Photoshop', nivel: 'avanzado' },
+    ],
+    servicios: [
       { titulo: 'Deck de ventas/pitch con diseño profesional', descripcion: 'Diseño de diapositivas para pitch, propuestas comerciales o clases. Plantilla editable.', precio: 45, categoria: 'Diseño Gráfico' },
+    ],
+  },
+  {
+    nombre: 'Lucía Fernández',
+    tituloProfesional: 'Diseñadora Junior & Redactora',
+    biografia: 'Diseño de banners y piezas promocionales. También escribo textos cortos que enganchan.',
+    calificacion: 4.3,
+    habilidades: [
+      { nombre: 'Adobe Photoshop', nivel: 'intermedio' },
+      { nombre: 'Copywriting', nivel: 'intermedio' },
+    ],
+    servicios: [
+      { titulo: 'Pack de banners para marketplace', descripcion: 'Banners promocionales listos para Mercado Libre, Amazon o tu tienda online.', precio: 35, categoria: 'Diseño Gráfico' },
       { titulo: 'Microcopy que hace tu app más usable', descripcion: 'Textos de botones, formularios y mensajes de error que mejoran la experiencia de usuario.', precio: 45, categoria: 'Redacción y Contenido' },
     ],
   },
@@ -188,8 +230,50 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Auditoría SEO: qué te está frenando en Google', descripcion: 'Análisis técnico, palabras clave, contenido y plan de acción priorizado en 30 días.', precio: 79, categoria: 'Marketing Digital' },
       { titulo: 'Google Ads: campaña lista y optimizada (1 mes)', descripcion: 'Configuración, segmentación y optimización de campañas durante un mes.', precio: 99, categoria: 'Marketing Digital' },
+    ],
+  },
+  {
+    nombre: 'Marcela Ruiz',
+    tituloProfesional: 'Estratega de Marketing Digital',
+    biografia: 'Planes de contenido y embudos de venta para pymes. Facebook Ads y email marketing.',
+    calificacion: 4.6,
+    habilidades: [
+      { nombre: 'Meta Ads', nivel: 'avanzado' },
+      { nombre: 'Copywriting', nivel: 'avanzado' },
+      { nombre: 'SEO', nivel: 'intermedio' },
+    ],
+    servicios: [
       { titulo: 'Plan de contenido SEO para tu blog (30 días)', descripcion: 'Calendario editorial, investigación de keywords y supervisión de redacción para tu blog.', precio: 149, categoria: 'Marketing Digital' },
-      { titulo: 'Artículo de blog 1000 palabras optimizado', descripcion: 'Redacción de artículos de 1000+ palabras con palabras clave y estructura correcta.', precio: 35, categoria: 'Redacción y Contenido' },
+      { titulo: 'Estrategia de embudo: seguidores → clientes', descripcion: 'Estrategia de contenido que convierte seguidores en clientes. Plan + plantillas.', precio: 119, categoria: 'Marketing Digital' },
+    ],
+  },
+  {
+    nombre: 'Isabella Castro',
+    tituloProfesional: 'Especialista en Meta & Redes Sociales',
+    biografia: 'Gestiono comunidades y campañas en Instagram, Facebook y TikTok para pymes.',
+    calificacion: 4.4,
+    habilidades: [
+      { nombre: 'Meta Ads', nivel: 'experto' },
+      { nombre: 'Copywriting', nivel: 'avanzado' },
+      { nombre: 'SEO', nivel: 'intermedio' },
+    ],
+    servicios: [
+      { titulo: 'Manejo tu Instagram 1 mes (posts+stories)', descripcion: '8 publicaciones, historias diarias, respuestas a comentarios y reporte mensual.', precio: 79, categoria: 'Marketing Digital' },
+      { titulo: 'Campaña Meta Ads con pauta optimizada', descripcion: 'Diseño de públicos, creatividades y optimización de presupuesto publicitario.', precio: 89, categoria: 'Marketing Digital' },
+    ],
+  },
+  {
+    nombre: 'Diego Salazar',
+    tituloProfesional: 'Community Manager',
+    biografia: 'Cuido las comunidades de marcas en redes: moderación, respuesta y reportes de crecimiento.',
+    calificacion: 4.5,
+    habilidades: [
+      { nombre: 'Meta Ads', nivel: 'intermedio' },
+      { nombre: 'Copywriting', nivel: 'avanzado' },
+    ],
+    servicios: [
+      { titulo: 'Respondo comentarios y DMs de tu marca', descripcion: 'Moderación de comentarios, mensajes directos y plan de respuesta a tu comunidad.', precio: 59, categoria: 'Marketing Digital' },
+      { titulo: 'Auditoría de redes sociales de tu negocio', descripcion: 'Revisión de perfiles, contenido, hashtags y plan de mejora en 30 días.', precio: 49, categoria: 'Marketing Digital' },
     ],
   },
   {
@@ -204,13 +288,39 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: '5 artículos de blog listos para publicar', descripcion: 'Artículos de 1000+ palabras, investigados y optimizados con palabras clave que tú elijas.', precio: 39, categoria: 'Redacción y Contenido' },
       { titulo: 'Descripciones de producto que venden (x20)', descripcion: 'Descripciones de producto, categorías y fichas que venden. Hasta 20 productos.', precio: 29, categoria: 'Redacción y Contenido' },
+    ],
+  },
+  {
+    nombre: 'Gabriela Paz',
+    tituloProfesional: 'Copywriter & Email Marketer',
+    biografia: 'Escribo newsletters, secuencias de email y guiones que conectan con la audiencia.',
+    calificacion: 4.7,
+    habilidades: [
+      { nombre: 'Copywriting', nivel: 'experto' },
+      { nombre: 'Redacción de artículos', nivel: 'avanzado' },
+    ],
+    servicios: [
       { titulo: '4 newsletters mensuales para tu audiencia', descripcion: '4 newsletters al mes para tu lista de correos: diseño de contenido + redacción.', precio: 49, categoria: 'Redacción y Contenido' },
       { titulo: 'Guion de video con hook y CTA incluidos', descripcion: 'Guiones con estructura, gancho y llamados a la acción para tu canal.', precio: 25, categoria: 'Redacción y Contenido' },
     ],
   },
   {
+    nombre: 'Andrés Felipe Ríos',
+    tituloProfesional: 'Redactor SEO',
+    biografia: 'Artículos optimizados para Google que posicionan y convierten lectores en clientes.',
+    calificacion: 4.4,
+    habilidades: [
+      { nombre: 'Redacción de artículos', nivel: 'experto' },
+      { nombre: 'SEO', nivel: 'avanzado' },
+    ],
+    servicios: [
+      { titulo: 'Artículo de blog 1000 palabras optimizado', descripcion: 'Redacción de artículos de 1000+ palabras con palabras clave y estructura correcta.', precio: 35, categoria: 'Redacción y Contenido' },
+      { titulo: 'Caso de estudio de cliente para tu web', descripcion: 'Historia de éxito de tu producto/servicio redactada para generar confianza.', precio: 45, categoria: 'Redacción y Contenido' },
+    ],
+  },
+  {
     nombre: 'Santiago Vélez',
-    tituloProfesional: 'Editor de Video y Motion Graphics',
+    tituloProfesional: 'Editor de Video',
     biografia: 'Edición para YouTube, TikTok y marcas. After Effects, DaVinci y motion design.',
     calificacion: 4.8,
     habilidades: [
@@ -221,9 +331,35 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Edito tu reel/tiktok en 48h con subtítulos', descripcion: 'Edición profesional con subtítulos, música y efectos. Entrega en 48 horas.', precio: 15, categoria: 'Video y Animación' },
       { titulo: 'Video promo 30-60s: guion + edición completa', descripcion: 'Video de 30-60 segundos con guion, grabación guiada y edición completa.', precio: 129, categoria: 'Video y Animación' },
-      { titulo: 'Intro animada de marca (motion graphics)', descripcion: 'Animación de marca para intros de video, logos animados y transiciones.', precio: 89, categoria: 'Video y Animación' },
+    ],
+  },
+  {
+    nombre: 'Kevin Ortiz',
+    tituloProfesional: 'Editor de Podcast & Subtitulado',
+    biografia: 'Postproducción de audio y video: limpieza, subtítulos sincronizados y masterización.',
+    calificacion: 4.6,
+    habilidades: [
+      { nombre: 'Edición de video', nivel: 'avanzado' },
+      { nombre: 'After Effects', nivel: 'intermedio' },
+    ],
+    servicios: [
       { titulo: 'Postproducción de episodio de podcast', descripcion: 'Limpieza de audio, eliminación de muletillas y masterización profesional.', precio: 49, categoria: 'Video y Animación' },
       { titulo: 'Subtítulos ES/EN sincronizados para tu video', descripcion: 'Subtítulos sincronizados en español/inglés con corrección de estilo.', precio: 19, categoria: 'Video y Animación' },
+    ],
+  },
+  {
+    nombre: 'Pablo Jiménez',
+    tituloProfesional: 'Motion Designer',
+    biografia: 'Animación de marca, intros y mini videos explicativos. After Effects y Premiere.',
+    calificacion: 4.7,
+    habilidades: [
+      { nombre: 'Motion Graphics', nivel: 'experto' },
+      { nombre: 'After Effects', nivel: 'experto' },
+      { nombre: 'Edición de video', nivel: 'avanzado' },
+    ],
+    servicios: [
+      { titulo: 'Intro animada de marca (motion graphics)', descripcion: 'Animación de marca para intros de video, logos animados y transiciones.', precio: 89, categoria: 'Video y Animación' },
+      { titulo: 'Thumbnails que hacen clic en YouTube', descripcion: 'Diseño de miniaturas llamativas para tus videos con textos e imágenes.', precio: 29, categoria: 'Video y Animación' },
     ],
   },
   {
@@ -239,6 +375,19 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Power BI: tablero con KPIs de tu empresa', descripcion: 'Tablero interactivo conectado a tu fuente de datos con KPIs y gráficas dinámicas.', precio: 149, categoria: 'Datos y Análisis' },
       { titulo: 'Reportes automáticos en Excel/PDF con Python', descripcion: 'Script que genera reportes automáticos (Excel/PDF) desde tus bases de datos.', precio: 99, categoria: 'Datos y Análisis' },
+    ],
+  },
+  {
+    nombre: 'Sergio Molina',
+    tituloProfesional: 'Especialista en Tableau',
+    biografia: 'Dashboards ejecutivos y limpieza de datos para equipos comerciales y financieros.',
+    calificacion: 4.5,
+    habilidades: [
+      { nombre: 'Power BI', nivel: 'avanzado' },
+      { nombre: 'SQL', nivel: 'avanzado' },
+      { nombre: 'Python', nivel: 'intermedio' },
+    ],
+    servicios: [
       { titulo: 'Limpio tus Excel/CSV desordenados', descripcion: 'Excel/CSV desordenados → datos limpios, consistentes y listos para analizar.', precio: 39, categoria: 'Datos y Análisis' },
       { titulo: 'Dashboards ejecutivos en Tableau', descripcion: 'Visualizaciones interactivas con filtros dinámicos para presentaciones ejecutivas.', precio: 119, categoria: 'Datos y Análisis' },
     ],
@@ -256,26 +405,34 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'MVP de app Android+iOS funcionando', descripcion: 'Aplicación funcional con diseño moderno, autenticación y backend incluido.', precio: 999, categoria: 'Aplicaciones Móviles' },
       { titulo: 'App de domicilios con pagos integrada', descripcion: 'Catálogo, carrito, pagos y panel de pedidos. Basada en Flutter.', precio: 1299, categoria: 'Aplicaciones Móviles' },
-      { titulo: 'Sistema de reservas con calendario online', descripcion: 'Calendario de disponibilidad, recordatorios y pagos integrados.', precio: 799, categoria: 'Aplicaciones Móviles' },
-      { titulo: 'App para controlar gastos personales', descripcion: 'Control de gastos, presupuestos y gráficas. Sincronización en la nube.', precio: 599, categoria: 'Aplicaciones Móviles' },
-      { titulo: 'Te publico la app en Play Store/App Store', descripcion: 'Subo tu app a Play Store/App Store y la mantengo actualizada por un mes.', precio: 99, categoria: 'Aplicaciones Móviles' },
     ],
   },
   {
-    nombre: 'Isabella Castro',
-    tituloProfesional: 'Especialista en Meta & Redes Sociales',
-    biografia: 'Gestiono comunidades y campañas en Instagram, Facebook y TikTok para pymes.',
-    calificacion: 4.4,
+    nombre: 'Javier Luna',
+    tituloProfesional: 'Desarrollador Flutter',
+    biografia: 'Apps con calendario, notificaciones y pagos. Publicadas en ambas tiendas.',
+    calificacion: 4.6,
     habilidades: [
-      { nombre: 'Meta Ads', nivel: 'experto' },
-      { nombre: 'Copywriting', nivel: 'avanzado' },
-      { nombre: 'SEO', nivel: 'intermedio' },
+      { nombre: 'Flutter', nivel: 'avanzado' },
+      { nombre: 'React Native', nivel: 'intermedio' },
     ],
     servicios: [
-      { titulo: 'Manejo tu Instagram 1 mes (posts+stories)', descripcion: '8 publicaciones, historias diarias, respuestas a comentarios y reporte mensual.', precio: 79, categoria: 'Marketing Digital' },
-      { titulo: 'Campaña Meta Ads con pauta optimizada', descripcion: 'Diseño de públicos, creatividades y optimización de presupuesto publicitario.', precio: 89, categoria: 'Marketing Digital' },
-      { titulo: 'Respondo comentarios y DMs de tu marca', descripcion: 'Moderación de comentarios, mensajes directos y plan de respuesta a tu comunidad.', precio: 59, categoria: 'Marketing Digital' },
-      { titulo: 'Estrategia de embudo: seguidores → clientes', descripcion: 'Estrategia de contenido que convierte seguidores en clientes. Plan + plantillas.', precio: 119, categoria: 'Marketing Digital' },
+      { titulo: 'Sistema de reservas con calendario online', descripcion: 'Calendario de disponibilidad, recordatorios y pagos integrados.', precio: 799, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'App para controlar gastos personales', descripcion: 'Control de gastos, presupuestos y gráficas. Sincronización en la nube.', precio: 599, categoria: 'Aplicaciones Móviles' },
+    ],
+  },
+  {
+    nombre: 'Natalia Cruz',
+    tituloProfesional: 'Publicadora de Apps',
+    biografia: 'Subo apps a Play Store y App Store, gestiono fichas, capturas y actualizaciones.',
+    calificacion: 4.4,
+    habilidades: [
+      { nombre: 'Flutter', nivel: 'intermedio' },
+      { nombre: 'React Native', nivel: 'intermedio' },
+    ],
+    servicios: [
+      { titulo: 'Te publico la app en Play Store/App Store', descripcion: 'Subo tu app a Play Store/App Store y la mantengo actualizada por un mes.', precio: 99, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'Actualizaciones y soporte de tu app (mensual)', descripcion: 'Mantenimiento, corrección de bugs y nuevas versiones de tu aplicación.', precio: 79, categoria: 'Aplicaciones Móviles' },
     ],
   },
   {
@@ -291,12 +448,60 @@ const freelancers: FreelancerSeed[] = [
     servicios: [
       { titulo: 'Migro tu web de hosting sin downtime', descripcion: 'Traslado de hosting/dominio con plan de contingencia. Cero pérdida de datos.', precio: 99, categoria: 'Soporte Técnico' },
       { titulo: 'Servidor Linux+Docker+SSL en producción', descripcion: 'Servidor Linux + Docker + Nginx + SSL. Tu app corriendo en producción.', precio: 149, categoria: 'Soporte Técnico' },
+    ],
+  },
+  {
+    nombre: 'Andrea Castillo',
+    tituloProfesional: 'Especialista en Seguridad Web',
+    biografia: 'Auditorías de seguridad, hardening de servidores y respuesta a incidentes.',
+    calificacion: 4.8,
+    habilidades: [
+      { nombre: 'Soporte técnico', nivel: 'experto' },
+      { nombre: 'Redes y servidores', nivel: 'avanzado' },
+      { nombre: 'PostgreSQL', nivel: 'intermedio' },
+    ],
+    servicios: [
       { titulo: 'Escaneo de vulnerabilidades de tu web', descripcion: 'Revisión de vulnerabilidades comunes, SSL, headers y buenas prácticas de seguridad.', precio: 79, categoria: 'Soporte Técnico' },
       { titulo: 'Soporte técnico prioritario por chat', descripcion: 'Atención prioritaria por chat/correo para problemas técnicos de tu empresa.', precio: 49, categoria: 'Soporte Técnico' },
+    ],
+  },
+  {
+    nombre: 'Felipe Duarte',
+    tituloProfesional: 'Administrador de Sistemas',
+    biografia: 'Backups, monitoreo y mantenimiento de infraestructura para pymes.',
+    calificacion: 4.3,
+    habilidades: [
+      { nombre: 'Redes y servidores', nivel: 'avanzado' },
+      { nombre: 'Soporte técnico', nivel: 'avanzado' },
+    ],
+    servicios: [
       { titulo: 'Backups automáticos de tu base de datos', descripcion: 'Configuración de backups programados para tu base de datos y archivos.', precio: 39, categoria: 'Soporte Técnico' },
     ],
   },
 ];
+
+// Clientes demo que "contrataron" a los freelancers (para contratos y reseñas).
+const clientesDemo = [
+  { nombre: 'María Fernanda López', email: 'cliente1@firstgig.demo' },
+  { nombre: 'Carlos Andrés Peña', email: 'cliente2@firstgig.demo' },
+  { nombre: 'Ana Lucía Vargas', email: 'cliente3@firstgig.demo' },
+  { nombre: 'Jorge Iván Suárez', email: 'cliente4@firstgig.demo' },
+];
+
+// Pool de comentarios variados para las calificaciones.
+const COMENTARIOS_RESEÑA = [
+  'Excelente trabajo, entregó antes del plazo y la calidad superó mis expectativas.',
+  'Muy profesional y comunicativo. El resultado quedó genial.',
+  'Buen trabajo en general. Tardó un poco más de lo esperado pero valió la pena.',
+  'Cumplió con todo lo acordado. Lo recomiendo ampliamente.',
+  'Entregó exactamente lo que pedí, sin vueltas. Volvería a contratarlo.',
+  'Calidad aceptable y precio justo. La comunicación pudo ser más fluida.',
+  'Impecable atención al detalle. Súper recomendado para cualquier proyecto.',
+  'Trabajo sólido y entregas puntuales. Cumplió el presupuesto acordado.',
+];
+
+// Puntuaciones variadas (la mayoria 5, algunas 4 y un par de 3 para realismo).
+const PUNTUACIONES = [5, 4, 5, 5, 4, 5, 3, 5, 4, 5];
 
 async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD_DEMO, 12);
