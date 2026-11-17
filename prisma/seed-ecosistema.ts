@@ -77,6 +77,29 @@ const IMAGENES_POR_CATEGORIA: Record<string, string[]> = {
   ],
 };
 
+// Clientes demo que "contrataron" a los freelancers (para contratos y reseñas).
+const clientesDemo = [
+  { nombre: 'María Fernanda López', email: 'cliente1@firstgig.demo' },
+  { nombre: 'Carlos Andrés Peña', email: 'cliente2@firstgig.demo' },
+  { nombre: 'Ana Lucía Vargas', email: 'cliente3@firstgig.demo' },
+  { nombre: 'Jorge Iván Suárez', email: 'cliente4@firstgig.demo' },
+];
+
+// Pool de comentarios variados para las calificaciones.
+const COMENTARIOS_RESEÑA = [
+  'Excelente trabajo, entregó antes del plazo y la calidad superó mis expectativas.',
+  'Muy profesional y comunicativo. El resultado quedó genial.',
+  'Buen trabajo en general. Tardó un poco más de lo esperado pero valió la pena.',
+  'Cumplió con todo lo acordado. Lo recomiendo ampliamente.',
+  'Entregó exactamente lo que pedí, sin vueltas. Volvería a contratarlo.',
+  'Calidad aceptable y precio justo. La comunicación pudo ser más fluida.',
+  'Impecable atención al detalle. Súper recomendado para cualquier proyecto.',
+  'Trabajo sólido y entregas puntuales. Cumplió el presupuesto acordado.',
+];
+
+// Puntuaciones variadas (la mayoria 5, algunas 4 y un par de 3 para realismo).
+const PUNTUACIONES = [5, 4, 5, 5, 4, 5, 3, 5, 4, 5];
+
 function urlImagen(categoria: string, indice: number): string {
   const pool = IMAGENES_POR_CATEGORIA[categoria] ?? IMAGENES_POR_CATEGORIA['Desarrollo Web'];
   const id = pool[indice % pool.length];
@@ -278,6 +301,7 @@ const freelancers: FreelancerSeed[] = [
 async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD_DEMO, 12);
   const contadorPorCategoria = new Map<string, number>();
+  const ecosistema: { freelancerId: number; servicioId: number; precio: number }[] = [];
 
   for (const [index, f] of freelancers.entries()) {
     const email = `freelancer${index + 1}@firstgig.demo`;
@@ -321,11 +345,14 @@ async function main() {
       });
     }
 
-    // Recrear servicios del freelancer demo (evita precios/categorias viejas)
+    // Recrear servicios del freelancer demo (evita precios/categorias viejas).
+    // Orden: calificaciones -> contratos -> servicios (por las llaves foraneas).
     try {
+      await prisma.calificacion.deleteMany({ where: { Contrato: { freelancerId: freelancer.id } } });
+      await prisma.contrato.deleteMany({ where: { freelancerId: freelancer.id } });
       await prisma.servicio.deleteMany({ where: { freelancerId: freelancer.id } });
     } catch {
-      console.warn(`  ${f.nombre}: no se pudieron borrar servicios existentes (tienen contratos)`);
+      console.warn(`  ${f.nombre}: no se pudieron borrar datos existentes (tienen pagos/entregas)`);
     }
 
     let creados = 0;
@@ -333,7 +360,7 @@ async function main() {
       const categoria = await prisma.categoria.findUnique({ where: { nombre: s.categoria } });
       const usados = contadorPorCategoria.get(s.categoria) ?? 0;
       contadorPorCategoria.set(s.categoria, usados + 1);
-      await prisma.servicio.create({
+      const servicio = await prisma.servicio.create({
         data: {
           freelancerId: freelancer.id,
           categoriaId: categoria?.id ?? null,
@@ -344,10 +371,103 @@ async function main() {
           estado: 'activo',
         },
       });
+      if (creados === 0) {
+        ecosistema.push({ freelancerId: freelancer.id, servicioId: servicio.id, precio: s.precio });
+      }
       creados++;
     }
 
     console.log(`${f.nombre}: ${creados} servicio(s)`);
+  }
+
+  // ---- Clientes demo ----
+  const clientes: { id: number; nombre: string }[] = [];
+  for (const c of clientesDemo) {
+    const usuario = await prisma.usuario.upsert({
+      where: { email: c.email },
+      update: {},
+      create: {
+        nombre: c.nombre,
+        email: c.email,
+        passwordHash,
+        rolId: 3,
+        estado: 'activo',
+      },
+    });
+    await prisma.cliente.upsert({
+      where: { id: usuario.id },
+      update: {},
+      create: { id: usuario.id, tipoCliente: 'natural' },
+    });
+    clientes.push({ id: usuario.id, nombre: c.nombre });
+  }
+  console.log(`${clientes.length} clientes demo listos`);
+
+  // ---- Contratos completados + calificaciones (reseñas) ----
+  // Cada freelancer recibe 2 reseñas de clientes distintos sobre su primer servicio.
+  let contratosCreados = 0;
+  let resenasCreadas = 0;
+  const resenasPorFreelancer = new Map<number, { suma: number; total: number }>();
+
+  for (const [fi, item] of ecosistema.entries()) {
+    // Dos reseñas por freelancer, de dos clientes rotativos
+    for (let r = 0; r < 2; r++) {
+      const cliente = clientes[(fi + r) % clientes.length];
+      const puntuacion = PUNTUACIONES[(fi * 2 + r) % PUNTUACIONES.length];
+      const comentario = COMENTARIOS_RESEÑA[(fi * 3 + r * 2) % COMENTARIOS_RESEÑA.length];
+
+      // Contrato completado (idempotente por freelancer+servicio+cliente)
+      let contrato = await prisma.contrato.findFirst({
+        where: { freelancerId: item.freelancerId, servicioId: item.servicioId, clienteId: cliente.id, estado: 'completado' },
+      });
+      if (!contrato) {
+        const fechaFin = new Date(Date.now() - (fi * 5 + r * 3 + 2) * 24 * 60 * 60 * 1000);
+        contrato = await prisma.contrato.create({
+          data: {
+            freelancerId: item.freelancerId,
+            clienteId: cliente.id,
+            servicioId: item.servicioId,
+            montoAcordado: item.precio,
+            estado: 'completado',
+            fechaInicio: new Date(fechaFin.getTime() - 7 * 24 * 60 * 60 * 1000),
+            fechaFin,
+          },
+        });
+        contratosCreados++;
+      }
+
+      // Reseña (idempotente por contrato+calificador)
+      const yaExiste = await prisma.calificacion.findFirst({
+        where: { contratoId: contrato.id, calificadorId: cliente.id },
+      });
+      if (yaExiste) continue;
+
+      await prisma.calificacion.create({
+        data: {
+          contratoId: contrato.id,
+          calificadorId: cliente.id,
+          calificadoId: item.freelancerId,
+          puntuacion,
+          comentario,
+        },
+      });
+      resenasCreadas++;
+
+      const acc = resenasPorFreelancer.get(item.freelancerId) ?? { suma: 0, total: 0 };
+      acc.suma += puntuacion;
+      acc.total += 1;
+      resenasPorFreelancer.set(item.freelancerId, acc);
+    }
+  }
+  console.log(`${contratosCreados} contratos completados, ${resenasCreadas} reseñas nuevas`);
+
+  // Actualizar calificacionPromedio de cada freelancer demo con el promedio real de sus reseñas
+  for (const [freelancerId, acc] of resenasPorFreelancer) {
+    const promedio = Math.round((acc.suma / acc.total) * 100) / 100;
+    await prisma.freelancer.update({
+      where: { id: freelancerId },
+      data: { calificacionPromedio: promedio },
+    });
   }
 
   // Reporte por categoria
