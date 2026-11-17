@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/infrastructure/http/server.js",
     "seed": "tsx prisma/seed.ts",
+    "seed:ecosistema": "tsx prisma/seed-ecosistema.ts",
     "prisma:generate": "prisma generate",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
