@@ -2,4 +2,12 @@ node_modules/
 dist/
 coverage/
 .env
+.env.*
+!.env.example
 *.log
+output*.txt
+list_errors.txt
+tmp-*.ts
+tmp_errors.txt
+tmp-tsc-errors.txt
+verificar.bat
