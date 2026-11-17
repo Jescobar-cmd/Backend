@@ -18,9 +18,9 @@ services:
     image: postgres:16-alpine
     container_name: firstgig-db
     environment:
-      POSTGRES_USER: firstgig
-      POSTGRES_PASSWORD: firstgig
-      POSTGRES_DB: firstgig
+      POSTGRES_USER: ${POSTGRES_USER:-firstgig}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-firstgig}
+      POSTGRES_DB: ${POSTGRES_DB:-firstgig}
     ports:
       - "5432:5432"
     volumes:
@@ -40,7 +40,7 @@ services:
     container_name: firstgig-migrate
     command: ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts"]
     environment:
-      DATABASE_URL: postgresql://firstgig:firstgig@db:5432/firstgig
+      DATABASE_URL: postgresql://${POSTGRES_USER:-firstgig}:${POSTGRES_PASSWORD:-firstgig}@db:5432/${POSTGRES_DB:-firstgig}
       # Crea el usuario demo (demo@firstgig.com / Demo1234) SOLO en este entorno local/CI.
       SEED_DEMO_USER: "true"
     depends_on:
@@ -55,7 +55,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://firstgig:firstgig@db:5432/firstgig
+      DATABASE_URL: postgresql://${POSTGRES_USER:-firstgig}:${POSTGRES_PASSWORD:-firstgig}@db:5432/${POSTGRES_DB:-firstgig}
       JWT_SECRET: ${JWT_SECRET:-firstgig-secreto-local}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       # Valor de relleno: el contenedor exige que la variable exista al arrancar.
