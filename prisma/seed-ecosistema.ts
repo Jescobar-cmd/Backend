@@ -1,7 +1,9 @@
-// Seed del ecosistema de demostracion: ~10 perfiles de freelancer
-// con habilidades, biografias y calificaciones variadas, cada uno
-// con 2 servicios publicados = 20 ofertas en el catalogo.
-// Idempotente: se puede correr varias veces sin duplicar.
+// Seed del ecosistema de demostracion: 10 perfiles de freelancer
+// con habilidades, biografias y calificaciones variadas.
+// Cada freelancer publica varios servicios = ~44 ofertas en el catalogo,
+// con minimo 5 servicios por cada una de las 8 categorias.
+// NOTA: los precios son valores decorativos en USD (la pasarela cobra en COP).
+// Idempotente: recrea los servicios de los freelancers demo sin duplicar perfiles.
 // Uso: npm run seed:ecosistema
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
@@ -18,7 +20,7 @@ const PASSWORD_DEMO = 'FirstGigDemo123!';
 type ServicioSeed = {
   titulo: string;
   descripcion: string;
-  precio: number;
+  precio: number; // USD (decorativo)
   categoria: string;
 };
 
@@ -43,8 +45,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Figma', nivel: 'intermedio' },
     ],
     servicios: [
-      { titulo: 'Landing page profesional en React', descripcion: 'Diseño + desarrollo de landing page moderna, responsive y optimizada para conversión. Incluye formulario de contacto y SEO básico.', precio: 450000, categoria: 'Desarrollo Web' },
-      { titulo: 'Dashboard administrativo a medida', descripcion: 'Panel con gráficas, tablas y autenticación para visualizar métricas de tu negocio en tiempo real.', precio: 1200000, categoria: 'Desarrollo Web' },
+      { titulo: 'Landing page profesional en React', descripcion: 'Diseño + desarrollo de landing page moderna, responsive y optimizada para conversión. Incluye formulario de contacto y SEO básico.', precio: 49, categoria: 'Desarrollo Web' },
+      { titulo: 'Dashboard administrativo a medida', descripcion: 'Panel con gráficas, tablas y autenticación para visualizar métricas de tu negocio en tiempo real.', precio: 199, categoria: 'Desarrollo Web' },
+      { titulo: 'Optimización de performance web', descripcion: 'Auditoría Core Web Vitals y optimización de carga, imágenes y bundle. Mejora tu puntuación de 60 a 90+.', precio: 99, categoria: 'Desarrollo Web' },
+      { titulo: 'Corrección de errores frontend', descripcion: 'Diagnóstico y solución de bugs en tu interfaz: responsive, formularios, estado y renderizado.', precio: 29, categoria: 'Soporte Técnico' },
     ],
   },
   {
@@ -58,8 +62,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'TypeScript', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'API REST con autenticación JWT', descripcion: 'Backend completo con registro, login, roles y documentación. Listo para conectar con tu frontend.', precio: 800000, categoria: 'Desarrollo Web' },
-      { titulo: 'Integración de pasarela de pagos', descripcion: 'Conexión con Mercado Pago / Stripe, webhooks y conciliación de pagos en tu sistema.', precio: 650000, categoria: 'Desarrollo Web' },
+      { titulo: 'API REST con autenticación JWT', descripcion: 'Backend completo con registro, login, roles y documentación. Listo para conectar con tu frontend.', precio: 149, categoria: 'Desarrollo Web' },
+      { titulo: 'Integración de pasarela de pagos', descripcion: 'Conexión con Mercado Pago / Stripe, webhooks y conciliación de pagos en tu sistema.', precio: 129, categoria: 'Desarrollo Web' },
+      { titulo: 'Migración y modelado de base de datos', descripcion: 'Diseño de esquema relacional, migración de datos desde Excel/CSV y optimización de consultas.', precio: 99, categoria: 'Desarrollo Web' },
+      { titulo: 'Script ETL de datos', descripcion: 'Pipeline que extrae datos de tus fuentes, los limpia y los carga en tu base de datos automáticamente.', precio: 119, categoria: 'Datos y Análisis' },
     ],
   },
   {
@@ -72,8 +78,12 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Adobe Photoshop', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'Diseño de identidad visual completa', descripcion: 'Logo, paleta de colores, tipografías y manual de marca. 3 propuestas iniciales.', precio: 550000, categoria: 'Diseño Gráfico' },
-      { titulo: 'Diseño UI de app móvil (5 pantallas)', descripcion: 'Wireframes + diseño visual de alta fidelidad para tu aplicación en Figma.', precio: 900000, categoria: 'Diseño Gráfico' },
+      { titulo: 'Identidad visual completa', descripcion: 'Logo, paleta de colores, tipografías y manual de marca. 3 propuestas iniciales.', precio: 59, categoria: 'Diseño Gráfico' },
+      { titulo: 'Diseño UI de app móvil (5 pantallas)', descripcion: 'Wireframes + diseño visual de alta fidelidad para tu aplicación en Figma.', precio: 149, categoria: 'Diseño Gráfico' },
+      { titulo: 'Pack de plantillas para redes sociales', descripcion: '30 plantillas editables para Instagram/Facebook: posts, historias y portadas.', precio: 39, categoria: 'Diseño Gráfico' },
+      { titulo: 'Branding para emprendedores', descripcion: 'Nombre, isotipo, paleta y mini manual de marca para lanzar tu negocio.', precio: 69, categoria: 'Diseño Gráfico' },
+      { titulo: 'Presentaciones corporativas', descripcion: 'Diseño de diapositivas para pitch, propuestas comerciales o clases. Plantilla editable.', precio: 45, categoria: 'Diseño Gráfico' },
+      { titulo: 'Microcopy para interfaces', descripcion: 'Textos de botones, formularios y mensajes de error que mejoran la experiencia de usuario.', precio: 45, categoria: 'Redacción y Contenido' },
     ],
   },
   {
@@ -87,8 +97,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Copywriting', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'Auditoría SEO completa de tu sitio', descripcion: 'Análisis técnico, palabras clave, contenido y plan de acción priorizado en 30 días.', precio: 380000, categoria: 'Marketing Digital' },
-      { titulo: 'Campaña de Google Ads gestionada', descripcion: 'Configuración, segmentación y optimización de campañas durante un mes.', precio: 500000, categoria: 'Marketing Digital' },
+      { titulo: 'Auditoría SEO completa de tu sitio', descripcion: 'Análisis técnico, palabras clave, contenido y plan de acción priorizado en 30 días.', precio: 79, categoria: 'Marketing Digital' },
+      { titulo: 'Campaña de Google Ads gestionada', descripcion: 'Configuración, segmentación y optimización de campañas durante un mes.', precio: 99, categoria: 'Marketing Digital' },
+      { titulo: 'Estrategia de contenido mensual', descripcion: 'Calendario editorial, investigación de keywords y supervisión de redacción para tu blog.', precio: 149, categoria: 'Marketing Digital' },
+      { titulo: 'Artículos de blog optimizados SEO', descripcion: 'Redacción de artículos de 1000+ palabras con palabras clave y estructura correcta.', precio: 35, categoria: 'Redacción y Contenido' },
     ],
   },
   {
@@ -101,8 +113,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Redacción de artículos', nivel: 'experto' },
     ],
     servicios: [
-      { titulo: 'Pack de 5 artículos SEO para blog', descripcion: 'Artículos de 1000+ palabras, investigados y optimizados con palabras clave que tú elijas.', precio: 420000, categoria: 'Redacción y Contenido' },
-      { titulo: 'Textos para tienda online', descripcion: 'Descripciones de producto, categorías y fichas que venden. Hasta 20 productos.', precio: 300000, categoria: 'Redacción y Contenido' },
+      { titulo: 'Pack de 5 artículos SEO para blog', descripcion: 'Artículos de 1000+ palabras, investigados y optimizados con palabras clave que tú elijas.', precio: 39, categoria: 'Redacción y Contenido' },
+      { titulo: 'Textos para tienda online', descripcion: 'Descripciones de producto, categorías y fichas que venden. Hasta 20 productos.', precio: 29, categoria: 'Redacción y Contenido' },
+      { titulo: 'Newsletters mensuales', descripcion: '4 newsletters al mes para tu lista de correos: diseño de contenido + redacción.', precio: 49, categoria: 'Redacción y Contenido' },
+      { titulo: 'Guiones para videos y podcasts', descripcion: 'Guiones con estructura, gancho y llamados a la acción para tu canal.', precio: 25, categoria: 'Redacción y Contenido' },
     ],
   },
   {
@@ -116,8 +130,11 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Motion Graphics', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'Edición de video corto (Reels/TikTok)', descripcion: 'Edición profesional con subtítulos, música y efectos. Entrega en 48 horas.', precio: 150000, categoria: 'Video y Animación' },
-      { titulo: 'Video promocional de producto', descripcion: 'Video de 30-60 segundos con guion, grabación guiada y edición completa.', precio: 700000, categoria: 'Video y Animación' },
+      { titulo: 'Edición de video corto (Reels/TikTok)', descripcion: 'Edición profesional con subtítulos, música y efectos. Entrega en 48 horas.', precio: 15, categoria: 'Video y Animación' },
+      { titulo: 'Video promocional de producto', descripcion: 'Video de 30-60 segundos con guion, grabación guiada y edición completa.', precio: 129, categoria: 'Video y Animación' },
+      { titulo: 'Motion graphics intro/outro', descripcion: 'Animación de marca para intros de video, logos animados y transiciones.', precio: 89, categoria: 'Video y Animación' },
+      { titulo: 'Edición de episodio de podcast', descripcion: 'Limpieza de audio, eliminación de muletillas y masterización profesional.', precio: 49, categoria: 'Video y Animación' },
+      { titulo: 'Subtítulos y traducción de videos', descripcion: 'Subtítulos sincronizados en español/inglés con corrección de estilo.', precio: 19, categoria: 'Video y Animación' },
     ],
   },
   {
@@ -131,8 +148,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Power BI', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'Dashboard en Power BI', descripcion: 'Tablero interactivo conectado a tu fuente de datos con KPIs y gráficas dinámicas.', precio: 850000, categoria: 'Datos y Análisis' },
-      { titulo: 'Automatización de reportes con Python', descripcion: 'Script que genera reportes automáticos (Excel/PDF) desde tus bases de datos.', precio: 600000, categoria: 'Datos y Análisis' },
+      { titulo: 'Dashboard en Power BI', descripcion: 'Tablero interactivo conectado a tu fuente de datos con KPIs y gráficas dinámicas.', precio: 149, categoria: 'Datos y Análisis' },
+      { titulo: 'Automatización de reportes con Python', descripcion: 'Script que genera reportes automáticos (Excel/PDF) desde tus bases de datos.', precio: 99, categoria: 'Datos y Análisis' },
+      { titulo: 'Limpieza y organización de datos', descripcion: 'Excel/CSV desordenados → datos limpios, consistentes y listos para analizar.', precio: 39, categoria: 'Datos y Análisis' },
+      { titulo: 'Dashboard en Tableau', descripcion: 'Visualizaciones interactivas con filtros dinámicos para presentaciones ejecutivas.', precio: 119, categoria: 'Datos y Análisis' },
     ],
   },
   {
@@ -146,8 +165,11 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'Node.js', nivel: 'intermedio' },
     ],
     servicios: [
-      { titulo: 'App móvil MVP (Android + iOS)', descripcion: 'Aplicación funcional con diseño moderno, autenticación y backend incluido.', precio: 3500000, categoria: 'Aplicaciones Móviles' },
-      { titulo: 'App de delivery / pedidos', descripcion: 'Catálogo, carrito, pagos y panel de pedidos. Basada en Flutter.', precio: 4200000, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'App móvil MVP (Android + iOS)', descripcion: 'Aplicación funcional con diseño moderno, autenticación y backend incluido.', precio: 999, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'App de delivery / pedidos', descripcion: 'Catálogo, carrito, pagos y panel de pedidos. Basada en Flutter.', precio: 1299, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'App de reservas y citas', descripcion: 'Calendario de disponibilidad, recordatorios y pagos integrados.', precio: 799, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'App de finanzas personales', descripcion: 'Control de gastos, presupuestos y gráficas. Sincronización en la nube.', precio: 599, categoria: 'Aplicaciones Móviles' },
+      { titulo: 'Publicación y mantenimiento de app', descripcion: 'Subo tu app a Play Store/App Store y la mantengo actualizada por un mes.', precio: 99, categoria: 'Aplicaciones Móviles' },
     ],
   },
   {
@@ -161,8 +183,10 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'SEO', nivel: 'intermedio' },
     ],
     servicios: [
-      { titulo: 'Gestión de Instagram (1 mes)', descripcion: '8 publicaciones, historias diarias, respuestas a comentarios y reporte mensual.', precio: 700000, categoria: 'Marketing Digital' },
-      { titulo: 'Campaña publicitaria en Meta Ads', descripcion: 'Diseño de públicos, creatividades y optimización de presupuesto publicitario.', precio: 450000, categoria: 'Marketing Digital' },
+      { titulo: 'Gestión de Instagram (1 mes)', descripcion: '8 publicaciones, historias diarias, respuestas a comentarios y reporte mensual.', precio: 79, categoria: 'Marketing Digital' },
+      { titulo: 'Campaña publicitaria en Meta Ads', descripcion: 'Diseño de públicos, creatividades y optimización de presupuesto publicitario.', precio: 89, categoria: 'Marketing Digital' },
+      { titulo: 'Community management', descripcion: 'Moderación de comentarios, mensajes directos y plan de respuesta a tu comunidad.', precio: 59, categoria: 'Marketing Digital' },
+      { titulo: 'Embudo de ventas para redes sociales', descripcion: 'Estrategia de contenido que convierte seguidores en clientes. Plan + plantillas.', precio: 119, categoria: 'Marketing Digital' },
     ],
   },
   {
@@ -176,8 +200,11 @@ const freelancers: FreelancerSeed[] = [
       { nombre: 'PostgreSQL', nivel: 'avanzado' },
     ],
     servicios: [
-      { titulo: 'Migración de sitio web sin downtime', descripcion: 'Traslado de hosting/dominio con plan de contingencia. Cero pérdida de datos.', precio: 500000, categoria: 'Soporte Técnico' },
-      { titulo: 'Configuración de servidor y despliegue', descripcion: 'Servidor Linux + Docker + Nginx + SSL. Tu app corriendo en producción.', precio: 750000, categoria: 'Soporte Técnico' },
+      { titulo: 'Migración de sitio web sin downtime', descripcion: 'Traslado de hosting/dominio con plan de contingencia. Cero pérdida de datos.', precio: 99, categoria: 'Soporte Técnico' },
+      { titulo: 'Configuración de servidor y despliegue', descripcion: 'Servidor Linux + Docker + Nginx + SSL. Tu app corriendo en producción.', precio: 149, categoria: 'Soporte Técnico' },
+      { titulo: 'Auditoría de seguridad web', descripcion: 'Revisión de vulnerabilidades comunes, SSL, headers y buenas prácticas de seguridad.', precio: 79, categoria: 'Soporte Técnico' },
+      { titulo: 'Soporte técnico mensual', descripcion: 'Atención prioritaria por chat/correo para problemas técnicos de tu empresa.', precio: 49, categoria: 'Soporte Técnico' },
+      { titulo: 'Respaldo automático en la nube', descripcion: 'Configuración de backups programados para tu base de datos y archivos.', precio: 39, categoria: 'Soporte Técnico' },
     ],
   },
 ];
@@ -227,14 +254,16 @@ async function main() {
       });
     }
 
-    // Servicios (ofertas) del freelancer
+    // Recrear servicios del freelancer demo (evita precios/categorias viejas)
+    try {
+      await prisma.servicio.deleteMany({ where: { freelancerId: freelancer.id } });
+    } catch {
+      console.warn(`  ${f.nombre}: no se pudieron borrar servicios existentes (tienen contratos)`);
+    }
+
     let creados = 0;
     for (const s of f.servicios) {
       const categoria = await prisma.categoria.findUnique({ where: { nombre: s.categoria } });
-      const existe = await prisma.servicio.findFirst({
-        where: { freelancerId: freelancer.id, titulo: s.titulo },
-      });
-      if (existe) continue;
       await prisma.servicio.create({
         data: {
           freelancerId: freelancer.id,
@@ -248,7 +277,20 @@ async function main() {
       creados++;
     }
 
-    console.log(`${f.nombre}: ${creados} servicio(s) nuevo(s)`);
+    console.log(`${f.nombre}: ${creados} servicio(s)`);
+  }
+
+  // Reporte por categoria
+  const porCategoria = await prisma.servicio.groupBy({
+    by: ['categoriaId'],
+    where: { estado: 'activo' },
+    _count: { id: true },
+  });
+  const categorias = await prisma.categoria.findMany({ select: { id: true, nombre: true } });
+  console.log('\nServicios activos por categoria:');
+  for (const c of categorias) {
+    const n = porCategoria.find((p) => p.categoriaId === c.id)?._count.id ?? 0;
+    console.log(`  ${c.nombre}: ${n}`);
   }
 
   const totalServicios = await prisma.servicio.count({ where: { estado: 'activo' } });
