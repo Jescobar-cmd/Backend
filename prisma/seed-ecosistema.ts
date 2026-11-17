@@ -17,6 +17,72 @@ const prisma = new PrismaClient({ adapter });
 
 const PASSWORD_DEMO = 'FirstGigDemo123!';
 
+// Fotos reales de Unsplash CDN (URLs verificadas) por categoria.
+const IMAGENES_POR_CATEGORIA: Record<string, string[]> = {
+  'Desarrollo Web': [
+    'photo-1498050108023-c5249f4df085',
+    'photo-1460925895917-afdab827c52f',
+    'photo-1587620962725-abab7fe55159',
+    'photo-1499750310107-5fef28a66643',
+    'photo-1526374965328-7f61d4dc18c5',
+    'photo-1516321318423-f06f85e504b3',
+  ],
+  'Aplicaciones Móviles': [
+    'photo-1512941937669-90a1b58e7e9c',
+    'photo-1511707171634-5f897ff02aa9',
+    'photo-1551650975-87deedd944c3',
+    'photo-1557804506-669a67965ba0',
+    'photo-1526498460520-4c246339dccb',
+  ],
+  'Diseño Gráfico': [
+    'photo-1522542550221-31fd19575a2d',
+    'photo-1559028012-481c04fa702d',
+    'photo-1561070791-2526d30994b5',
+    'photo-1626785774573-4b799315345d',
+    'photo-1558655146-d09347e92766',
+  ],
+  'Marketing Digital': [
+    'photo-1432888498266-38ffec3eaf0a',
+    'photo-1552664730-d307ca884978',
+    'photo-1559136555-9303baea8ebd',
+    'photo-1557804506-669a67965ba0',
+    'photo-1542744173-8e7e53415bb0',
+  ],
+  'Redacción y Contenido': [
+    'photo-1434030216411-0b793f4b4173',
+    'photo-1455390582262-044cdead277a',
+    'photo-1455390582262-044cdead277a',
+    'photo-1499750310107-5fef28a66643',
+    'photo-1516321318423-f06f85e504b3',
+  ],
+  'Video y Animación': [
+    'photo-1574717024653-61fd2cf4d44d',
+    'photo-1535016120720-40c646be5580',
+    'photo-1492691527719-9d1e07e534b4',
+    'photo-1497032628192-86f99bcd76bc',
+    'photo-1557804506-669a67965ba0',
+  ],
+  'Datos y Análisis': [
+    'photo-1551288049-bebda4e38f71',
+    'photo-1460925895917-afdab827c52f',
+    'photo-1543286386-713bdd548da4',
+    'photo-1526374965328-7f61d4dc18c5',
+  ],
+  'Soporte Técnico': [
+    'photo-1518770660439-4636190af475',
+    'photo-1544197150-b99a580bb7a8',
+    'photo-1558494949-ef010cbdcc31',
+    'photo-1454165804606-c3d57bc86b40',
+    'photo-1522202176988-66273c2fd55f',
+  ],
+};
+
+function urlImagen(categoria: string, indice: number): string {
+  const pool = IMAGENES_POR_CATEGORIA[categoria] ?? IMAGENES_POR_CATEGORIA['Desarrollo Web'];
+  const id = pool[indice % pool.length];
+  return `https://images.unsplash.com/${id}?w=800&h=450&fit=crop&auto=format&q=80`;
+}
+
 type ServicioSeed = {
   titulo: string;
   descripcion: string;
@@ -211,6 +277,7 @@ const freelancers: FreelancerSeed[] = [
 
 async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD_DEMO, 12);
+  const contadorPorCategoria = new Map<string, number>();
 
   for (const [index, f] of freelancers.entries()) {
     const email = `freelancer${index + 1}@firstgig.demo`;
@@ -264,6 +331,8 @@ async function main() {
     let creados = 0;
     for (const s of f.servicios) {
       const categoria = await prisma.categoria.findUnique({ where: { nombre: s.categoria } });
+      const usados = contadorPorCategoria.get(s.categoria) ?? 0;
+      contadorPorCategoria.set(s.categoria, usados + 1);
       await prisma.servicio.create({
         data: {
           freelancerId: freelancer.id,
@@ -271,6 +340,7 @@ async function main() {
           titulo: s.titulo,
           descripcion: s.descripcion,
           precio: s.precio,
+          imagenUrl: urlImagen(s.categoria, usados),
           estado: 'activo',
         },
       });
